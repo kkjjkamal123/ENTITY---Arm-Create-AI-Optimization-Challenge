@@ -3,7 +3,7 @@
 **Fully offline LLM chat for Android, tuned for the Arm CPU it's running on.**
 
 [![Arm Create: AI Optimization Challenge](https://img.shields.io/badge/Arm%20Create-AI%20Optimization%20Challenge%20%C2%B7%20Track%201-00A5DE)](github.md)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-yellow.svg)](LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%2013%2B%20(arm64--v8a)-3DDC84)](docs/BUILD.md)
 
 **[Read the full hackathon submission write-up → `github.md`](github.md)**
@@ -54,33 +54,51 @@ what was only demonstrated from the CLI.
 |---|---|---|
 | ![chat](screenshots/v5_reply.png) | ![graph](screenshots/v4_picker.png) | ![settings](screenshots/v4_settings2.png) |
 
+## Prerequisites
+
+- **JDK 17** (e.g., [Eclipse Temurin](https://adoptium.net/temurin/releases/?variant=jdk&version=17)).
+- **Android SDK** with platform-tools, **build-tools 36**, and **NDK 27.1.12297006** (install via `sdkmanager --install "ndk;27.1.12297006" "cmake;3.31.6"`).
+- **CMake 3.31.6** (also via sdkmanager, or via your OS package manager).
+- An **arm64-v8a device** running Android 13+ with USB debugging enabled, and at least 2 GB free RAM.
+- A runnable GGUF model (e.g., Llama-3.2-1B or -3B in Q4_0, from [Hugging Face / bartowski](https://huggingface.co/bartowski)).
+
 ## Quick start
 
-Full detail in [`docs/BUILD.md`](docs/BUILD.md) (toolchain versions, adapting to a different SoC,
-troubleshooting). Short version:
+**Fast path** (judge, no build): download a prebuilt APK from [`apk/`](apk/) and run `adb install -r <apk>`.
+
+**Full build:**
 
 ```bash
-# 1. Fetch llama.cpp and drop this app into its examples/ (or run ./setup.sh)
+# 1. Fetch llama.cpp and drop this app into its examples/ (or run ./setup.sh to automate)
 curl -sL -o llama.tar.gz https://github.com/ggml-org/llama.cpp/archive/refs/heads/master.tar.gz
 tar xzf llama.tar.gz
 cp -r app/entity.android llama.cpp-master/examples/entity.android
 
-# 2. Point Gradle at your Android SDK, then build
+# 2. Set toolchain paths and build
 cd llama.cpp-master/examples/entity.android
+export JAVA_HOME=/path/to/jdk-17
 export ANDROID_HOME=/path/to/Android/sdk
 ./gradlew :app:assembleDebug --no-daemon --console=plain
+# → app/build/outputs/apk/debug/app-debug.apk (~100 MB with native symbols)
 
-# 3. Install and run
+# 3. Install and launch
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.entity.chat/com.example.llama.MainActivity
 ```
 
-Then in the app: **Import from device** to pick a GGUF model (Q4_0 recommended — see
-[`docs/OPTIMIZATIONS.md`](docs/OPTIMIZATIONS.md#4-quantization-q4_0-on-dotprod)), chat, and run
-⋮ → **Benchmark** to see the naive-vs-optimized comparison on your own device.
+In the app: tap the folder icon to **Import from device**, select a Q4_0 GGUF model, and chat.
+To validate the optimization, run ⋮ → **Benchmark** (compares naive 8-core vs. optimized big-core performance on your loaded model).
 
-Prebuilt debug APKs (no build required) are in [`apk/`](apk/) — see `apk/README.md` for the
-version index and a note on GitHub's 100 MB file-size limit before you commit/push them.
+## What makes this build Arm-optimized
+
+ENTITY's build is tuned for the CMF Phone 1 / Dimensity 7300 (Cortex-A78 + A55, `armv8.2-a+dotprod`, no i8mm/SVE). These compile-time and runtime choices deliver the +34–59% speedup and 2–7.6× energy efficiency gain:
+
+- **Single device-tuned backend** (`GGML_CPU_ALL_VARIANTS=OFF` + `GGML_CPU_ARM_ARCH=armv8.2-a+dotprod`): one CPU variant (KleidiAI/dotprod kernels) instead of 7 generic fallbacks — smaller APK, less startup RAM, no runtime dispatch overhead.
+- **arm64-only build** (`abiFilters = ["arm64-v8a"]`): drops x86/x86_64 entirely, halving footprint and startup time.
+- **Big-core affinity** (auto-detected at runtime via `cpufreq` ranking): inference pinned to Cortex-A78 cluster, not scattered across slow A55s — recovers ~2× on generation throughput.
+- **Adaptive context window**: KV-cache auto-sized from model size + free RAM, so any runnable model fits without OOM.
+
+To retarget for a different Arm SoC, change `GGML_CPU_ARM_ARCH` in `lib/build.gradle.kts` (or see `docs/BUILD.md` for detailed steps). See [`docs/OPTIMIZATIONS.md`](docs/OPTIMIZATIONS.md) for the full breakdown of each technique and exact file locations.
 
 ## Repository map
 
@@ -122,5 +140,5 @@ tuned to this chip — see [`docs/BUILD.md`](docs/BUILD.md) to retarget it.
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Built on [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT) and
+Apache License 2.0 — see [LICENSE](LICENSE). Built on [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT) and
 Arm [KleidiAI](https://gitlab.arm.com/kleidi/kleidiai) (Apache-2.0).
