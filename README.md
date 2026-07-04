@@ -3,7 +3,7 @@
 **Fully offline LLM chat for Android, tuned for the Arm CPU it's running on.**
 
 [![Arm Create: AI Optimization Challenge](https://img.shields.io/badge/Arm%20Create-AI%20Optimization%20Challenge%20%C2%B7%20Track%201-00A5DE)](github.md)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![License: Appache 2.0](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Android%2013%2B%20(arm64--v8a)-3DDC84)](docs/BUILD.md)
 
 **[Read the full hackathon submission write-up → `github.md`](github.md)**
