@@ -50,9 +50,9 @@ what was only demonstrated from the CLI.
 
 ## Screenshots
 
-| Chat + stats | Live graph | Settings |
+| Chat + stats | Model Info | Settings |
 |---|---|---|
-| ![chat](screenshots/v5_reply.png) | ![graph](screenshots/v4_picker.png) | ![settings](screenshots/v4_settings2.png) |
+| ![chat](screenshots/6.png) | ![Info](screenshots/2.png) | ![settings](screenshots/4.png) |
 
 ## Prerequisites
 
