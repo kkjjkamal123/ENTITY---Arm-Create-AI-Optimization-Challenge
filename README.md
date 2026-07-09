@@ -52,7 +52,7 @@ what was only demonstrated from the CLI.
 
 | Chat + stats | Model Info | Settings |
 |---|---|---|
-| ![chat](screenshots/6.jpeg) | ![Info](screenshots/2.JPEG) | ![settings](screenshots/4.jpeg) |
+| ![chat](screenshots/6.jpeg) | ![Info](screenshots/2.JPEG) | ![settings](screenshots/4.Jpeg) |
 
 ## Prerequisites
 
