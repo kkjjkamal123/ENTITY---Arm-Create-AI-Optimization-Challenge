@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Icons/Whitebg_icon.png" width="100%"/>
+<img src="Icons/Whitebg_icon.png" width="25%"/>
 
 # ENTITY — an adaptive on-device LLM runtime for Arm phones
 
