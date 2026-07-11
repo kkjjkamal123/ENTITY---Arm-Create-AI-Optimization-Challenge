@@ -1,3 +1,7 @@
+<div align="center">
+
+<img src="Icons/Whitebg_icon.png" width="100%"/>
+
 # ENTITY — an adaptive on-device LLM runtime for Arm phones
 
 **Fully offline LLM chat for Android, tuned for the Arm CPU it's running on.**
