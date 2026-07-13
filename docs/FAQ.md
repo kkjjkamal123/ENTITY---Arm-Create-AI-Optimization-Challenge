@@ -1,6 +1,6 @@
 # ENTITY FAQ
 
-[Home](../README.md) · [Benchmarks](../benchmarks/BENCHMARKS.md) · [Optimization](OPTIMIZATIONS.md) · [Contributing](CONTRIBUTING.md) · [License](../LICENSE)
+[Home](../README.md) · [Benchmarks](../benchmarks/BENCHMARKS.md) · [Optimization](OPTIMIZATIONS.md) · [Starter kit](../templates/arm64-android-runtime/README.md) · [Contributing](CONTRIBUTING.md) · [License](../LICENSE)
 
 ## Does ENTITY need internet access?
 
@@ -69,3 +69,9 @@ admission, thermal policy, power math, benchmark statistics, and the limits of e
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for build validation, project conventions, and next steps.
 The canonical source is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge).
+
+## Can I reuse the Arm runtime logic in another Android project?
+
+Yes. The [Arm64 Android starter kit](../templates/arm64-android-runtime/README.md) contains the
+pure Kotlin runtime policy, a portable C++ affinity helper, and a retargeting checklist. It is a
+ starting point, not a replacement for testing on the target phone.
