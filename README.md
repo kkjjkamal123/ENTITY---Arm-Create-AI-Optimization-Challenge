@@ -16,6 +16,12 @@ ENTITY is a private Android assistant that runs runnable GGUF language models en
 
 The current release is built for arm64 Android phones running Android 13 or later. It has been measured on a CMF Phone 1 with MediaTek Dimensity 7300 and independently validated on a Qualcomm Snapdragon 6 Gen 4 phone.
 
+<div align="center">
+
+**[Get the latest release](https://github.com/kkjjkamal123/Daily-Track/releases/latest)**
+
+</div>
+
 ## What makes it different
 
 | Runtime decision | What ENTITY does |
@@ -75,7 +81,7 @@ TTFT in this benchmark is an estimate from prompt evaluation plus one decode ste
 
 ## Get started
 
-1. Install the current release signed APK from [apk](apk).
+1. Install the current release signed APK from [apk](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge/releases/latest).
 2. Open ENTITY and choose Import from device.
 3. Select a runnable GGUF model.
 4. Leave Auto mode enabled for device aware CPU and context decisions.
