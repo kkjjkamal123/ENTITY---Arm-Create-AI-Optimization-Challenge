@@ -34,7 +34,9 @@ evaluation plus one decode step, not a live-chat first-token measurement.
 |  | Power | 3.4 ± 0.15 W | 3.4 ± 0.29 W | flat |
 |  | Energy efficiency | 1.8 ± 0.24 tok/W | 3.8 ± 0.31 tok/W | 2.1× |
 
-|![Current in-app benchmark Mediatek](../screenshots/Benchmark.png)| |![Current in-app benchmark Snapdragon](../screenshots/Benchmark2.png)|
+| Mediatek | Snapdragon |
+|---|---|
+| ![Mediatek](../screenshots/Benchmark.png) | ![Snapdragon](../screenshots/Benchmark2.png) | 
 
 ## Interpretation and limits
 
