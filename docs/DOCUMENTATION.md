@@ -117,6 +117,8 @@ live chat first token measurement.
 4. docs/ARCHITECTURE.md maps the Kotlin UI, JNI layer, and native inference flow.
 5. docs/OPTIMIZATIONS.md connects each shipped optimization to its source file.
 6. docs/FAQ.md answers common questions about models, Auto mode, device support, and metrics.
+7. templates/arm64-android-runtime/ is a copyable starter kit for other Arm64 Android projects.
+
 
 ## Historical work
 
