@@ -1,0 +1,11 @@
+== IDLE baseline ==
+idle_power = 1.226 W
+
+== INFERENCE (128 tok, --ignore-eos, cooldown 20s between) ==
+1B NAIVE    (-t8 all cores) | prompt=64.6 t/s | gen=10.4 t/s | power=4.232 W | efficiency=2.46 tok/s/W
+1B OPTIMIZED(-t4 pinned+RT) | prompt=102.8 t/s | gen=15.7 t/s | power=4.038 W | efficiency=3.89 tok/s/W
+3B NAIVE    (-t8 all cores) | prompt=12.2 t/s | gen=1.4 t/s | power=4.833 W | efficiency=0.29 tok/s/W
+3B OPTIMIZED(-t4 pinned+RT) | prompt=11.7 t/s | gen=4.0 t/s | power=4.674 W | efficiency=0.86 tok/s/W
+
+IDLE=1.226 W
+DONE

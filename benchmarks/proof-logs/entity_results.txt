@@ -1,0 +1,22 @@
+TEAM ENTITY MASTER BENCHMARK  |  Wed Jul  1 16:41:49 IST 2026
+Device: CMF Phone 1, Dimensity 7300 (4xA78@2.5GHz + 4xA55@2.0GHz), 6GB, Android 16
+NAIVE=-t8 all cores default sched | OPTIMIZED=-t4 pinned A78 (cores4-7) + realtime | n=80 --ignore-eos
+start temp: 35.0C
+
+===== PHASE 1: SPEED (no power sampler), avg of 2 reps =====
+model      config     prompt_t/s    gen_t/s
+1B         NAIVE           91.10      13.65
+1B         OPTIMIZED      123.15      18.35
+3B         NAIVE           19.90       3.75
+3B         OPTIMIZED       21.95       5.95
+phase1 end temp: 39.0C
+
+===== PHASE 2: POWER (with sampler) =====  idle=0.931W
+model      config      gen_t/s   power_W    tok/s/W
+1B         NAIVE           8.1     4.087       1.98
+1B         OPTIMIZED      15.9     3.936       4.04
+3B         NAIVE           0.7     4.288       0.16
+3B         OPTIMIZED       4.4     3.626       1.21
+end temp: 42.0C
+
+DONE

@@ -1,0 +1,15 @@
+### C0 baseline: -t 2 (default sched)
+[ Prompt: 52.8 t/s | Generation: 14.6 t/s ]
+
+### C1: -t 2 pinned big cores + realtime
+[ Prompt: 50.7 t/s | Generation: 16.1 t/s ]
+
+### C2: -t 3 pinned big cores + realtime
+[ Prompt: 50.2 t/s | Generation: 8.4 t/s ]
+
+### C3: -t 4 pinned big cores + realtime
+[ Prompt: 78.6 t/s | Generation: 17.1 t/s ]
+
+### C4: -t 2 pinned + flashattn + KV q8
+[ Prompt: 10.7 t/s | Generation: 2.9 t/s ]
+

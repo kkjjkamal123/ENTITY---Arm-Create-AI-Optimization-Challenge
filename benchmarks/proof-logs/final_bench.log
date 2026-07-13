@@ -1,0 +1,21 @@
+### 1B NAIVE (-t 8, all cores, default scheduler)
+  run1: 3.0 t/s
+  run2: 5.8 t/s
+  run3: 6.4 t/s
+  >>> AVG: 5.07 t/s
+### 1B OPTIMIZED (-t 4, pinned A78 big cores + realtime)
+  run1: 17.1 t/s
+  run2: 17.0 t/s
+  run3: 16.5 t/s
+  >>> AVG: 16.87 t/s
+### 3B NAIVE (-t 8, all cores, default scheduler)
+  run1: 0.6 t/s
+  run2: 2.9 t/s
+  run3: 3.7 t/s
+  >>> AVG: 2.40 t/s
+### 3B OPTIMIZED (-t 4, pinned A78 big cores + realtime)
+  run1: 1.6 t/s
+  run2: 5.7 t/s
+  run3: 2.9 t/s
+  >>> AVG: 3.40 t/s
+DONE
