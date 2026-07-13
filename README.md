@@ -1,148 +1,110 @@
 <div align="center">
 
-<img src="Icons/Whitebg_icon.png" width="25%"/>
+<img src="Icons/Whitebg_icon.png" width="25%" alt="ENTITY icon">
 
-# ENTITY — an adaptive on-device LLM runtime for Arm phones
+# ENTITY: adaptive on device LLM runtime for Arm phones
 
-**Fully offline LLM chat for Android, tuned for the Arm CPU it's running on.**
+**Fully offline Android chat that tunes llama.cpp to the Arm CPU in the phone.**
 
-[![Arm Create: AI Optimization Challenge](https://img.shields.io/badge/Arm%20Create-AI%20Optimization%20Challenge%20%C2%B7%20Track%201-00A5DE)](github.md)
-[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/platform-Android%2013%2B%20(arm64--v8a)-3DDC84)](docs/BUILD.md)
+[Read the complete Arm Create submission](github.md)
 
-**[Read the full hackathon submission write-up → `github.md`](github.md)**
+</div>
 
----
+## What ENTITY is
 
-ENTITY runs large language models **fully offline** on a phone and tunes itself to the device's
-Arm CPU. It's not "a chatbot that uses llama.cpp" — it's a small **inference optimization layer**
-(Kotlin UI + C++/JNI over llama.cpp), proven on real consumer hardware: a **CMF Phone 1**
-(MediaTek Dimensity 7300, 6 GB RAM, Cortex-A78 + A55 big.LITTLE).
+ENTITY is a private Android assistant that runs runnable GGUF language models entirely on the phone. It is built as an inference optimization layer around llama.cpp with a Kotlin interface and a C++ JNI inference path.
 
-> Drop in any runnable GGUF model, and ENTITY profiles the device and configures itself to run it
-> as fast as the phone allows — offline, with live speed/energy/thermal metrics.
+The current release is built for arm64 Android phones running Android 13 or later. It has been measured on a CMF Phone 1 with MediaTek Dimensity 7300 and independently validated on a Qualcomm Snapdragon 6 Gen 4 phone.
 
-## Why it's more than a demo
+## What makes it different
 
-| Optimization | What it does |
+| Runtime decision | What ENTITY does |
 |---|---|
-| **Big-core affinity** | Pins inference to the Cortex-A78 performance cluster via `sched_setaffinity`, choosing cores by live `cpufreq` ranking — not a hardcoded core list. |
-| **Device-tuned CPU backend** | A **single** `armv8.2-a + dotprod` build with Arm **KleidiAI** kernels, instead of the ~7 generic CPU variants most builds ship. Smaller APK, less startup RAM, faster launch. arm64-only. |
-| **Adaptive context** | Context window sized from **model size + free RAM**, so any runnable model fits without OOM (a 1B gets a big window; a 3B is trimmed to fit a 6 GB phone). |
-| **Auto (optimized) mode** | One switch applies all of the above. Turn it off to tune temperature, top-k, top-p, max tokens, context and threads by hand. |
-| **Thermal-aware guard** | Eases off between tokens under sustained heat (Android's own thermal API) to hold steadier throughput instead of hard-throttling mid-answer. |
-| **Live energy metrics** | tokens, tok/s, TTFT, temperature, **power draw (W)**, tokens/watt, free memory — as a stats bar and a toggleable multi-series graph. |
+| CPU backend | Ships seven Arm CPU backend variants from Arm v8.0 through Arm v9.2. ggml loads the best supported variant at startup with KleidiAI kernels available in every variant. |
+| Fast core selection | Reads maximum CPU frequency from the device then ranks the cores. Decode runs on the fastest two to four cores rather than waiting for slower efficiency cores. |
+| Separate thread pools | In Auto mode token generation stays on the fast core set while prompt processing can use every online core. |
+| Adaptive context | Selects a 2048 to 8192 token context from model size and free RAM. This lets a 3B class model use a smaller window when memory is tight. |
+| Thermal policy | Checks Android thermal status during generation and adds a small cooperative delay when heat rises. Efficiency mode doubles the delay and caps inference at two threads. |
+| Energy telemetry | Reports tokens, token rate, time to first token, temperature, power, token per watt and free memory. |
 
-Honest framing: against a hand-tuned Termux CLI running the same cores and kernels, raw tokens/sec
-are near-identical — no app beats a CLI on that one number. ENTITY's value is delivering the
-optimization **automatically**, in the **foreground**, with **energy/thermal awareness** and a real
-UI, beating the *default* (un-tuned) experience most users actually get. See
-[`docs/OPTIMIZATIONS.md`](docs/OPTIMIZATIONS.md) for exactly what's implemented in the app versus
-what was only demonstrated from the CLI.
+ENTITY does not claim to beat a tuned command line build on raw token rate. Its purpose is to give a normal phone user the same hardware aware decisions in a responsive foreground app with live energy and thermal information.
 
 ## Features
 
-- Fully offline chat (Llama 3.2 1B / 3B and any other runnable GGUF).
-- In-app model picker via Storage Access Framework — no file browser, no adb required.
-- Professional chat UI with smooth token streaming, **Stop** and **New chat**.
-- Settings screen with an **Auto (optimized)** master toggle, or full manual tuning.
-- Live metrics bar + toggleable multi-series graph (tokens, tok/s, TTFT, °C, W, free GB).
-- In-app **benchmark** (⋮ → Benchmark): naive-vs-optimized speed, power, and tokens/watt, on your
-  own loaded model.
-- Light / Dark / System theme, with a theme-aware app-icon switcher.
-- Model-info card that reads the GGUF header (params, quantization, architecture, context).
+1. Fully offline chat with Llama 3.2 1B, Llama 3.2 3B and other runnable GGUF models.
+2. In app model import through Android Storage Access Framework.
+3. Streaming replies with Stop, New chat, Markdown rendering, Copy and Regenerate.
+4. Persistent local conversations with restore, rename, switch and delete actions.
+5. Auto mode plus manual controls for temperature, top k, top p, completion length, context and threads.
+6. Live statistics and a selectable graph for token count, token rate, TTFT, temperature, power and memory.
+7. In app benchmark with three run median, population standard deviation, thermal cooldown and CSV export.
+8. Light, dark and system themes plus a theme aware app icon.
+9. GGUF model information including parameters, quantization, architecture and running context.
 
 ## Screenshots
 
-| Chat + stats | Benchmark | Settings |
+| Chat | Benchmark | Settings |
 |---|---|---|
-| ![chat](screenshots/Chat.png) | ![Benchmark](screenshots/Benchmark.png) | ![settings](screenshots/Settings.png) |
+| ![Chat](screenshots/Chat.png) | ![Benchmark](screenshots/Benchmark.png) | ![Settings](screenshots/Settings.png) |
 
-## Prerequisites
+## Current in app benchmark
 
-- **JDK 17** (e.g., [Eclipse Temurin](https://adoptium.net/temurin/releases/?variant=jdk&version=17)).
-- **Android SDK** with platform-tools, **build-tools 36**, and **NDK 27.1.12297006** (install via `sdkmanager --install "ndk;27.1.12297006" "cmake;3.31.6"`).
-- **CMake 3.31.6** (also via sdkmanager, or via your OS package manager).
-- An **arm64-v8a device** running Android 13+ with USB debugging enabled, and at least 2 GB free RAM.
-- A runnable GGUF model (e.g., Llama-3.2-1B or -3B in Q4_0, from [Hugging Face / bartowski](https://huggingface.co/bartowski)).
+The benchmark uses Llama 3.2 1B Instruct Q3 K L with 512 prompt tokens and 128 generated tokens. Each configuration runs three times on an unplugged phone. Values are median plus or minus population standard deviation.
 
-## Quick start
+### CMF Phone 1: MediaTek Dimensity 7300
 
-**Fast path** (judge, no build): download a prebuilt APK from [`apk/`](apk/) and run `adb install -r <apk>`.
+| Metric | Naive eight cores | ENTITY Auto four fast cores | Result |
+|---|---:|---:|---:|
+| Prompt throughput | 42.2 ± 0.34 tok per s | 43.2 ± 1.8 tok per s | +2% |
+| Decode throughput | 8.0 ± 1.1 tok per s | 17.7 ± 0.56 tok per s | +121% |
+| Derived TTFT | 12245 ± 108 ms | 11907 ± 452 ms | 3% lower |
+| Power | 4.7 ± 0.34 W | 4.0 ± 0.22 W | lower |
+| Energy efficiency | 1.7 ± 0.36 tok per W | 4.2 ± 0.23 tok per W | 2.5× |
 
-**Full build:**
+### OPPO CPH2729: Qualcomm Snapdragon 6 Gen 4
 
-```bash
-# 1. Fetch llama.cpp and drop this app into its examples/ (or run ./setup.sh to automate)
-curl -sL -o llama.tar.gz https://github.com/ggml-org/llama.cpp/archive/refs/heads/master.tar.gz
-tar xzf llama.tar.gz
-cp -r app/entity.android llama.cpp-master/examples/entity.android
+| Metric | Naive eight cores | ENTITY Auto four fast cores | Result |
+|---|---:|---:|---:|
+| Prompt throughput | 39.3 ± 2.2 tok per s | 47.7 ± 0.12 tok per s | +21% |
+| Decode throughput | 6.0 ± 1.1 tok per s | 13.1 ± 0.05 tok per s | +117% |
+| Derived TTFT | 13194 ± 672 ms | 10811 ± 28 ms | 18% lower |
+| Power | 3.4 ± 0.15 W | 3.4 ± 0.29 W | flat |
+| Energy efficiency | 1.8 ± 0.24 tok per W | 3.8 ± 0.31 tok per W | 2.1× |
 
-# 2. Set toolchain paths and build
-cd llama.cpp-master/examples/entity.android
-export JAVA_HOME=/path/to/jdk-17
-export ANDROID_HOME=/path/to/Android/sdk
-./gradlew :app:assembleDebug --no-daemon --console=plain
-# → app/build/outputs/apk/debug/app-debug.apk (~100 MB with native symbols)
+TTFT in this benchmark is an estimate from prompt evaluation plus one decode step. It is not a live chat first token measurement. Read the full [benchmark method and caveats](benchmarks/IN_APP_BENCHMARK.md).
 
-# 3. Install and launch
-adb install -r app/build/outputs/apk/debug/app-debug.apk
-adb shell am start -n com.entity.chat/com.example.llama.MainActivity
-```
+## Get started
 
-In the app: tap the folder icon to **Import from device**, select a Q4_0 GGUF model, and chat.
-To validate the optimization, run ⋮ → **Benchmark** (compares naive 8-core vs. optimized big-core performance on your loaded model).
+1. Install the current release signed APK from [apk](apk).
+2. Open ENTITY and choose Import from device.
+3. Select a runnable GGUF model.
+4. Leave Auto mode enabled for device aware CPU and context decisions.
+5. Open Benchmark from the app menu to compare the naive path with the optimized path on the loaded model.
 
-## What makes this build Arm-optimized
+To build from source use the exact Android SDK, NDK, CMake and JDK setup in [BUILD](docs/BUILD.md). The release build is arm64 only and includes all seven CPU backend variants.
 
-ENTITY's build is tuned for the CMF Phone 1 / Dimensity 7300 (Cortex-A78 + A55, `armv8.2-a+dotprod`, no i8mm/SVE). These compile-time and runtime choices deliver the +34–59% speedup and 2–7.6× energy efficiency gain:
+## Repository guide
 
-- **Single device-tuned backend** (`GGML_CPU_ALL_VARIANTS=OFF` + `GGML_CPU_ARM_ARCH=armv8.2-a+dotprod`): one CPU variant (KleidiAI/dotprod kernels) instead of 7 generic fallbacks — smaller APK, less startup RAM, no runtime dispatch overhead.
-- **arm64-only build** (`abiFilters = ["arm64-v8a"]`): drops x86/x86_64 entirely, halving footprint and startup time.
-- **Big-core affinity** (auto-detected at runtime via `cpufreq` ranking): inference pinned to Cortex-A78 cluster, not scattered across slow A55s — recovers ~2× on generation throughput.
-- **Adaptive context window**: KV-cache auto-sized from model size + free RAM, so any runnable model fits without OOM.
-
-To retarget for a different Arm SoC, change `GGML_CPU_ARM_ARCH` in `lib/build.gradle.kts` (or see `docs/BUILD.md` for detailed steps). See [`docs/OPTIMIZATIONS.md`](docs/OPTIMIZATIONS.md) for the full breakdown of each technique and exact file locations.
-
-## Repository map
-
-```
-app/entity.android/   The Android app: Kotlin UI module (com.example.llama) +
-                       native inference library module (com.arm.aichat, JNI + C++)
-apk/                   Prebuilt debug APKs, one per tagged version (see apk/README.md)
-releases/              Copy-paste-ready GitHub Release notes, one per version
-docs/                  ARCHITECTURE.md, BUILD.md, OPTIMIZATIONS.md, CONTRIBUTING.md,
-                       plus BENCHMARKS.md / CHANGELOG.md / submission-process docs
-benchmarks/            Measured results (BENCHMARKS.md) + raw logs, CSVs, and charts
-scripts/               Termux / llama.cpp CLI benchmark + chat scripts (optimized + naive)
-screenshots/           App screenshots used in this README and github.md
-CHANGELOG.md           Full per-version history (Keep a Changelog format)
-github.md              The hackathon submission write-up
-SETUP.md               Short build reference (docs/BUILD.md has the full version)
-```
+| Location | Purpose |
+|---|---|
+| app/entity.android | Kotlin Android app and the native C++ inference library |
+| apk | Debug and release signed APKs |
+| benchmarks | Current app measurement, historical command line results and raw records |
+| docs | Architecture, build instructions, optimization details and contributor guidance |
+| releases | Release notes for every version |
+| scripts | Termux benchmark and chat helpers |
+| screenshots | Images used in this README |
+| github.md | Full Arm Create submission |
 
 ## Documentation
 
-- **[`github.md`](github.md)** — the full hackathon submission (problem, approach, measured results).
-- **[`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)** — how the app is put together end to end, with a
-  component diagram and the UI → JNI → llama.cpp token flow.
-- **[`docs/BUILD.md`](docs/BUILD.md)** — reproducible build/run/validate steps and how to retarget
-  the native build to a different Arm SoC.
-- **[`docs/OPTIMIZATIONS.md`](docs/OPTIMIZATIONS.md)** — a deep dive on each optimization, each
-  pointing at the exact file/function that implements it.
-- **[`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)** — how to continue this project: conventions,
-  adding a screen, touching the native layer, and a next-steps list.
-- **[`CHANGELOG.md`](CHANGELOG.md)** — what changed in each version, with file-level diffs.
-
-## Hardware target
-
-MediaTek Dimensity 7300: 4× **Cortex-A78 @2.5 GHz** (cpu 4-7, `armv8.2-a + dotprod`) + 4×
-Cortex-A55 @2.0 GHz (cpu 0-3). No i8mm / SVE / SME — so dotprod + KleidiAI is the right
-acceleration path here, and Q4_0 (fast dotprod kernels) often beats a "smaller" 3-bit format. The
-affinity logic itself is SoC-agnostic (ranks cores by live `cpufreq`); only the compiled backend is
-tuned to this chip — see [`docs/BUILD.md`](docs/BUILD.md) to retarget it.
+1. [Architecture](docs/ARCHITECTURE.md): UI to JNI to llama.cpp design.
+2. [Build](docs/BUILD.md): reproducible toolchain and installation steps.
+3. [Optimizations](docs/OPTIMIZATIONS.md): source level explanation of each runtime decision.
+4. [Benchmark summary](<benchmarks/Benchmark Summary.md>): judge focused benchmark brief.
+5. [In app benchmark](benchmarks/IN_APP_BENCHMARK.md): current method, values and caveats.
+6. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE). Built on [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT) and
-Arm [KleidiAI](https://gitlab.arm.com/kleidi/kleidiai) (Apache-2.0).
+ENTITY is licensed under [Apache License 2.0](LICENSE). It builds on llama.cpp and Arm KleidiAI.
