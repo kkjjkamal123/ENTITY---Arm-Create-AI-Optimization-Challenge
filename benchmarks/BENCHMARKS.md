@@ -53,6 +53,13 @@ workload. The numbers are benchmark values rather than live multi-turn-chat spee
 4. Retain the copied result or exported CSV with the model, device, app version, and start
    temperature.
 
+## Contribute a device result
+
+Use [device-result-template.csv](device-result-template.csv) for a result from another arm64
+Android phone. Keep the model, app version, selected backend, thermal starting point, raw CSV, and
+test settings with the row. This makes a community result comparable without claiming that every
+SoC will produce the same multiplier.
+
 ## Historical command-line data
 
 [`termux_master_results.txt`](termux_master_results.txt) retains the original Termux CLI output.
