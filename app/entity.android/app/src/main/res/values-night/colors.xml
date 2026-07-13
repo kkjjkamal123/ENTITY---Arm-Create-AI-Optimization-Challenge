@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="accent">#19C39A</color>
+    <color name="accent_dark">#10A37F</color>
+
+    <color name="app_bg">#161618</color>
+    <color name="surface">#202022</color>
+    <color name="on_surface">#ECECEC</color>
+    <color name="muted">#9A9AA6</color>
+    <color name="divider">#2C2C2F</color>
+
+    <color name="user_bubble">#10A37F</color>
+    <color name="assistant_bubble">#2A2A2D</color>
+    <color name="input_bg">#242426</color>
+
+    <color name="bubble_stroke">#34343A</color>
+    <color name="code_bg">#1A1A1D</color>
+    <color name="ripple_on_accent">#33FFFFFF</color>
+</resources>

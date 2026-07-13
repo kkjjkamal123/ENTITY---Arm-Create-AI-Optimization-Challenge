@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:fitsSystemWindows="true"
+    android:background="@color/app_bg">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/app_bg"
+        app:title="@string/menu_benchmark"
+        app:titleTextColor="@color/on_surface" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="20dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/muted"
+                android:textSize="14sp"
+                android:lineSpacingMultiplier="1.25"
+                android:text="@string/bench_intro" />
+
+            <TextView
+                android:id="@+id/bench_model"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:textColor="@color/on_surface"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                tools:text="Llama-3.2-1B-Instruct-Q4_0" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/muted"
+                    android:textSize="14sp"
+                    android:text="@string/bench_runs_label" />
+
+                <RadioGroup
+                    android:id="@+id/bench_runs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginStart="12dp">
+
+                    <RadioButton
+                        android:id="@+id/bench_runs_1"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/on_surface"
+                        android:buttonTint="@color/accent"
+                        android:text="@string/bench_runs_1" />
+
+                    <RadioButton
+                        android:id="@+id/bench_runs_3"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:textColor="@color/on_surface"
+                        android:buttonTint="@color/accent"
+                        android:checked="true"
+                        android:text="@string/bench_runs_3" />
+
+                    <RadioButton
+                        android:id="@+id/bench_runs_5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:textColor="@color/on_surface"
+                        android:buttonTint="@color/accent"
+                        android:text="@string/bench_runs_5" />
+                </RadioGroup>
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/run_bench"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/bench_run"
+                android:textColor="@color/white"
+                android:backgroundTint="@color/accent" />
+
+            <LinearLayout
+                android:id="@+id/bench_running"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="18dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/bench_status"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/on_surface"
+                    android:textSize="14sp"
+                    tools:text="Optimized run — performance cores…" />
+
+                <ProgressBar
+                    android:id="@+id/bench_progress"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:indeterminate="true" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/bench_results"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="20dp"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/bench_headline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/accent"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:lineSpacingMultiplier="1.2"
+                    tools:text="Big-core optimization: decode +96% faster · 1.9× more efficient" />
+
+                <LinearLayout
+                    android:id="@+id/bench_table"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginTop="16dp"
+                    android:background="@color/surface"
+                    android:padding="4dp" />
+
+                <TextView
+                    android:id="@+id/bench_note"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:textColor="@color/muted"
+                    android:textSize="12sp"
+                    android:lineSpacingMultiplier="1.2"
+                    tools:text="Synthetic PP 512 / TG 128 run…" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp">
+
+                    <Button
+                        android:id="@+id/bench_copy"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/bench_copy"
+                        android:textColor="@color/accent"
+                        android:backgroundTint="@android:color/transparent" />
+
+                    <Button
+                        android:id="@+id/bench_export"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:text="@string/bench_export"
+                        android:textColor="@color/accent"
+                        android:backgroundTint="@android:color/transparent" />
+                </LinearLayout>
+            </LinearLayout>
+
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>
