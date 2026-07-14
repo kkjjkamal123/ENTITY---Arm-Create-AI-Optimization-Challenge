@@ -129,6 +129,18 @@ and the benchmark screen shows both sides of it.
 
 ![Energy efficiency](plots/energy_efficiency.png)
 
+## Against other apps
+
+ENTITY was measured against Arm's own AI Chat and PocketPal AI on the same phone, the same GGUF and
+the same PP 512 / TG 128 workload: **prompt 133 vs 120 vs 86.4 tok/s, token generation 15.6 vs 12.9
+vs 10.9 tok/s.** ENTITY beats Arm's own reference app on Arm's own silicon.
+
+PocketPal runs 6 threads and comes last, which is the same failure this document's naive arm
+measures — the fifth and sixth threads land on Cortex-A55s and every step waits on them.
+
+Setup, screenshots, and the caveats (including why ENTITY's live-chat 16.9 tok/s is *not* used):
+[competitor-comparison/](competitor-comparison/README.md).
+
 ## Interpretation and limits
 
 - One phone, two models, one quantization pair. Not a universal multiplier.

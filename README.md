@@ -114,6 +114,22 @@ Llama 3.2 1B, ENTITY Auto, unplugged:
 
 Time to first token, the latency a user feels on a long prompt, drops 3.4 times. Decode gives up about 12%, the bandwidth cost of the larger quantization, and the benchmark screen shows both sides of the trade.
 
+### Against the competition
+
+Same phone, same `Llama-3.2-1B-Instruct-Q4_0`, same PP 512 / TG 128 workload, all three apps' own benchmark screens:
+
+| App | Prompt | Token generation | Threads |
+|---|---:|---:|---|
+| PocketPal AI | 86.4 tok per s | 10.9 tok per s | 6 |
+| Arm AI Chat (Arm's own app) | 120 tok per s | 12.9 tok per s | not reported |
+| **ENTITY** | **133 tok per s** | **15.6 tok per s** | 4, pinned |
+
+![Competitor comparison](benchmarks/competitor-comparison/three_app_comparison.png)
+
+ENTITY beats Arm's own reference app on Arm's own silicon by 11% on prompt and 21% on token generation, and PocketPal by 54% and 43%. PocketPal runs six threads and comes last, which is the same failure ENTITY's ablation measures in its naive arm: on a 4+4 phone the fifth and sixth threads land on Cortex A55s and every step waits on them. A competitor being slower for exactly the reason the ablation predicts is the strongest confirmation the finding has.
+
+ENTITY's decode is the median of four runs with the full range published, not its best, because the other two apps report three repetition results. Even ENTITY's worst run beats Arm's app. Full setup, screenshots and caveats: [competitor comparison](benchmarks/competitor-comparison/README.md).
+
 TTFT here is derived from prompt evaluation plus one decode step. It is not a live chat first token measurement. Full method, the historical two arm v2.0.0 record, and every limit: [benchmarks](benchmarks/BENCHMARKS.md).
 
 ## Get started
