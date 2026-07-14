@@ -58,12 +58,15 @@ import kotlin.math.sqrt
  * thread count, so naïve -> threads-only isolates the thread count and
  * threads-only -> Auto isolates the core placement.
  *
- * Measured on a Dimensity 7300, and the reason these arms are not ceremony: on
- * Llama-3.2-1B the pinning is worth about nothing (decode 16.7 vs 16.9 tok/s), but
- * on Llama-3.2-3B it is worth ~+12% decode and ~+9% prompt. The larger working set
- * gives the scheduler more chances to migrate a thread onto an A55, and a single
- * straggler stalls the whole step. Which optimization pays is a property of the
- * model, not a constant - this screen is what tells the user which.
+ * Measured on a Dimensity 7300, and the reason these arms are not ceremony: they
+ * disproved this project's own flagship optimization. Across six runs on two models
+ * the thread count earns +81% to +94% of decode, and the pinning earns ~0%. One 3B
+ * run showed +12%, but two others showed 0% and -16%; single 3B runs swing about
+ * +/-15%, so that was noise, not a model-size effect.
+ *
+ * The affinity code still ships - it is free, and another SoC may answer differently.
+ * It is simply no longer credited with the speed-up. This screen is what tells the
+ * user which decisions actually pay on their phone.
  */
 class BenchmarkActivity : AppCompatActivity() {
 
@@ -84,6 +87,7 @@ class BenchmarkActivity : AppCompatActivity() {
     private lateinit var headlineTv: TextView
     private lateinit var noteTv: TextView
     private lateinit var runBtn: Button
+    private lateinit var sustainedBtn: Button
     private lateinit var copyBtn: Button
     private lateinit var exportBtn: Button
     private lateinit var runsGroup: RadioGroup
@@ -93,7 +97,7 @@ class BenchmarkActivity : AppCompatActivity() {
     private lateinit var progress: ProgressBar
 
     private var lastResultText: String? = null
-    private var lastResult: Result? = null
+    private var pendingCsvBuilder: (() -> String)? = null
     private var pendingCsvPath: String? = null
 
     private data class Pass(
@@ -154,6 +158,9 @@ class BenchmarkActivity : AppCompatActivity() {
     ) {
         val configs get() = listOf(naive, threadsOnly, opt)
     }
+    // No cooldown between passes within a block: heat is meant to accumulate. Only
+    // threads-only vs Auto — naïve isn't part of the pinning question this isolates.
+    private data class SustainedResult(val threadsOnly: Config, val opt: Config)
     private data class Stat(val median: Double, val sd: Double, val n: Int)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -173,6 +180,7 @@ class BenchmarkActivity : AppCompatActivity() {
         headlineTv = findViewById(R.id.bench_headline)
         noteTv = findViewById(R.id.bench_note)
         runBtn = findViewById(R.id.run_bench)
+        sustainedBtn = findViewById(R.id.run_sustained_bench)
         copyBtn = findViewById(R.id.bench_copy)
         exportBtn = findViewById(R.id.bench_export)
         runsGroup = findViewById(R.id.bench_runs)
@@ -186,6 +194,7 @@ class BenchmarkActivity : AppCompatActivity() {
         modelTv.text = intent.getStringExtra(EXTRA_MODEL) ?: "Loaded model"
 
         runBtn.setOnClickListener { runBenchmark() }
+        sustainedBtn.setOnClickListener { runSustainedBenchmark() }
         copyBtn.setOnClickListener { copyResult() }
         exportBtn.setOnClickListener { exportCsv() }
         exportBtn.isEnabled = false
@@ -204,6 +213,7 @@ class BenchmarkActivity : AppCompatActivity() {
     private fun runBenchmark() {
         val nRuns = selectedRuns()
         runBtn.isEnabled = false
+        sustainedBtn.isEnabled = false
         setRunsEnabled(false)
         resultsBox.visibility = View.GONE
         runningBox.visibility = View.VISIBLE
@@ -211,12 +221,42 @@ class BenchmarkActivity : AppCompatActivity() {
             val outcome = runCatching { withContext(Dispatchers.IO) { doBenchmark(nRuns) } }
             runningBox.visibility = View.GONE
             runBtn.isEnabled = true
+            sustainedBtn.isEnabled = true
             setRunsEnabled(true)
             outcome
                 .onSuccess { showResults(it) }
                 .onFailure {
                     if (it !is CancellationException) {
                         Toast.makeText(this@BenchmarkActivity, "Benchmark failed: ${it.message}", Toast.LENGTH_LONG).show()
+                    }
+                }
+        }
+    }
+
+    // Isolates whether affinity pinning pays off under sustained heat, which the
+    // controlled benchmark above cannot see: it cools back to baseline before every
+    // single pass by design. Here only threads-only and Auto run (naive is not part of
+    // the pinning question), each as SUSTAINED_PASSES back-to-back passes with just a
+    // fixed gap - no wait for the battery to cool - so heat accumulates within a block.
+    // Both blocks start from the same cooled baseline, so pass 1 is comparable across
+    // arms even though later passes are not blind to how long the phone has been busy.
+    private fun runSustainedBenchmark() {
+        runBtn.isEnabled = false
+        sustainedBtn.isEnabled = false
+        setRunsEnabled(false)
+        resultsBox.visibility = View.GONE
+        runningBox.visibility = View.VISIBLE
+        lifecycleScope.launch {
+            val outcome = runCatching { withContext(Dispatchers.IO) { doSustainedBenchmark() } }
+            runningBox.visibility = View.GONE
+            runBtn.isEnabled = true
+            sustainedBtn.isEnabled = true
+            setRunsEnabled(true)
+            outcome
+                .onSuccess { showSustainedResults(it) }
+                .onFailure {
+                    if (it !is CancellationException) {
+                        Toast.makeText(this@BenchmarkActivity, "Sustained test failed: ${it.message}", Toast.LENGTH_LONG).show()
                     }
                 }
         }
@@ -284,6 +324,63 @@ class BenchmarkActivity : AppCompatActivity() {
             )
             status("$prefix…")
             runs.add(runPass(startTempC))
+        }
+        return Config(label, key, genThreads, pinCores, runs)
+    }
+
+    private suspend fun doSustainedBenchmark(): SustainedResult {
+        val v = Settings.load(prefs)
+        val ctx = prefs.getInt(Settings.KEY_ACTIVE_CTX, if (v.ctx > 0) v.ctx else Settings.DEF_CTX)
+        val restoreThreads = if (v.auto) 0 else v.threads
+        val baselineC = readTempC()
+        val coolTargetC = if (baselineC > 0.0) maxOf(baselineC + COOL_MARGIN_C, MIN_COOL_TARGET_C) else 0.0
+        try {
+            status("Warming up…")
+            engine.applyConfig(ctx, OPT_THREADS_AUTO, v.temp, v.topK, v.topP)
+            engine.bench(64, 16, PL, 1)   // discarded — pages in weights, warms caches
+
+            val threadsOnly =
+                runSustainedConfig("Threads only", "threads_only", autoGenThreads(), false, ctx, v, coolTargetC)
+            val opt = runSustainedConfig("Optimized", "optimized", OPT_THREADS_AUTO, true, ctx, v, coolTargetC)
+            if (threadsOnly.runs.isEmpty() || opt.runs.isEmpty()) {
+                error("Engine returned no timing — try again.")
+            }
+            return SustainedResult(threadsOnly, opt)
+        } finally {
+            withContext(NonCancellable) {
+                engine.applyConfig(ctx, restoreThreads, v.temp, v.topK, v.topP, pinCores = true)
+            }
+        }
+    }
+
+    private suspend fun runSustainedConfig(
+        label: String,
+        key: String,
+        threads: Int,
+        pinCores: Boolean,
+        ctx: Int,
+        v: Settings.Values,
+        coolTargetC: Double,
+    ): Config {
+        engine.applyConfig(ctx, threads, v.temp, v.topK, v.topP, pinCores)
+        val genThreads = if (threads <= 0) autoGenThreads() else threads
+        // Same cooled starting point for both blocks; no cooldown between the passes
+        // that follow, so this pass loop is where heat is allowed to build.
+        cooldown("$label — cooling to baseline before sustained run", coolTargetC)
+        val runs = ArrayList<Pass>(SUSTAINED_PASSES)
+        for (i in 1..SUSTAINED_PASSES) {
+            val placement = if (pinCores) "pinned" else "no pin"
+            status("$label ($genThreads threads, $placement) — sustained pass $i/$SUSTAINED_PASSES…")
+            val startTempC = readTempC()
+            Log.i(
+                TAG,
+                String.format(
+                    Locale.US, "sustained %s pass %d/%d start: threads=%d pinned=%b battery=%.1fC thermalStatus=%d",
+                    key, i, SUSTAINED_PASSES, genThreads, pinCores, startTempC, powerManager.currentThermalStatus
+                )
+            )
+            runs.add(runPass(startTempC))
+            if (i < SUSTAINED_PASSES) delay(SUSTAINED_GAP_MS)
         }
         return Config(label, key, genThreads, pinCores, runs)
     }
@@ -413,7 +510,7 @@ class BenchmarkActivity : AppCompatActivity() {
     }
 
     private fun showResults(r: Result) {
-        lastResult = r
+        pendingCsvBuilder = { buildCsv(r) }
         exportBtn.isEnabled = true
         resultsBox.visibility = View.VISIBLE
 
@@ -522,6 +619,56 @@ class BenchmarkActivity : AppCompatActivity() {
         }.trim()
     }
 
+    // Threads-only vs Auto, back-to-back, no cooldown inside a block. If pinning only
+    // pays off once the little cores have had time to heat up and throttle, this is
+    // where it shows: the per-pass decode trend, not the cooled 3-arm median above.
+    private fun showSustainedResults(r: SustainedResult) {
+        pendingCsvBuilder = { buildSustainedCsv(r) }
+        exportBtn.isEnabled = true
+        resultsBox.visibility = View.VISIBLE
+
+        fun decodeSeries(c: Config) = c.runs.map { it.tg }
+        fun dropPct(series: List<Double>): Double {
+            val first = series.firstOrNull { it > 0 } ?: return 0.0
+            val last = series.lastOrNull { it > 0 } ?: return 0.0
+            return if (first > 0) (last / first - 1) * 100 else 0.0
+        }
+        val toTg = decodeSeries(r.threadsOnly)
+        val optTg = decodeSeries(r.opt)
+        val toDrop = dropPct(toTg)
+        val optDrop = dropPct(optTg)
+        headlineTv.text = "Sustained, no cooldown: threads-only decode ${signed(toDrop)} from pass 1 to " +
+            "$SUSTAINED_PASSES · Auto ${signed(optDrop)}"
+
+        table.removeAllViews()
+        addRow("Pass", "Threads-only\ntg/s · thermal", "ENTITY Auto\ntg/s · thermal", "", header = true)
+        for (i in 0 until SUSTAINED_PASSES) {
+            val to = r.threadsOnly.runs.getOrNull(i)
+            val op = r.opt.runs.getOrNull(i)
+            addRow(
+                "#${i + 1}",
+                to?.let { "${fmt(it.tg)} · ${thermalLabel(it.peakThermalStatus)}" } ?: "—",
+                op?.let { "${fmt(it.tg)} · ${thermalLabel(it.peakThermalStatus)}" } ?: "—",
+            )
+        }
+
+        noteTv.text = "$SUSTAINED_PASSES back-to-back PP $PP / TG $TG passes per arm, only a fixed " +
+            "${SUSTAINED_GAP_MS / 1000}s gap between passes instead of the cooldown-to-baseline the controlled " +
+            "benchmark above uses — heat is meant to accumulate within a block. Both arms start their block " +
+            "from the same cooled baseline, so pass 1 is comparable across arms, but this is a single session: " +
+            "run it more than once, and swap which arm goes first, before trusting the direction of any gap. " +
+            "n=1 per pass — read the trend across passes, not any single one."
+
+        lastResultText = buildString {
+            appendLine("ENTITY sustained thermal test — ${modelTv.text}")
+            appendLine(headlineTv.text)
+            appendLine("threads-only tg: " + toTg.joinToString("  ") { fmt(it) })
+            appendLine("auto        tg: " + optTg.joinToString("  ") { fmt(it) })
+            appendLine("threads-only thermal: " + r.threadsOnly.runs.joinToString("  ") { thermalLabel(it.peakThermalStatus) })
+            appendLine("auto        thermal: " + r.opt.runs.joinToString("  ") { thermalLabel(it.peakThermalStatus) })
+        }.trim()
+    }
+
     private fun cells(s: List<Stat>) = s.map { cellStat(it) }.toTypedArray()
 
     private fun cellStat(s: Stat) = when {
@@ -595,9 +742,9 @@ class BenchmarkActivity : AppCompatActivity() {
     // while still toasting "CSV exported". That is how a benchmark export silently produced
     // an empty file, and why no raw per-pass CSV ever survived to be published.
     private fun exportCsv() {
-        val result = lastResult ?: return
+        val builder = pendingCsvBuilder ?: return
         val cached = runCatching {
-            File(cacheDir, "pending_export.csv").apply { writeText(buildCsv(result)) }
+            File(cacheDir, "pending_export.csv").apply { writeText(builder()) }
         }.getOrNull()
         if (cached == null) {
             Toast.makeText(this, "Could not prepare CSV", Toast.LENGTH_SHORT).show()
@@ -628,7 +775,7 @@ class BenchmarkActivity : AppCompatActivity() {
         // Prefer the file staged before the picker opened; it survives this activity being
         // killed. Only fall back to rebuilding from an in-memory result.
         val staged = pendingCsvPath?.let { File(it) }?.takeIf { it.exists() && it.length() > 0 }
-        val csv = staged?.readText() ?: lastResult?.let { buildCsv(it) }
+        val csv = staged?.readText() ?: pendingCsvBuilder?.invoke()
         if (csv.isNullOrEmpty()) {
             // Never leave the caller believing an empty file is a valid export.
             Toast.makeText(this, "Export failed: benchmark result was lost, please re-run", Toast.LENGTH_LONG).show()
@@ -731,6 +878,41 @@ class BenchmarkActivity : AppCompatActivity() {
         }
     }
 
+    private fun buildSustainedCsv(r: SustainedResult): String = buildString {
+        fun esc(s: String) =
+            if (s.any { it == ',' || it == '"' || it == '\n' }) "\"${s.replace("\"", "\"\"")}\"" else s
+        fun row(config: String, runIndex: String, metric: String, value: String, unit: String) =
+            appendLine(listOf(config, runIndex, metric, value, unit).joinToString(",") { esc(it) })
+        fun num(x: Double) = String.format(Locale.US, "%.3f", x)
+
+        appendLine("config,run_index,metric,value,unit")
+        row("meta", "", "app", "ENTITY", "")
+        row("meta", "", "app_version", BuildConfig.VERSION_NAME, "")
+        row("meta", "", "test", "sustained_no_cooldown", "")
+        row("meta", "", "model", modelTv.text.toString(), "")
+        row("meta", "", "device", "${Build.MANUFACTURER} ${Build.MODEL}", "")
+        row("meta", "", "device_fingerprint", Build.FINGERPRINT, "")
+        row("meta", "", "passes_per_config", SUSTAINED_PASSES.toString(), "")
+        row("meta", "", "inter_pass_gap", (SUSTAINED_GAP_MS / 1000).toString(), "s")
+        row("meta", "", "pp", PP.toString(), "tokens")
+        row("meta", "", "tg", TG.toString(), "tokens")
+        row("meta", "", "perf_cores", fastCores.joinToString(" "), "cpu index")
+        row("meta", "", "little_cores", littleCores.joinToString(" "), "cpu index")
+        for (c in listOf(r.threadsOnly, r.opt)) {
+            row("meta", "", "threads_${c.key}", c.threads.toString(), "")
+            row("meta", "", "affinity_${c.key}", if (c.pinned) "pinned_fast_cores" else "none_scheduler_placed", "")
+            c.runs.forEachIndexed { i, p ->
+                val idx = (i + 1).toString()
+                row(c.key, idx, "tg", num(p.tg), "tok/s")
+                row(c.key, idx, "start_temp", num(p.startTempC), "C")
+                row(c.key, idx, "peak_battery_temp", num(p.peakBatteryTempC), "C")
+                row(c.key, idx, "peak_thermal_status", p.peakThermalStatus.toString(), "Android PowerManager status")
+                row(c.key, idx, "mean_perf_core_clock", num(p.meanFastCoreFreqMhz(fastCores)), "MHz")
+                row(c.key, idx, "mean_little_core_clock", num(p.meanLittleCoreFreqMhz(littleCores)), "MHz")
+            }
+        }
+    }
+
     private fun fmt(x: Double) = if (x >= 100) "%.0f".format(x) else "%.1f".format(x)
 
     private fun fmtSd(x: Double) = when {
@@ -758,6 +940,10 @@ class BenchmarkActivity : AppCompatActivity() {
         private const val THREAD_HEADROOM = 2
         private const val MIN_PAUSE_MS = 15_000L
         private const val MAX_COOLDOWN_MS = 90_000L
+        // Sustained thermal test: enough back-to-back passes to build a visible trend,
+        // with only a short gap - not a cooldown - between them.
+        private const val SUSTAINED_PASSES = 6
+        private const val SUSTAINED_GAP_MS = 2_000L
         private const val COOL_MARGIN_C = 0.5
         // Cooldown never waits below this — ambient in hot climates keeps batteries above ~37°C.
         private const val MIN_COOL_TARGET_C = 37.5
