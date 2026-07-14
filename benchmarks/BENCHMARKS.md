@@ -129,6 +129,34 @@ and the benchmark screen shows both sides of it.
 
 ![Energy efficiency](plots/energy_efficiency.png)
 
+## Result 4: the same work costs 47% less battery
+
+Tokens-per-watt is the metric every on-device app quotes, and it undersells what is happening. The
+app's CSV export records the battery current every 150 ms, so the *energy* a pass actually cost can
+be integrated from the measured power curve rather than inferred.
+
+![Energy per task](plots/energy_per_task.png)
+
+| Arm | Pass duration | Mean power | **Energy for 128 tokens** |
+|---|---:|---:|---:|
+| Naïve (8 threads) | 20.8 s | 4.57 W | **95 J** |
+| Threads only | 12.7 s | 4.45 W | **57 J** (−40%) |
+| **ENTITY Auto** | **11.7 s** | 4.31 W | **51 J** (−47%) |
+
+**All three configurations draw roughly the same watts.** ENTITY does not win by sipping less
+current — it wins because it finishes in half the time. Energy is the area under the power curve,
+which is why the left panel of that figure is a literal picture of the right one.
+
+Integrated by trapezoid from 289 battery-current samples in
+[`results/entity_1b-q4_0_unplugged_1run_20260714.csv`](results/entity_1b-q4_0_unplugged_1run_20260714.csv):
+
+```bash
+python3 benchmarks/plot_energy.py benchmarks/results/entity_1b-q4_0_unplugged_1run_20260714.csv
+```
+
+The script refuses to run on a charging export, because the battery current would be the charger's
+rather than the workload's.
+
 ## Against other apps
 
 ENTITY was measured against Arm's own AI Chat and PocketPal AI on the same phone, the same GGUF and
@@ -193,8 +221,33 @@ carelessness. The export was **broken**: the system file picker comes to the for
 multi-gigabyte model is resident, Android kills the activity behind it, and the recreated instance
 had no result to write, so it returned early while the picker had already created the file. Every
 export produced a 0-byte CSV *and* a "CSV exported" toast. Fixed in v2.1.0 — the CSV is now staged
-to cache before the picker opens. New exports carry per-pass values, per-core CPU frequency samples,
-battery temperature, thermal state, power, and the per-arm affinity policy.
+to cache before the picker opens.
+
+**Two real exports are now retained** in [`results/`](results/), the first that ever survived:
+
+| File | Run | Contents |
+|---|---|---|
+| `entity_1b-q4_0_unplugged_1run_20260714.csv` | 1B Q4_0, unplugged, 1 run | 4,046 telemetry samples, 2,312 CPU-frequency samples. Power is valid; every graph on this page comes from it. |
+| `entity_1b-q4_0_charging_3run_20260714.csv` | 1B Q4_0, charging, 3 runs | 12,012 telemetry samples. Speed is valid and this is the tightest three-run evidence in the project. **Its power columns are not** — the phone was charging, so they measure the charger. Both plot scripts refuse to draw power from it. |
+
+Exports carry per-pass values, per-core CPU frequency samples, battery temperature, thermal state,
+power, and the per-arm affinity policy.
+
+### What the three-run export says about the pinning
+
+`entity_1b-q4_0_charging_3run_20260714.csv` is the cleanest ablation evidence recorded so far —
+three passes per arm, every one at LIGHT thermal:
+
+| Arm | Decode, per pass (tok/s) | Median |
+|---|---|---:|
+| Naïve | 6.94, 7.21, 7.74 | 7.21 |
+| Threads only | 16.2, 16.0, 16.1 | 16.1 |
+| ENTITY Auto | 16.4, 16.6, 15.7 | 16.4 |
+
+Thread count: **+123%**. Pinning: **+1.9%** on the median — but Auto's worst pass (15.7) falls below
+threads-only's worst (16.0), so the distributions overlap and the mean-to-mean difference is +0.8%.
+The pinning is somewhere between 0 and +2%, inside the run-to-run noise. That is consistent with
+every other run and with this document's conclusion: **the thread count earns the gain.**
 
 ## Contribute a device result
 

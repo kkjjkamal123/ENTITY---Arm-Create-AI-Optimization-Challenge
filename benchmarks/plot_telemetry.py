@@ -276,12 +276,24 @@ def main():
         print("note: two-arm export. The threads-only ablation arm is missing, so the")
         print("      attribution chart cannot separate thread count from core pinning.")
 
+    # A charging phone's battery current is the CHARGER's, not the workload's. The app hides
+    # power on screen for exactly this reason; the CSV still records the raw samples, so a
+    # consumer that plots them anyway produces nonsense (one such export reports 18 tok/W).
+    # Refuse to draw power rather than draw a wrong number.
+    charging = (meta.get("charging") or "").strip().lower() == "true"
+
     written = []
     plots = [
         (plot_metric, ("sample_process_cpu", "CPU utilization", "App process CPU (%)", args.output_dir / "cpu_utilization.png")),
-        (plot_metric, ("sample_power", "Power consumption", "Battery power (W)", args.output_dir / "power_consumption.png")),
         (plot_metric, ("sample_free_ram", "Memory availability", "Free RAM (GiB)", args.output_dir / "memory_usage.png")),
     ]
+    if charging:
+        print("skipped power_consumption.png: this export was taken while CHARGING, so the "
+              "battery-current samples measure the charger, not inference. Re-run unplugged.")
+    else:
+        plots.append(
+            (plot_metric, ("sample_power", "Power consumption", "Battery power (W)", args.output_dir / "power_consumption.png"))
+        )
     for func, rest in plots:
         metric, title, ylabel, out = rest
         if func(traces, metric, title, ylabel, out):

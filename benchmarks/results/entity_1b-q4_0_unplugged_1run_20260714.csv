@@ -1,0 +1,4175 @@
+config,run_index,metric,value,unit
+meta,,app,ENTITY,
+meta,,app_version,2.1.0,
+meta,,app_version_code,5,
+meta,,exported_at_epoch_ms,1784051510663,ms
+meta,,model,Llama-3.2-1B-Instruct-Q4_0,
+meta,,device,Nothing A015,
+meta,,device_manufacturer,Nothing,
+meta,,device_model,A015,
+meta,,device_fingerprint,Nothing/TetrisIND/Tetris:16/BP2A.250605.031.A3/2606151652:user/release-keys,
+meta,,android,16,
+meta,,android_sdk,36,
+meta,,supported_abis,arm64-v8a,
+meta,,charging,false,
+meta,,benchmark_start_temp,36.000,C
+meta,,benchmark_start_thermal_status,1,Android PowerManager status
+meta,,pp,512,tokens
+meta,,tg,128,tokens
+meta,,runs_per_config,1,
+meta,,warmup,PP 64 / TG 16 / discarded,
+meta,,configuration_order,naive_then_threads_only_then_optimized,
+meta,,threads_naive,8,
+meta,,threads_threads_only,4,
+meta,,threads_optimized,4,
+meta,,affinity_naive,pinned_fast_cores,
+meta,,affinity_threads_only,none_scheduler_placed,
+meta,,affinity_optimized,pinned_fast_cores,
+meta,,cooldown_minimum,15,s
+meta,,cooldown_maximum,90,s
+meta,,cooldown_target_margin,0.500,C above benchmark-start temperature
+meta,,perf_cores,4 5 6 7,cpu index
+meta,,little_cores,0 1 2 3,cpu index
+meta,,cpu_max_clocks,2000 2000 2000 2000 2500 2500 2500 2500,MHz per cpu index
+naive,1,pp,103.000,tok/s
+naive,1,tg,8.050,tok/s
+naive,1,power,4.570,W
+naive,1,tok_per_w,1.761,tok/W
+naive,1,ttft_pp512_derived,5095.097,ms
+naive,1,start_temp,36.000,C
+naive,1,average_process_cpu,468.228,% one core
+naive,1,minimum_free_ram,1.078,GiB
+naive,1,peak_battery_temp,36.000,C
+naive,1,peak_thermal_status,1,Android PowerManager status
+naive,1:1,sample_elapsed,0,ms
+naive,1:1,sample_power,1.530,W
+naive,1:1,sample_process_cpu,0.000,% one core
+naive,1:1,sample_free_ram,1.186,GiB
+naive,1:1,sample_battery_temp,36.000,C
+naive,1:1,sample_thermal_status,1,Android PowerManager status
+naive,1:1,sample_cpu0_freq,1900,MHz
+naive,1:1,sample_cpu1_freq,1900,MHz
+naive,1:1,sample_cpu2_freq,1900,MHz
+naive,1:1,sample_cpu3_freq,1900,MHz
+naive,1:1,sample_cpu4_freq,2500,MHz
+naive,1:1,sample_cpu5_freq,2500,MHz
+naive,1:1,sample_cpu6_freq,2500,MHz
+naive,1:1,sample_cpu7_freq,2500,MHz
+naive,1:2,sample_elapsed,160,ms
+naive,1:2,sample_power,1.530,W
+naive,1:2,sample_process_cpu,413.750,% one core
+naive,1:2,sample_free_ram,1.130,GiB
+naive,1:2,sample_battery_temp,36.000,C
+naive,1:2,sample_thermal_status,1,Android PowerManager status
+naive,1:2,sample_cpu0_freq,1900,MHz
+naive,1:2,sample_cpu1_freq,1900,MHz
+naive,1:2,sample_cpu2_freq,1900,MHz
+naive,1:2,sample_cpu3_freq,1900,MHz
+naive,1:2,sample_cpu4_freq,2500,MHz
+naive,1:2,sample_cpu5_freq,2500,MHz
+naive,1:2,sample_cpu6_freq,2500,MHz
+naive,1:2,sample_cpu7_freq,2500,MHz
+naive,1:3,sample_elapsed,314,ms
+naive,1:3,sample_power,1.530,W
+naive,1:3,sample_process_cpu,461.688,% one core
+naive,1:3,sample_free_ram,1.105,GiB
+naive,1:3,sample_battery_temp,36.000,C
+naive,1:3,sample_thermal_status,1,Android PowerManager status
+naive,1:3,sample_cpu0_freq,1900,MHz
+naive,1:3,sample_cpu1_freq,1900,MHz
+naive,1:3,sample_cpu2_freq,1900,MHz
+naive,1:3,sample_cpu3_freq,1900,MHz
+naive,1:3,sample_cpu4_freq,2500,MHz
+naive,1:3,sample_cpu5_freq,2500,MHz
+naive,1:3,sample_cpu6_freq,2500,MHz
+naive,1:3,sample_cpu7_freq,2500,MHz
+naive,1:4,sample_elapsed,468,ms
+naive,1:4,sample_power,1.530,W
+naive,1:4,sample_process_cpu,455.844,% one core
+naive,1:4,sample_free_ram,1.102,GiB
+naive,1:4,sample_battery_temp,36.000,C
+naive,1:4,sample_thermal_status,1,Android PowerManager status
+naive,1:4,sample_cpu0_freq,1900,MHz
+naive,1:4,sample_cpu1_freq,1900,MHz
+naive,1:4,sample_cpu2_freq,1900,MHz
+naive,1:4,sample_cpu3_freq,1900,MHz
+naive,1:4,sample_cpu4_freq,2500,MHz
+naive,1:4,sample_cpu5_freq,2500,MHz
+naive,1:4,sample_cpu6_freq,2500,MHz
+naive,1:4,sample_cpu7_freq,2500,MHz
+naive,1:5,sample_elapsed,625,ms
+naive,1:5,sample_power,4.039,W
+naive,1:5,sample_process_cpu,522.930,% one core
+naive,1:5,sample_free_ram,1.106,GiB
+naive,1:5,sample_battery_temp,36.000,C
+naive,1:5,sample_thermal_status,1,Android PowerManager status
+naive,1:5,sample_cpu0_freq,1900,MHz
+naive,1:5,sample_cpu1_freq,1900,MHz
+naive,1:5,sample_cpu2_freq,1900,MHz
+naive,1:5,sample_cpu3_freq,1900,MHz
+naive,1:5,sample_cpu4_freq,2500,MHz
+naive,1:5,sample_cpu5_freq,2500,MHz
+naive,1:5,sample_cpu6_freq,2500,MHz
+naive,1:5,sample_cpu7_freq,2500,MHz
+naive,1:6,sample_elapsed,779,ms
+naive,1:6,sample_power,4.039,W
+naive,1:6,sample_process_cpu,457.792,% one core
+naive,1:6,sample_free_ram,1.106,GiB
+naive,1:6,sample_battery_temp,36.000,C
+naive,1:6,sample_thermal_status,1,Android PowerManager status
+naive,1:6,sample_cpu0_freq,1900,MHz
+naive,1:6,sample_cpu1_freq,1900,MHz
+naive,1:6,sample_cpu2_freq,1900,MHz
+naive,1:6,sample_cpu3_freq,1900,MHz
+naive,1:6,sample_cpu4_freq,2500,MHz
+naive,1:6,sample_cpu5_freq,2500,MHz
+naive,1:6,sample_cpu6_freq,2500,MHz
+naive,1:6,sample_cpu7_freq,2500,MHz
+naive,1:7,sample_elapsed,934,ms
+naive,1:7,sample_power,4.039,W
+naive,1:7,sample_process_cpu,456.774,% one core
+naive,1:7,sample_free_ram,1.106,GiB
+naive,1:7,sample_battery_temp,36.000,C
+naive,1:7,sample_thermal_status,1,Android PowerManager status
+naive,1:7,sample_cpu0_freq,1900,MHz
+naive,1:7,sample_cpu1_freq,1900,MHz
+naive,1:7,sample_cpu2_freq,1900,MHz
+naive,1:7,sample_cpu3_freq,1900,MHz
+naive,1:7,sample_cpu4_freq,2500,MHz
+naive,1:7,sample_cpu5_freq,2500,MHz
+naive,1:7,sample_cpu6_freq,2500,MHz
+naive,1:7,sample_cpu7_freq,2500,MHz
+naive,1:8,sample_elapsed,1087,ms
+naive,1:8,sample_power,4.039,W
+naive,1:8,sample_process_cpu,477.124,% one core
+naive,1:8,sample_free_ram,1.106,GiB
+naive,1:8,sample_battery_temp,36.000,C
+naive,1:8,sample_thermal_status,1,Android PowerManager status
+naive,1:8,sample_cpu0_freq,1900,MHz
+naive,1:8,sample_cpu1_freq,1900,MHz
+naive,1:8,sample_cpu2_freq,1900,MHz
+naive,1:8,sample_cpu3_freq,1900,MHz
+naive,1:8,sample_cpu4_freq,2500,MHz
+naive,1:8,sample_cpu5_freq,2500,MHz
+naive,1:8,sample_cpu6_freq,2500,MHz
+naive,1:8,sample_cpu7_freq,2500,MHz
+naive,1:9,sample_elapsed,1244,ms
+naive,1:9,sample_power,4.486,W
+naive,1:9,sample_process_cpu,444.586,% one core
+naive,1:9,sample_free_ram,1.106,GiB
+naive,1:9,sample_battery_temp,36.000,C
+naive,1:9,sample_thermal_status,1,Android PowerManager status
+naive,1:9,sample_cpu0_freq,1900,MHz
+naive,1:9,sample_cpu1_freq,1900,MHz
+naive,1:9,sample_cpu2_freq,1900,MHz
+naive,1:9,sample_cpu3_freq,1900,MHz
+naive,1:9,sample_cpu4_freq,2500,MHz
+naive,1:9,sample_cpu5_freq,2500,MHz
+naive,1:9,sample_cpu6_freq,2500,MHz
+naive,1:9,sample_cpu7_freq,2500,MHz
+naive,1:10,sample_elapsed,1399,ms
+naive,1:10,sample_power,4.486,W
+naive,1:10,sample_process_cpu,467.742,% one core
+naive,1:10,sample_free_ram,1.106,GiB
+naive,1:10,sample_battery_temp,36.000,C
+naive,1:10,sample_thermal_status,1,Android PowerManager status
+naive,1:10,sample_cpu0_freq,1900,MHz
+naive,1:10,sample_cpu1_freq,1900,MHz
+naive,1:10,sample_cpu2_freq,1900,MHz
+naive,1:10,sample_cpu3_freq,1900,MHz
+naive,1:10,sample_cpu4_freq,2500,MHz
+naive,1:10,sample_cpu5_freq,2500,MHz
+naive,1:10,sample_cpu6_freq,2500,MHz
+naive,1:10,sample_cpu7_freq,2500,MHz
+naive,1:11,sample_elapsed,1553,ms
+naive,1:11,sample_power,4.486,W
+naive,1:11,sample_process_cpu,451.948,% one core
+naive,1:11,sample_free_ram,1.106,GiB
+naive,1:11,sample_battery_temp,36.000,C
+naive,1:11,sample_thermal_status,1,Android PowerManager status
+naive,1:11,sample_cpu0_freq,1900,MHz
+naive,1:11,sample_cpu1_freq,1900,MHz
+naive,1:11,sample_cpu2_freq,1900,MHz
+naive,1:11,sample_cpu3_freq,1900,MHz
+naive,1:11,sample_cpu4_freq,2500,MHz
+naive,1:11,sample_cpu5_freq,2500,MHz
+naive,1:11,sample_cpu6_freq,2500,MHz
+naive,1:11,sample_cpu7_freq,2500,MHz
+naive,1:12,sample_elapsed,1707,ms
+naive,1:12,sample_power,4.486,W
+naive,1:12,sample_process_cpu,464.935,% one core
+naive,1:12,sample_free_ram,1.106,GiB
+naive,1:12,sample_battery_temp,36.000,C
+naive,1:12,sample_thermal_status,1,Android PowerManager status
+naive,1:12,sample_cpu0_freq,1900,MHz
+naive,1:12,sample_cpu1_freq,1900,MHz
+naive,1:12,sample_cpu2_freq,1900,MHz
+naive,1:12,sample_cpu3_freq,1900,MHz
+naive,1:12,sample_cpu4_freq,2500,MHz
+naive,1:12,sample_cpu5_freq,2500,MHz
+naive,1:12,sample_cpu6_freq,2500,MHz
+naive,1:12,sample_cpu7_freq,2500,MHz
+naive,1:13,sample_elapsed,1861,ms
+naive,1:13,sample_power,4.180,W
+naive,1:13,sample_process_cpu,473.377,% one core
+naive,1:13,sample_free_ram,1.106,GiB
+naive,1:13,sample_battery_temp,36.000,C
+naive,1:13,sample_thermal_status,1,Android PowerManager status
+naive,1:13,sample_cpu0_freq,1900,MHz
+naive,1:13,sample_cpu1_freq,1900,MHz
+naive,1:13,sample_cpu2_freq,1900,MHz
+naive,1:13,sample_cpu3_freq,1900,MHz
+naive,1:13,sample_cpu4_freq,2500,MHz
+naive,1:13,sample_cpu5_freq,2500,MHz
+naive,1:13,sample_cpu6_freq,2500,MHz
+naive,1:13,sample_cpu7_freq,2500,MHz
+naive,1:14,sample_elapsed,2018,ms
+naive,1:14,sample_power,4.180,W
+naive,1:14,sample_process_cpu,458.599,% one core
+naive,1:14,sample_free_ram,1.105,GiB
+naive,1:14,sample_battery_temp,36.000,C
+naive,1:14,sample_thermal_status,1,Android PowerManager status
+naive,1:14,sample_cpu0_freq,1900,MHz
+naive,1:14,sample_cpu1_freq,1900,MHz
+naive,1:14,sample_cpu2_freq,1900,MHz
+naive,1:14,sample_cpu3_freq,1900,MHz
+naive,1:14,sample_cpu4_freq,2500,MHz
+naive,1:14,sample_cpu5_freq,2500,MHz
+naive,1:14,sample_cpu6_freq,2500,MHz
+naive,1:14,sample_cpu7_freq,2500,MHz
+naive,1:15,sample_elapsed,2172,ms
+naive,1:15,sample_power,4.180,W
+naive,1:15,sample_process_cpu,453.896,% one core
+naive,1:15,sample_free_ram,1.104,GiB
+naive,1:15,sample_battery_temp,36.000,C
+naive,1:15,sample_thermal_status,1,Android PowerManager status
+naive,1:15,sample_cpu0_freq,1900,MHz
+naive,1:15,sample_cpu1_freq,1900,MHz
+naive,1:15,sample_cpu2_freq,1900,MHz
+naive,1:15,sample_cpu3_freq,1900,MHz
+naive,1:15,sample_cpu4_freq,2500,MHz
+naive,1:15,sample_cpu5_freq,2500,MHz
+naive,1:15,sample_cpu6_freq,2500,MHz
+naive,1:15,sample_cpu7_freq,2500,MHz
+naive,1:16,sample_elapsed,2326,ms
+naive,1:16,sample_power,4.180,W
+naive,1:16,sample_process_cpu,451.299,% one core
+naive,1:16,sample_free_ram,1.102,GiB
+naive,1:16,sample_battery_temp,36.000,C
+naive,1:16,sample_thermal_status,1,Android PowerManager status
+naive,1:16,sample_cpu0_freq,1900,MHz
+naive,1:16,sample_cpu1_freq,1900,MHz
+naive,1:16,sample_cpu2_freq,1900,MHz
+naive,1:16,sample_cpu3_freq,1900,MHz
+naive,1:16,sample_cpu4_freq,2500,MHz
+naive,1:16,sample_cpu5_freq,2500,MHz
+naive,1:16,sample_cpu6_freq,2500,MHz
+naive,1:16,sample_cpu7_freq,2500,MHz
+naive,1:17,sample_elapsed,2480,ms
+naive,1:17,sample_power,4.074,W
+naive,1:17,sample_process_cpu,477.273,% one core
+naive,1:17,sample_free_ram,1.103,GiB
+naive,1:17,sample_battery_temp,36.000,C
+naive,1:17,sample_thermal_status,1,Android PowerManager status
+naive,1:17,sample_cpu0_freq,1900,MHz
+naive,1:17,sample_cpu1_freq,1900,MHz
+naive,1:17,sample_cpu2_freq,1900,MHz
+naive,1:17,sample_cpu3_freq,1900,MHz
+naive,1:17,sample_cpu4_freq,2500,MHz
+naive,1:17,sample_cpu5_freq,2500,MHz
+naive,1:17,sample_cpu6_freq,2500,MHz
+naive,1:17,sample_cpu7_freq,2500,MHz
+naive,1:18,sample_elapsed,2636,ms
+naive,1:18,sample_power,4.074,W
+naive,1:18,sample_process_cpu,452.564,% one core
+naive,1:18,sample_free_ram,1.103,GiB
+naive,1:18,sample_battery_temp,36.000,C
+naive,1:18,sample_thermal_status,1,Android PowerManager status
+naive,1:18,sample_cpu0_freq,1900,MHz
+naive,1:18,sample_cpu1_freq,1900,MHz
+naive,1:18,sample_cpu2_freq,1900,MHz
+naive,1:18,sample_cpu3_freq,1900,MHz
+naive,1:18,sample_cpu4_freq,2500,MHz
+naive,1:18,sample_cpu5_freq,2500,MHz
+naive,1:18,sample_cpu6_freq,2500,MHz
+naive,1:18,sample_cpu7_freq,2500,MHz
+naive,1:19,sample_elapsed,2790,ms
+naive,1:19,sample_power,4.074,W
+naive,1:19,sample_process_cpu,469.481,% one core
+naive,1:19,sample_free_ram,1.103,GiB
+naive,1:19,sample_battery_temp,36.000,C
+naive,1:19,sample_thermal_status,1,Android PowerManager status
+naive,1:19,sample_cpu0_freq,1900,MHz
+naive,1:19,sample_cpu1_freq,1900,MHz
+naive,1:19,sample_cpu2_freq,1900,MHz
+naive,1:19,sample_cpu3_freq,1900,MHz
+naive,1:19,sample_cpu4_freq,2500,MHz
+naive,1:19,sample_cpu5_freq,2500,MHz
+naive,1:19,sample_cpu6_freq,2500,MHz
+naive,1:19,sample_cpu7_freq,2500,MHz
+naive,1:20,sample_elapsed,2944,ms
+naive,1:20,sample_power,4.074,W
+naive,1:20,sample_process_cpu,468.831,% one core
+naive,1:20,sample_free_ram,1.103,GiB
+naive,1:20,sample_battery_temp,36.000,C
+naive,1:20,sample_thermal_status,1,Android PowerManager status
+naive,1:20,sample_cpu0_freq,1900,MHz
+naive,1:20,sample_cpu1_freq,1900,MHz
+naive,1:20,sample_cpu2_freq,1900,MHz
+naive,1:20,sample_cpu3_freq,1900,MHz
+naive,1:20,sample_cpu4_freq,2500,MHz
+naive,1:20,sample_cpu5_freq,2500,MHz
+naive,1:20,sample_cpu6_freq,2500,MHz
+naive,1:20,sample_cpu7_freq,2500,MHz
+naive,1:21,sample_elapsed,3101,ms
+naive,1:21,sample_power,4.937,W
+naive,1:21,sample_process_cpu,460.510,% one core
+naive,1:21,sample_free_ram,1.103,GiB
+naive,1:21,sample_battery_temp,36.000,C
+naive,1:21,sample_thermal_status,1,Android PowerManager status
+naive,1:21,sample_cpu0_freq,1900,MHz
+naive,1:21,sample_cpu1_freq,1900,MHz
+naive,1:21,sample_cpu2_freq,1900,MHz
+naive,1:21,sample_cpu3_freq,1900,MHz
+naive,1:21,sample_cpu4_freq,2500,MHz
+naive,1:21,sample_cpu5_freq,2500,MHz
+naive,1:21,sample_cpu6_freq,2500,MHz
+naive,1:21,sample_cpu7_freq,2500,MHz
+naive,1:22,sample_elapsed,3261,ms
+naive,1:22,sample_power,4.937,W
+naive,1:22,sample_process_cpu,450.000,% one core
+naive,1:22,sample_free_ram,1.102,GiB
+naive,1:22,sample_battery_temp,36.000,C
+naive,1:22,sample_thermal_status,1,Android PowerManager status
+naive,1:22,sample_cpu0_freq,1900,MHz
+naive,1:22,sample_cpu1_freq,1900,MHz
+naive,1:22,sample_cpu2_freq,1900,MHz
+naive,1:22,sample_cpu3_freq,1900,MHz
+naive,1:22,sample_cpu4_freq,2500,MHz
+naive,1:22,sample_cpu5_freq,2500,MHz
+naive,1:22,sample_cpu6_freq,2500,MHz
+naive,1:22,sample_cpu7_freq,2500,MHz
+naive,1:23,sample_elapsed,3418,ms
+naive,1:23,sample_power,4.937,W
+naive,1:23,sample_process_cpu,473.248,% one core
+naive,1:23,sample_free_ram,1.103,GiB
+naive,1:23,sample_battery_temp,36.000,C
+naive,1:23,sample_thermal_status,1,Android PowerManager status
+naive,1:23,sample_cpu0_freq,1900,MHz
+naive,1:23,sample_cpu1_freq,1900,MHz
+naive,1:23,sample_cpu2_freq,1900,MHz
+naive,1:23,sample_cpu3_freq,1900,MHz
+naive,1:23,sample_cpu4_freq,2500,MHz
+naive,1:23,sample_cpu5_freq,2500,MHz
+naive,1:23,sample_cpu6_freq,2500,MHz
+naive,1:23,sample_cpu7_freq,2500,MHz
+naive,1:24,sample_elapsed,3573,ms
+naive,1:24,sample_power,4.937,W
+naive,1:24,sample_process_cpu,458.065,% one core
+naive,1:24,sample_free_ram,1.102,GiB
+naive,1:24,sample_battery_temp,36.000,C
+naive,1:24,sample_thermal_status,1,Android PowerManager status
+naive,1:24,sample_cpu0_freq,1900,MHz
+naive,1:24,sample_cpu1_freq,1900,MHz
+naive,1:24,sample_cpu2_freq,1900,MHz
+naive,1:24,sample_cpu3_freq,1900,MHz
+naive,1:24,sample_cpu4_freq,2500,MHz
+naive,1:24,sample_cpu5_freq,2500,MHz
+naive,1:24,sample_cpu6_freq,2500,MHz
+naive,1:24,sample_cpu7_freq,2500,MHz
+naive,1:25,sample_elapsed,3727,ms
+naive,1:25,sample_power,4.136,W
+naive,1:25,sample_process_cpu,468.831,% one core
+naive,1:25,sample_free_ram,1.102,GiB
+naive,1:25,sample_battery_temp,36.000,C
+naive,1:25,sample_thermal_status,1,Android PowerManager status
+naive,1:25,sample_cpu0_freq,1900,MHz
+naive,1:25,sample_cpu1_freq,1900,MHz
+naive,1:25,sample_cpu2_freq,1900,MHz
+naive,1:25,sample_cpu3_freq,1900,MHz
+naive,1:25,sample_cpu4_freq,2500,MHz
+naive,1:25,sample_cpu5_freq,2500,MHz
+naive,1:25,sample_cpu6_freq,2500,MHz
+naive,1:25,sample_cpu7_freq,2500,MHz
+naive,1:26,sample_elapsed,3882,ms
+naive,1:26,sample_power,4.136,W
+naive,1:26,sample_process_cpu,463.226,% one core
+naive,1:26,sample_free_ram,1.102,GiB
+naive,1:26,sample_battery_temp,36.000,C
+naive,1:26,sample_thermal_status,1,Android PowerManager status
+naive,1:26,sample_cpu0_freq,1900,MHz
+naive,1:26,sample_cpu1_freq,1900,MHz
+naive,1:26,sample_cpu2_freq,1900,MHz
+naive,1:26,sample_cpu3_freq,1900,MHz
+naive,1:26,sample_cpu4_freq,2500,MHz
+naive,1:26,sample_cpu5_freq,2500,MHz
+naive,1:26,sample_cpu6_freq,2500,MHz
+naive,1:26,sample_cpu7_freq,2500,MHz
+naive,1:27,sample_elapsed,4039,ms
+naive,1:27,sample_power,4.136,W
+naive,1:27,sample_process_cpu,459.236,% one core
+naive,1:27,sample_free_ram,1.102,GiB
+naive,1:27,sample_battery_temp,36.000,C
+naive,1:27,sample_thermal_status,1,Android PowerManager status
+naive,1:27,sample_cpu0_freq,1900,MHz
+naive,1:27,sample_cpu1_freq,1900,MHz
+naive,1:27,sample_cpu2_freq,1900,MHz
+naive,1:27,sample_cpu3_freq,1900,MHz
+naive,1:27,sample_cpu4_freq,2500,MHz
+naive,1:27,sample_cpu5_freq,2500,MHz
+naive,1:27,sample_cpu6_freq,2500,MHz
+naive,1:27,sample_cpu7_freq,2500,MHz
+naive,1:28,sample_elapsed,4193,ms
+naive,1:28,sample_power,4.136,W
+naive,1:28,sample_process_cpu,467.532,% one core
+naive,1:28,sample_free_ram,1.102,GiB
+naive,1:28,sample_battery_temp,36.000,C
+naive,1:28,sample_thermal_status,1,Android PowerManager status
+naive,1:28,sample_cpu0_freq,1900,MHz
+naive,1:28,sample_cpu1_freq,1900,MHz
+naive,1:28,sample_cpu2_freq,1900,MHz
+naive,1:28,sample_cpu3_freq,1900,MHz
+naive,1:28,sample_cpu4_freq,2500,MHz
+naive,1:28,sample_cpu5_freq,2500,MHz
+naive,1:28,sample_cpu6_freq,2500,MHz
+naive,1:28,sample_cpu7_freq,2500,MHz
+naive,1:29,sample_elapsed,4348,ms
+naive,1:29,sample_power,4.871,W
+naive,1:29,sample_process_cpu,460.645,% one core
+naive,1:29,sample_free_ram,1.101,GiB
+naive,1:29,sample_battery_temp,36.000,C
+naive,1:29,sample_thermal_status,1,Android PowerManager status
+naive,1:29,sample_cpu0_freq,1900,MHz
+naive,1:29,sample_cpu1_freq,1900,MHz
+naive,1:29,sample_cpu2_freq,1900,MHz
+naive,1:29,sample_cpu3_freq,1900,MHz
+naive,1:29,sample_cpu4_freq,2500,MHz
+naive,1:29,sample_cpu5_freq,2500,MHz
+naive,1:29,sample_cpu6_freq,2500,MHz
+naive,1:29,sample_cpu7_freq,2500,MHz
+naive,1:30,sample_elapsed,4504,ms
+naive,1:30,sample_power,4.871,W
+naive,1:30,sample_process_cpu,466.026,% one core
+naive,1:30,sample_free_ram,1.101,GiB
+naive,1:30,sample_battery_temp,36.000,C
+naive,1:30,sample_thermal_status,1,Android PowerManager status
+naive,1:30,sample_cpu0_freq,1900,MHz
+naive,1:30,sample_cpu1_freq,1900,MHz
+naive,1:30,sample_cpu2_freq,1900,MHz
+naive,1:30,sample_cpu3_freq,1900,MHz
+naive,1:30,sample_cpu4_freq,2500,MHz
+naive,1:30,sample_cpu5_freq,2500,MHz
+naive,1:30,sample_cpu6_freq,2500,MHz
+naive,1:30,sample_cpu7_freq,2500,MHz
+naive,1:31,sample_elapsed,4658,ms
+naive,1:31,sample_power,4.871,W
+naive,1:31,sample_process_cpu,459.091,% one core
+naive,1:31,sample_free_ram,1.101,GiB
+naive,1:31,sample_battery_temp,36.000,C
+naive,1:31,sample_thermal_status,1,Android PowerManager status
+naive,1:31,sample_cpu0_freq,1900,MHz
+naive,1:31,sample_cpu1_freq,1900,MHz
+naive,1:31,sample_cpu2_freq,1900,MHz
+naive,1:31,sample_cpu3_freq,1900,MHz
+naive,1:31,sample_cpu4_freq,2500,MHz
+naive,1:31,sample_cpu5_freq,2500,MHz
+naive,1:31,sample_cpu6_freq,2500,MHz
+naive,1:31,sample_cpu7_freq,2500,MHz
+naive,1:32,sample_elapsed,4813,ms
+naive,1:32,sample_power,4.871,W
+naive,1:32,sample_process_cpu,467.097,% one core
+naive,1:32,sample_free_ram,1.103,GiB
+naive,1:32,sample_battery_temp,36.000,C
+naive,1:32,sample_thermal_status,1,Android PowerManager status
+naive,1:32,sample_cpu0_freq,1900,MHz
+naive,1:32,sample_cpu1_freq,1900,MHz
+naive,1:32,sample_cpu2_freq,1900,MHz
+naive,1:32,sample_cpu3_freq,1900,MHz
+naive,1:32,sample_cpu4_freq,2500,MHz
+naive,1:32,sample_cpu5_freq,2500,MHz
+naive,1:32,sample_cpu6_freq,2500,MHz
+naive,1:32,sample_cpu7_freq,2500,MHz
+naive,1:33,sample_elapsed,4967,ms
+naive,1:33,sample_power,5.017,W
+naive,1:33,sample_process_cpu,483.117,% one core
+naive,1:33,sample_free_ram,1.104,GiB
+naive,1:33,sample_battery_temp,36.000,C
+naive,1:33,sample_thermal_status,1,Android PowerManager status
+naive,1:33,sample_cpu0_freq,1900,MHz
+naive,1:33,sample_cpu1_freq,1900,MHz
+naive,1:33,sample_cpu2_freq,1900,MHz
+naive,1:33,sample_cpu3_freq,1900,MHz
+naive,1:33,sample_cpu4_freq,2500,MHz
+naive,1:33,sample_cpu5_freq,2500,MHz
+naive,1:33,sample_cpu6_freq,2500,MHz
+naive,1:33,sample_cpu7_freq,2500,MHz
+naive,1:34,sample_elapsed,5125,ms
+naive,1:34,sample_power,5.017,W
+naive,1:34,sample_process_cpu,462.025,% one core
+naive,1:34,sample_free_ram,1.103,GiB
+naive,1:34,sample_battery_temp,36.000,C
+naive,1:34,sample_thermal_status,1,Android PowerManager status
+naive,1:34,sample_cpu0_freq,1900,MHz
+naive,1:34,sample_cpu1_freq,1900,MHz
+naive,1:34,sample_cpu2_freq,1900,MHz
+naive,1:34,sample_cpu3_freq,1900,MHz
+naive,1:34,sample_cpu4_freq,2500,MHz
+naive,1:34,sample_cpu5_freq,2500,MHz
+naive,1:34,sample_cpu6_freq,2500,MHz
+naive,1:34,sample_cpu7_freq,2500,MHz
+naive,1:35,sample_elapsed,5279,ms
+naive,1:35,sample_power,5.017,W
+naive,1:35,sample_process_cpu,462.338,% one core
+naive,1:35,sample_free_ram,1.103,GiB
+naive,1:35,sample_battery_temp,36.000,C
+naive,1:35,sample_thermal_status,1,Android PowerManager status
+naive,1:35,sample_cpu0_freq,1900,MHz
+naive,1:35,sample_cpu1_freq,1900,MHz
+naive,1:35,sample_cpu2_freq,1900,MHz
+naive,1:35,sample_cpu3_freq,1900,MHz
+naive,1:35,sample_cpu4_freq,2500,MHz
+naive,1:35,sample_cpu5_freq,2500,MHz
+naive,1:35,sample_cpu6_freq,2500,MHz
+naive,1:35,sample_cpu7_freq,2500,MHz
+naive,1:36,sample_elapsed,5433,ms
+naive,1:36,sample_power,5.017,W
+naive,1:36,sample_process_cpu,467.532,% one core
+naive,1:36,sample_free_ram,1.103,GiB
+naive,1:36,sample_battery_temp,36.000,C
+naive,1:36,sample_thermal_status,1,Android PowerManager status
+naive,1:36,sample_cpu0_freq,1900,MHz
+naive,1:36,sample_cpu1_freq,1900,MHz
+naive,1:36,sample_cpu2_freq,1900,MHz
+naive,1:36,sample_cpu3_freq,1900,MHz
+naive,1:36,sample_cpu4_freq,2500,MHz
+naive,1:36,sample_cpu5_freq,2500,MHz
+naive,1:36,sample_cpu6_freq,2500,MHz
+naive,1:36,sample_cpu7_freq,2500,MHz
+naive,1:37,sample_elapsed,5586,ms
+naive,1:37,sample_power,4.605,W
+naive,1:37,sample_process_cpu,473.856,% one core
+naive,1:37,sample_free_ram,1.103,GiB
+naive,1:37,sample_battery_temp,36.000,C
+naive,1:37,sample_thermal_status,1,Android PowerManager status
+naive,1:37,sample_cpu0_freq,1900,MHz
+naive,1:37,sample_cpu1_freq,1900,MHz
+naive,1:37,sample_cpu2_freq,1900,MHz
+naive,1:37,sample_cpu3_freq,1900,MHz
+naive,1:37,sample_cpu4_freq,2500,MHz
+naive,1:37,sample_cpu5_freq,2500,MHz
+naive,1:37,sample_cpu6_freq,2500,MHz
+naive,1:37,sample_cpu7_freq,2500,MHz
+naive,1:38,sample_elapsed,5743,ms
+naive,1:38,sample_power,4.605,W
+naive,1:38,sample_process_cpu,459.236,% one core
+naive,1:38,sample_free_ram,1.102,GiB
+naive,1:38,sample_battery_temp,36.000,C
+naive,1:38,sample_thermal_status,1,Android PowerManager status
+naive,1:38,sample_cpu0_freq,1900,MHz
+naive,1:38,sample_cpu1_freq,1900,MHz
+naive,1:38,sample_cpu2_freq,1900,MHz
+naive,1:38,sample_cpu3_freq,1900,MHz
+naive,1:38,sample_cpu4_freq,2500,MHz
+naive,1:38,sample_cpu5_freq,2500,MHz
+naive,1:38,sample_cpu6_freq,2500,MHz
+naive,1:38,sample_cpu7_freq,2500,MHz
+naive,1:39,sample_elapsed,5897,ms
+naive,1:39,sample_power,4.605,W
+naive,1:39,sample_process_cpu,475.974,% one core
+naive,1:39,sample_free_ram,1.102,GiB
+naive,1:39,sample_battery_temp,36.000,C
+naive,1:39,sample_thermal_status,1,Android PowerManager status
+naive,1:39,sample_cpu0_freq,1900,MHz
+naive,1:39,sample_cpu1_freq,1900,MHz
+naive,1:39,sample_cpu2_freq,1900,MHz
+naive,1:39,sample_cpu3_freq,1900,MHz
+naive,1:39,sample_cpu4_freq,2500,MHz
+naive,1:39,sample_cpu5_freq,2500,MHz
+naive,1:39,sample_cpu6_freq,2500,MHz
+naive,1:39,sample_cpu7_freq,2500,MHz
+naive,1:40,sample_elapsed,6054,ms
+naive,1:40,sample_power,4.605,W
+naive,1:40,sample_process_cpu,466.879,% one core
+naive,1:40,sample_free_ram,1.102,GiB
+naive,1:40,sample_battery_temp,36.000,C
+naive,1:40,sample_thermal_status,1,Android PowerManager status
+naive,1:40,sample_cpu0_freq,1900,MHz
+naive,1:40,sample_cpu1_freq,1900,MHz
+naive,1:40,sample_cpu2_freq,1900,MHz
+naive,1:40,sample_cpu3_freq,1900,MHz
+naive,1:40,sample_cpu4_freq,2500,MHz
+naive,1:40,sample_cpu5_freq,2500,MHz
+naive,1:40,sample_cpu6_freq,2500,MHz
+naive,1:40,sample_cpu7_freq,2500,MHz
+naive,1:41,sample_elapsed,6212,ms
+naive,1:41,sample_power,4.876,W
+naive,1:41,sample_process_cpu,477.215,% one core
+naive,1:41,sample_free_ram,1.102,GiB
+naive,1:41,sample_battery_temp,36.000,C
+naive,1:41,sample_thermal_status,1,Android PowerManager status
+naive,1:41,sample_cpu0_freq,1900,MHz
+naive,1:41,sample_cpu1_freq,1900,MHz
+naive,1:41,sample_cpu2_freq,1900,MHz
+naive,1:41,sample_cpu3_freq,1900,MHz
+naive,1:41,sample_cpu4_freq,2500,MHz
+naive,1:41,sample_cpu5_freq,2500,MHz
+naive,1:41,sample_cpu6_freq,2500,MHz
+naive,1:41,sample_cpu7_freq,2500,MHz
+naive,1:42,sample_elapsed,6367,ms
+naive,1:42,sample_power,4.876,W
+naive,1:42,sample_process_cpu,467.742,% one core
+naive,1:42,sample_free_ram,1.101,GiB
+naive,1:42,sample_battery_temp,36.000,C
+naive,1:42,sample_thermal_status,1,Android PowerManager status
+naive,1:42,sample_cpu0_freq,1900,MHz
+naive,1:42,sample_cpu1_freq,1900,MHz
+naive,1:42,sample_cpu2_freq,1900,MHz
+naive,1:42,sample_cpu3_freq,1900,MHz
+naive,1:42,sample_cpu4_freq,2500,MHz
+naive,1:42,sample_cpu5_freq,2500,MHz
+naive,1:42,sample_cpu6_freq,2500,MHz
+naive,1:42,sample_cpu7_freq,2500,MHz
+naive,1:43,sample_elapsed,6523,ms
+naive,1:43,sample_power,4.876,W
+naive,1:43,sample_process_cpu,488.462,% one core
+naive,1:43,sample_free_ram,1.101,GiB
+naive,1:43,sample_battery_temp,36.000,C
+naive,1:43,sample_thermal_status,1,Android PowerManager status
+naive,1:43,sample_cpu0_freq,1900,MHz
+naive,1:43,sample_cpu1_freq,1900,MHz
+naive,1:43,sample_cpu2_freq,1900,MHz
+naive,1:43,sample_cpu3_freq,1900,MHz
+naive,1:43,sample_cpu4_freq,2500,MHz
+naive,1:43,sample_cpu5_freq,2500,MHz
+naive,1:43,sample_cpu6_freq,2500,MHz
+naive,1:43,sample_cpu7_freq,2500,MHz
+naive,1:44,sample_elapsed,6683,ms
+naive,1:44,sample_power,4.876,W
+naive,1:44,sample_process_cpu,460.625,% one core
+naive,1:44,sample_free_ram,1.101,GiB
+naive,1:44,sample_battery_temp,36.000,C
+naive,1:44,sample_thermal_status,1,Android PowerManager status
+naive,1:44,sample_cpu0_freq,1900,MHz
+naive,1:44,sample_cpu1_freq,1900,MHz
+naive,1:44,sample_cpu2_freq,1900,MHz
+naive,1:44,sample_cpu3_freq,1900,MHz
+naive,1:44,sample_cpu4_freq,2500,MHz
+naive,1:44,sample_cpu5_freq,2500,MHz
+naive,1:44,sample_cpu6_freq,2500,MHz
+naive,1:44,sample_cpu7_freq,2500,MHz
+naive,1:45,sample_elapsed,6840,ms
+naive,1:45,sample_power,4.596,W
+naive,1:45,sample_process_cpu,482.166,% one core
+naive,1:45,sample_free_ram,1.101,GiB
+naive,1:45,sample_battery_temp,36.000,C
+naive,1:45,sample_thermal_status,1,Android PowerManager status
+naive,1:45,sample_cpu0_freq,1900,MHz
+naive,1:45,sample_cpu1_freq,1900,MHz
+naive,1:45,sample_cpu2_freq,1900,MHz
+naive,1:45,sample_cpu3_freq,1900,MHz
+naive,1:45,sample_cpu4_freq,2500,MHz
+naive,1:45,sample_cpu5_freq,2500,MHz
+naive,1:45,sample_cpu6_freq,2500,MHz
+naive,1:45,sample_cpu7_freq,2500,MHz
+naive,1:46,sample_elapsed,6997,ms
+naive,1:46,sample_power,4.596,W
+naive,1:46,sample_process_cpu,477.707,% one core
+naive,1:46,sample_free_ram,1.104,GiB
+naive,1:46,sample_battery_temp,36.000,C
+naive,1:46,sample_thermal_status,1,Android PowerManager status
+naive,1:46,sample_cpu0_freq,1900,MHz
+naive,1:46,sample_cpu1_freq,1900,MHz
+naive,1:46,sample_cpu2_freq,1900,MHz
+naive,1:46,sample_cpu3_freq,1900,MHz
+naive,1:46,sample_cpu4_freq,2500,MHz
+naive,1:46,sample_cpu5_freq,2500,MHz
+naive,1:46,sample_cpu6_freq,2500,MHz
+naive,1:46,sample_cpu7_freq,2500,MHz
+naive,1:47,sample_elapsed,7154,ms
+naive,1:47,sample_power,4.596,W
+naive,1:47,sample_process_cpu,473.248,% one core
+naive,1:47,sample_free_ram,1.107,GiB
+naive,1:47,sample_battery_temp,36.000,C
+naive,1:47,sample_thermal_status,1,Android PowerManager status
+naive,1:47,sample_cpu0_freq,1900,MHz
+naive,1:47,sample_cpu1_freq,1900,MHz
+naive,1:47,sample_cpu2_freq,1900,MHz
+naive,1:47,sample_cpu3_freq,1900,MHz
+naive,1:47,sample_cpu4_freq,2500,MHz
+naive,1:47,sample_cpu5_freq,2500,MHz
+naive,1:47,sample_cpu6_freq,2500,MHz
+naive,1:47,sample_cpu7_freq,2500,MHz
+naive,1:48,sample_elapsed,7310,ms
+naive,1:48,sample_power,4.596,W
+naive,1:48,sample_process_cpu,462.821,% one core
+naive,1:48,sample_free_ram,1.105,GiB
+naive,1:48,sample_battery_temp,36.000,C
+naive,1:48,sample_thermal_status,1,Android PowerManager status
+naive,1:48,sample_cpu0_freq,1900,MHz
+naive,1:48,sample_cpu1_freq,1900,MHz
+naive,1:48,sample_cpu2_freq,1900,MHz
+naive,1:48,sample_cpu3_freq,1900,MHz
+naive,1:48,sample_cpu4_freq,2500,MHz
+naive,1:48,sample_cpu5_freq,2500,MHz
+naive,1:48,sample_cpu6_freq,2500,MHz
+naive,1:48,sample_cpu7_freq,2500,MHz
+naive,1:49,sample_elapsed,7463,ms
+naive,1:49,sample_power,5.053,W
+naive,1:49,sample_process_cpu,475.817,% one core
+naive,1:49,sample_free_ram,1.104,GiB
+naive,1:49,sample_battery_temp,36.000,C
+naive,1:49,sample_thermal_status,1,Android PowerManager status
+naive,1:49,sample_cpu0_freq,1900,MHz
+naive,1:49,sample_cpu1_freq,1900,MHz
+naive,1:49,sample_cpu2_freq,1900,MHz
+naive,1:49,sample_cpu3_freq,1900,MHz
+naive,1:49,sample_cpu4_freq,2500,MHz
+naive,1:49,sample_cpu5_freq,2500,MHz
+naive,1:49,sample_cpu6_freq,2500,MHz
+naive,1:49,sample_cpu7_freq,2500,MHz
+naive,1:50,sample_elapsed,7620,ms
+naive,1:50,sample_power,4.552,W
+naive,1:50,sample_process_cpu,452.229,% one core
+naive,1:50,sample_free_ram,1.103,GiB
+naive,1:50,sample_battery_temp,36.000,C
+naive,1:50,sample_thermal_status,1,Android PowerManager status
+naive,1:50,sample_cpu0_freq,1900,MHz
+naive,1:50,sample_cpu1_freq,1900,MHz
+naive,1:50,sample_cpu2_freq,1900,MHz
+naive,1:50,sample_cpu3_freq,1900,MHz
+naive,1:50,sample_cpu4_freq,2500,MHz
+naive,1:50,sample_cpu5_freq,2500,MHz
+naive,1:50,sample_cpu6_freq,2500,MHz
+naive,1:50,sample_cpu7_freq,2500,MHz
+naive,1:51,sample_elapsed,7775,ms
+naive,1:51,sample_power,4.552,W
+naive,1:51,sample_process_cpu,470.968,% one core
+naive,1:51,sample_free_ram,1.103,GiB
+naive,1:51,sample_battery_temp,36.000,C
+naive,1:51,sample_thermal_status,1,Android PowerManager status
+naive,1:51,sample_cpu0_freq,1900,MHz
+naive,1:51,sample_cpu1_freq,1900,MHz
+naive,1:51,sample_cpu2_freq,1900,MHz
+naive,1:51,sample_cpu3_freq,1900,MHz
+naive,1:51,sample_cpu4_freq,2500,MHz
+naive,1:51,sample_cpu5_freq,2500,MHz
+naive,1:51,sample_cpu6_freq,2500,MHz
+naive,1:51,sample_cpu7_freq,2500,MHz
+naive,1:52,sample_elapsed,7929,ms
+naive,1:52,sample_power,4.552,W
+naive,1:52,sample_process_cpu,477.273,% one core
+naive,1:52,sample_free_ram,1.103,GiB
+naive,1:52,sample_battery_temp,36.000,C
+naive,1:52,sample_thermal_status,1,Android PowerManager status
+naive,1:52,sample_cpu0_freq,1900,MHz
+naive,1:52,sample_cpu1_freq,1900,MHz
+naive,1:52,sample_cpu2_freq,1900,MHz
+naive,1:52,sample_cpu3_freq,1900,MHz
+naive,1:52,sample_cpu4_freq,2500,MHz
+naive,1:52,sample_cpu5_freq,2500,MHz
+naive,1:52,sample_cpu6_freq,2500,MHz
+naive,1:52,sample_cpu7_freq,2500,MHz
+naive,1:53,sample_elapsed,8086,ms
+naive,1:53,sample_power,5.523,W
+naive,1:53,sample_process_cpu,459.873,% one core
+naive,1:53,sample_free_ram,1.103,GiB
+naive,1:53,sample_battery_temp,36.000,C
+naive,1:53,sample_thermal_status,1,Android PowerManager status
+naive,1:53,sample_cpu0_freq,1900,MHz
+naive,1:53,sample_cpu1_freq,1900,MHz
+naive,1:53,sample_cpu2_freq,1900,MHz
+naive,1:53,sample_cpu3_freq,1900,MHz
+naive,1:53,sample_cpu4_freq,2500,MHz
+naive,1:53,sample_cpu5_freq,2500,MHz
+naive,1:53,sample_cpu6_freq,2500,MHz
+naive,1:53,sample_cpu7_freq,2500,MHz
+naive,1:54,sample_elapsed,8245,ms
+naive,1:54,sample_power,5.523,W
+naive,1:54,sample_process_cpu,469.811,% one core
+naive,1:54,sample_free_ram,1.103,GiB
+naive,1:54,sample_battery_temp,36.000,C
+naive,1:54,sample_thermal_status,1,Android PowerManager status
+naive,1:54,sample_cpu0_freq,1900,MHz
+naive,1:54,sample_cpu1_freq,1900,MHz
+naive,1:54,sample_cpu2_freq,1900,MHz
+naive,1:54,sample_cpu3_freq,1900,MHz
+naive,1:54,sample_cpu4_freq,2500,MHz
+naive,1:54,sample_cpu5_freq,2500,MHz
+naive,1:54,sample_cpu6_freq,2500,MHz
+naive,1:54,sample_cpu7_freq,2500,MHz
+naive,1:55,sample_elapsed,8400,ms
+naive,1:55,sample_power,5.523,W
+naive,1:55,sample_process_cpu,475.484,% one core
+naive,1:55,sample_free_ram,1.103,GiB
+naive,1:55,sample_battery_temp,36.000,C
+naive,1:55,sample_thermal_status,1,Android PowerManager status
+naive,1:55,sample_cpu0_freq,1900,MHz
+naive,1:55,sample_cpu1_freq,1900,MHz
+naive,1:55,sample_cpu2_freq,1900,MHz
+naive,1:55,sample_cpu3_freq,1900,MHz
+naive,1:55,sample_cpu4_freq,2500,MHz
+naive,1:55,sample_cpu5_freq,2500,MHz
+naive,1:55,sample_cpu6_freq,2500,MHz
+naive,1:55,sample_cpu7_freq,2500,MHz
+naive,1:56,sample_elapsed,8554,ms
+naive,1:56,sample_power,5.523,W
+naive,1:56,sample_process_cpu,472.078,% one core
+naive,1:56,sample_free_ram,1.103,GiB
+naive,1:56,sample_battery_temp,36.000,C
+naive,1:56,sample_thermal_status,1,Android PowerManager status
+naive,1:56,sample_cpu0_freq,1900,MHz
+naive,1:56,sample_cpu1_freq,1900,MHz
+naive,1:56,sample_cpu2_freq,1900,MHz
+naive,1:56,sample_cpu3_freq,1900,MHz
+naive,1:56,sample_cpu4_freq,2500,MHz
+naive,1:56,sample_cpu5_freq,2500,MHz
+naive,1:56,sample_cpu6_freq,2500,MHz
+naive,1:56,sample_cpu7_freq,2500,MHz
+naive,1:57,sample_elapsed,8709,ms
+naive,1:57,sample_power,4.977,W
+naive,1:57,sample_process_cpu,483.871,% one core
+naive,1:57,sample_free_ram,1.103,GiB
+naive,1:57,sample_battery_temp,36.000,C
+naive,1:57,sample_thermal_status,1,Android PowerManager status
+naive,1:57,sample_cpu0_freq,1900,MHz
+naive,1:57,sample_cpu1_freq,1900,MHz
+naive,1:57,sample_cpu2_freq,1900,MHz
+naive,1:57,sample_cpu3_freq,1900,MHz
+naive,1:57,sample_cpu4_freq,2500,MHz
+naive,1:57,sample_cpu5_freq,2500,MHz
+naive,1:57,sample_cpu6_freq,2500,MHz
+naive,1:57,sample_cpu7_freq,2500,MHz
+naive,1:58,sample_elapsed,8864,ms
+naive,1:58,sample_power,4.977,W
+naive,1:58,sample_process_cpu,473.548,% one core
+naive,1:58,sample_free_ram,1.102,GiB
+naive,1:58,sample_battery_temp,36.000,C
+naive,1:58,sample_thermal_status,1,Android PowerManager status
+naive,1:58,sample_cpu0_freq,1900,MHz
+naive,1:58,sample_cpu1_freq,1900,MHz
+naive,1:58,sample_cpu2_freq,1900,MHz
+naive,1:58,sample_cpu3_freq,1900,MHz
+naive,1:58,sample_cpu4_freq,2500,MHz
+naive,1:58,sample_cpu5_freq,2500,MHz
+naive,1:58,sample_cpu6_freq,2500,MHz
+naive,1:58,sample_cpu7_freq,2500,MHz
+naive,1:59,sample_elapsed,9019,ms
+naive,1:59,sample_power,4.977,W
+naive,1:59,sample_process_cpu,478.065,% one core
+naive,1:59,sample_free_ram,1.102,GiB
+naive,1:59,sample_battery_temp,36.000,C
+naive,1:59,sample_thermal_status,1,Android PowerManager status
+naive,1:59,sample_cpu0_freq,1900,MHz
+naive,1:59,sample_cpu1_freq,1900,MHz
+naive,1:59,sample_cpu2_freq,1900,MHz
+naive,1:59,sample_cpu3_freq,1900,MHz
+naive,1:59,sample_cpu4_freq,2500,MHz
+naive,1:59,sample_cpu5_freq,2500,MHz
+naive,1:59,sample_cpu6_freq,2500,MHz
+naive,1:59,sample_cpu7_freq,2500,MHz
+naive,1:60,sample_elapsed,9172,ms
+naive,1:60,sample_power,4.977,W
+naive,1:60,sample_process_cpu,476.471,% one core
+naive,1:60,sample_free_ram,1.102,GiB
+naive,1:60,sample_battery_temp,36.000,C
+naive,1:60,sample_thermal_status,1,Android PowerManager status
+naive,1:60,sample_cpu0_freq,1900,MHz
+naive,1:60,sample_cpu1_freq,1900,MHz
+naive,1:60,sample_cpu2_freq,1900,MHz
+naive,1:60,sample_cpu3_freq,1900,MHz
+naive,1:60,sample_cpu4_freq,2500,MHz
+naive,1:60,sample_cpu5_freq,2500,MHz
+naive,1:60,sample_cpu6_freq,2500,MHz
+naive,1:60,sample_cpu7_freq,2500,MHz
+naive,1:61,sample_elapsed,9326,ms
+naive,1:61,sample_power,4.618,W
+naive,1:61,sample_process_cpu,485.714,% one core
+naive,1:61,sample_free_ram,1.101,GiB
+naive,1:61,sample_battery_temp,36.000,C
+naive,1:61,sample_thermal_status,1,Android PowerManager status
+naive,1:61,sample_cpu0_freq,1900,MHz
+naive,1:61,sample_cpu1_freq,1900,MHz
+naive,1:61,sample_cpu2_freq,1900,MHz
+naive,1:61,sample_cpu3_freq,1900,MHz
+naive,1:61,sample_cpu4_freq,2500,MHz
+naive,1:61,sample_cpu5_freq,2500,MHz
+naive,1:61,sample_cpu6_freq,2500,MHz
+naive,1:61,sample_cpu7_freq,2500,MHz
+naive,1:62,sample_elapsed,9484,ms
+naive,1:62,sample_power,4.618,W
+naive,1:62,sample_process_cpu,458.861,% one core
+naive,1:62,sample_free_ram,1.101,GiB
+naive,1:62,sample_battery_temp,36.000,C
+naive,1:62,sample_thermal_status,1,Android PowerManager status
+naive,1:62,sample_cpu0_freq,1900,MHz
+naive,1:62,sample_cpu1_freq,1900,MHz
+naive,1:62,sample_cpu2_freq,1900,MHz
+naive,1:62,sample_cpu3_freq,1900,MHz
+naive,1:62,sample_cpu4_freq,2500,MHz
+naive,1:62,sample_cpu5_freq,2500,MHz
+naive,1:62,sample_cpu6_freq,2500,MHz
+naive,1:62,sample_cpu7_freq,2500,MHz
+naive,1:63,sample_elapsed,9640,ms
+naive,1:63,sample_power,4.618,W
+naive,1:63,sample_process_cpu,478.846,% one core
+naive,1:63,sample_free_ram,1.101,GiB
+naive,1:63,sample_battery_temp,36.000,C
+naive,1:63,sample_thermal_status,1,Android PowerManager status
+naive,1:63,sample_cpu0_freq,1900,MHz
+naive,1:63,sample_cpu1_freq,1900,MHz
+naive,1:63,sample_cpu2_freq,1900,MHz
+naive,1:63,sample_cpu3_freq,1900,MHz
+naive,1:63,sample_cpu4_freq,2500,MHz
+naive,1:63,sample_cpu5_freq,2500,MHz
+naive,1:63,sample_cpu6_freq,2500,MHz
+naive,1:63,sample_cpu7_freq,2500,MHz
+naive,1:64,sample_elapsed,9795,ms
+naive,1:64,sample_power,4.618,W
+naive,1:64,sample_process_cpu,475.484,% one core
+naive,1:64,sample_free_ram,1.101,GiB
+naive,1:64,sample_battery_temp,36.000,C
+naive,1:64,sample_thermal_status,1,Android PowerManager status
+naive,1:64,sample_cpu0_freq,1900,MHz
+naive,1:64,sample_cpu1_freq,1900,MHz
+naive,1:64,sample_cpu2_freq,1900,MHz
+naive,1:64,sample_cpu3_freq,1900,MHz
+naive,1:64,sample_cpu4_freq,2500,MHz
+naive,1:64,sample_cpu5_freq,2500,MHz
+naive,1:64,sample_cpu6_freq,2500,MHz
+naive,1:64,sample_cpu7_freq,2500,MHz
+naive,1:65,sample_elapsed,9950,ms
+naive,1:65,sample_power,4.636,W
+naive,1:65,sample_process_cpu,479.355,% one core
+naive,1:65,sample_free_ram,1.101,GiB
+naive,1:65,sample_battery_temp,36.000,C
+naive,1:65,sample_thermal_status,1,Android PowerManager status
+naive,1:65,sample_cpu0_freq,1900,MHz
+naive,1:65,sample_cpu1_freq,1900,MHz
+naive,1:65,sample_cpu2_freq,1900,MHz
+naive,1:65,sample_cpu3_freq,1900,MHz
+naive,1:65,sample_cpu4_freq,2500,MHz
+naive,1:65,sample_cpu5_freq,2500,MHz
+naive,1:65,sample_cpu6_freq,2500,MHz
+naive,1:65,sample_cpu7_freq,2500,MHz
+naive,1:66,sample_elapsed,10107,ms
+naive,1:66,sample_power,4.636,W
+naive,1:66,sample_process_cpu,472.611,% one core
+naive,1:66,sample_free_ram,1.100,GiB
+naive,1:66,sample_battery_temp,36.000,C
+naive,1:66,sample_thermal_status,1,Android PowerManager status
+naive,1:66,sample_cpu0_freq,1900,MHz
+naive,1:66,sample_cpu1_freq,1900,MHz
+naive,1:66,sample_cpu2_freq,1900,MHz
+naive,1:66,sample_cpu3_freq,1900,MHz
+naive,1:66,sample_cpu4_freq,2500,MHz
+naive,1:66,sample_cpu5_freq,2500,MHz
+naive,1:66,sample_cpu6_freq,2500,MHz
+naive,1:66,sample_cpu7_freq,2500,MHz
+naive,1:67,sample_elapsed,10263,ms
+naive,1:67,sample_power,4.636,W
+naive,1:67,sample_process_cpu,464.744,% one core
+naive,1:67,sample_free_ram,1.100,GiB
+naive,1:67,sample_battery_temp,36.000,C
+naive,1:67,sample_thermal_status,1,Android PowerManager status
+naive,1:67,sample_cpu0_freq,1900,MHz
+naive,1:67,sample_cpu1_freq,1900,MHz
+naive,1:67,sample_cpu2_freq,1900,MHz
+naive,1:67,sample_cpu3_freq,1900,MHz
+naive,1:67,sample_cpu4_freq,2500,MHz
+naive,1:67,sample_cpu5_freq,2500,MHz
+naive,1:67,sample_cpu6_freq,2500,MHz
+naive,1:67,sample_cpu7_freq,2500,MHz
+naive,1:68,sample_elapsed,10417,ms
+naive,1:68,sample_power,4.636,W
+naive,1:68,sample_process_cpu,461.039,% one core
+naive,1:68,sample_free_ram,1.099,GiB
+naive,1:68,sample_battery_temp,36.000,C
+naive,1:68,sample_thermal_status,1,Android PowerManager status
+naive,1:68,sample_cpu0_freq,1900,MHz
+naive,1:68,sample_cpu1_freq,1900,MHz
+naive,1:68,sample_cpu2_freq,1900,MHz
+naive,1:68,sample_cpu3_freq,1900,MHz
+naive,1:68,sample_cpu4_freq,2500,MHz
+naive,1:68,sample_cpu5_freq,2500,MHz
+naive,1:68,sample_cpu6_freq,2500,MHz
+naive,1:68,sample_cpu7_freq,2500,MHz
+naive,1:69,sample_elapsed,10572,ms
+naive,1:69,sample_power,4.526,W
+naive,1:69,sample_process_cpu,513.548,% one core
+naive,1:69,sample_free_ram,1.099,GiB
+naive,1:69,sample_battery_temp,36.000,C
+naive,1:69,sample_thermal_status,1,Android PowerManager status
+naive,1:69,sample_cpu0_freq,1900,MHz
+naive,1:69,sample_cpu1_freq,1900,MHz
+naive,1:69,sample_cpu2_freq,1900,MHz
+naive,1:69,sample_cpu3_freq,1900,MHz
+naive,1:69,sample_cpu4_freq,2500,MHz
+naive,1:69,sample_cpu5_freq,2500,MHz
+naive,1:69,sample_cpu6_freq,2500,MHz
+naive,1:69,sample_cpu7_freq,2500,MHz
+naive,1:70,sample_elapsed,10741,ms
+naive,1:70,sample_power,4.526,W
+naive,1:70,sample_process_cpu,420.710,% one core
+naive,1:70,sample_free_ram,1.099,GiB
+naive,1:70,sample_battery_temp,36.000,C
+naive,1:70,sample_thermal_status,1,Android PowerManager status
+naive,1:70,sample_cpu0_freq,1900,MHz
+naive,1:70,sample_cpu1_freq,1900,MHz
+naive,1:70,sample_cpu2_freq,1900,MHz
+naive,1:70,sample_cpu3_freq,1900,MHz
+naive,1:70,sample_cpu4_freq,2500,MHz
+naive,1:70,sample_cpu5_freq,2500,MHz
+naive,1:70,sample_cpu6_freq,2500,MHz
+naive,1:70,sample_cpu7_freq,2500,MHz
+naive,1:71,sample_elapsed,10894,ms
+naive,1:71,sample_power,4.526,W
+naive,1:71,sample_process_cpu,466.667,% one core
+naive,1:71,sample_free_ram,1.099,GiB
+naive,1:71,sample_battery_temp,36.000,C
+naive,1:71,sample_thermal_status,1,Android PowerManager status
+naive,1:71,sample_cpu0_freq,1900,MHz
+naive,1:71,sample_cpu1_freq,1900,MHz
+naive,1:71,sample_cpu2_freq,1900,MHz
+naive,1:71,sample_cpu3_freq,1900,MHz
+naive,1:71,sample_cpu4_freq,2500,MHz
+naive,1:71,sample_cpu5_freq,2500,MHz
+naive,1:71,sample_cpu6_freq,2500,MHz
+naive,1:71,sample_cpu7_freq,2500,MHz
+naive,1:72,sample_elapsed,11048,ms
+naive,1:72,sample_power,4.526,W
+naive,1:72,sample_process_cpu,458.442,% one core
+naive,1:72,sample_free_ram,1.099,GiB
+naive,1:72,sample_battery_temp,36.000,C
+naive,1:72,sample_thermal_status,1,Android PowerManager status
+naive,1:72,sample_cpu0_freq,1900,MHz
+naive,1:72,sample_cpu1_freq,1900,MHz
+naive,1:72,sample_cpu2_freq,1900,MHz
+naive,1:72,sample_cpu3_freq,1900,MHz
+naive,1:72,sample_cpu4_freq,2500,MHz
+naive,1:72,sample_cpu5_freq,2500,MHz
+naive,1:72,sample_cpu6_freq,2500,MHz
+naive,1:72,sample_cpu7_freq,2500,MHz
+naive,1:73,sample_elapsed,11203,ms
+naive,1:73,sample_power,4.592,W
+naive,1:73,sample_process_cpu,465.806,% one core
+naive,1:73,sample_free_ram,1.099,GiB
+naive,1:73,sample_battery_temp,36.000,C
+naive,1:73,sample_thermal_status,1,Android PowerManager status
+naive,1:73,sample_cpu0_freq,1900,MHz
+naive,1:73,sample_cpu1_freq,1900,MHz
+naive,1:73,sample_cpu2_freq,1900,MHz
+naive,1:73,sample_cpu3_freq,1900,MHz
+naive,1:73,sample_cpu4_freq,2500,MHz
+naive,1:73,sample_cpu5_freq,2500,MHz
+naive,1:73,sample_cpu6_freq,2500,MHz
+naive,1:73,sample_cpu7_freq,2500,MHz
+naive,1:74,sample_elapsed,11357,ms
+naive,1:74,sample_power,4.592,W
+naive,1:74,sample_process_cpu,464.286,% one core
+naive,1:74,sample_free_ram,1.098,GiB
+naive,1:74,sample_battery_temp,36.000,C
+naive,1:74,sample_thermal_status,1,Android PowerManager status
+naive,1:74,sample_cpu0_freq,1900,MHz
+naive,1:74,sample_cpu1_freq,1900,MHz
+naive,1:74,sample_cpu2_freq,1900,MHz
+naive,1:74,sample_cpu3_freq,1900,MHz
+naive,1:74,sample_cpu4_freq,2500,MHz
+naive,1:74,sample_cpu5_freq,2500,MHz
+naive,1:74,sample_cpu6_freq,2500,MHz
+naive,1:74,sample_cpu7_freq,2500,MHz
+naive,1:75,sample_elapsed,11511,ms
+naive,1:75,sample_power,4.592,W
+naive,1:75,sample_process_cpu,463.636,% one core
+naive,1:75,sample_free_ram,1.098,GiB
+naive,1:75,sample_battery_temp,36.000,C
+naive,1:75,sample_thermal_status,1,Android PowerManager status
+naive,1:75,sample_cpu0_freq,1900,MHz
+naive,1:75,sample_cpu1_freq,1900,MHz
+naive,1:75,sample_cpu2_freq,1900,MHz
+naive,1:75,sample_cpu3_freq,1900,MHz
+naive,1:75,sample_cpu4_freq,2500,MHz
+naive,1:75,sample_cpu5_freq,2500,MHz
+naive,1:75,sample_cpu6_freq,2500,MHz
+naive,1:75,sample_cpu7_freq,2500,MHz
+naive,1:76,sample_elapsed,11665,ms
+naive,1:76,sample_power,4.592,W
+naive,1:76,sample_process_cpu,466.883,% one core
+naive,1:76,sample_free_ram,1.098,GiB
+naive,1:76,sample_battery_temp,36.000,C
+naive,1:76,sample_thermal_status,1,Android PowerManager status
+naive,1:76,sample_cpu0_freq,1900,MHz
+naive,1:76,sample_cpu1_freq,1900,MHz
+naive,1:76,sample_cpu2_freq,1900,MHz
+naive,1:76,sample_cpu3_freq,1900,MHz
+naive,1:76,sample_cpu4_freq,2500,MHz
+naive,1:76,sample_cpu5_freq,2500,MHz
+naive,1:76,sample_cpu6_freq,2500,MHz
+naive,1:76,sample_cpu7_freq,2500,MHz
+naive,1:77,sample_elapsed,11820,ms
+naive,1:77,sample_power,4.688,W
+naive,1:77,sample_process_cpu,466.452,% one core
+naive,1:77,sample_free_ram,1.097,GiB
+naive,1:77,sample_battery_temp,36.000,C
+naive,1:77,sample_thermal_status,1,Android PowerManager status
+naive,1:77,sample_cpu0_freq,1900,MHz
+naive,1:77,sample_cpu1_freq,1900,MHz
+naive,1:77,sample_cpu2_freq,1900,MHz
+naive,1:77,sample_cpu3_freq,1900,MHz
+naive,1:77,sample_cpu4_freq,2500,MHz
+naive,1:77,sample_cpu5_freq,2500,MHz
+naive,1:77,sample_cpu6_freq,2500,MHz
+naive,1:77,sample_cpu7_freq,2500,MHz
+naive,1:78,sample_elapsed,11976,ms
+naive,1:78,sample_power,4.688,W
+naive,1:78,sample_process_cpu,455.128,% one core
+naive,1:78,sample_free_ram,1.098,GiB
+naive,1:78,sample_battery_temp,36.000,C
+naive,1:78,sample_thermal_status,1,Android PowerManager status
+naive,1:78,sample_cpu0_freq,1900,MHz
+naive,1:78,sample_cpu1_freq,1900,MHz
+naive,1:78,sample_cpu2_freq,1900,MHz
+naive,1:78,sample_cpu3_freq,1900,MHz
+naive,1:78,sample_cpu4_freq,2500,MHz
+naive,1:78,sample_cpu5_freq,2500,MHz
+naive,1:78,sample_cpu6_freq,2500,MHz
+naive,1:78,sample_cpu7_freq,2500,MHz
+naive,1:79,sample_elapsed,12146,ms
+naive,1:79,sample_power,4.893,W
+naive,1:79,sample_process_cpu,457.647,% one core
+naive,1:79,sample_free_ram,1.097,GiB
+naive,1:79,sample_battery_temp,36.000,C
+naive,1:79,sample_thermal_status,1,Android PowerManager status
+naive,1:79,sample_cpu0_freq,1900,MHz
+naive,1:79,sample_cpu1_freq,1900,MHz
+naive,1:79,sample_cpu2_freq,1900,MHz
+naive,1:79,sample_cpu3_freq,1900,MHz
+naive,1:79,sample_cpu4_freq,2500,MHz
+naive,1:79,sample_cpu5_freq,2500,MHz
+naive,1:79,sample_cpu6_freq,2500,MHz
+naive,1:79,sample_cpu7_freq,2500,MHz
+naive,1:80,sample_elapsed,12302,ms
+naive,1:80,sample_power,4.893,W
+naive,1:80,sample_process_cpu,469.231,% one core
+naive,1:80,sample_free_ram,1.097,GiB
+naive,1:80,sample_battery_temp,36.000,C
+naive,1:80,sample_thermal_status,1,Android PowerManager status
+naive,1:80,sample_cpu0_freq,1900,MHz
+naive,1:80,sample_cpu1_freq,1900,MHz
+naive,1:80,sample_cpu2_freq,1900,MHz
+naive,1:80,sample_cpu3_freq,1900,MHz
+naive,1:80,sample_cpu4_freq,2500,MHz
+naive,1:80,sample_cpu5_freq,2500,MHz
+naive,1:80,sample_cpu6_freq,2500,MHz
+naive,1:80,sample_cpu7_freq,2500,MHz
+naive,1:81,sample_elapsed,12458,ms
+naive,1:81,sample_power,4.893,W
+naive,1:81,sample_process_cpu,469.231,% one core
+naive,1:81,sample_free_ram,1.096,GiB
+naive,1:81,sample_battery_temp,36.000,C
+naive,1:81,sample_thermal_status,1,Android PowerManager status
+naive,1:81,sample_cpu0_freq,1900,MHz
+naive,1:81,sample_cpu1_freq,1900,MHz
+naive,1:81,sample_cpu2_freq,1900,MHz
+naive,1:81,sample_cpu3_freq,1900,MHz
+naive,1:81,sample_cpu4_freq,2500,MHz
+naive,1:81,sample_cpu5_freq,2500,MHz
+naive,1:81,sample_cpu6_freq,2500,MHz
+naive,1:81,sample_cpu7_freq,2500,MHz
+naive,1:82,sample_elapsed,12613,ms
+naive,1:82,sample_power,4.954,W
+naive,1:82,sample_process_cpu,492.903,% one core
+naive,1:82,sample_free_ram,1.096,GiB
+naive,1:82,sample_battery_temp,36.000,C
+naive,1:82,sample_thermal_status,1,Android PowerManager status
+naive,1:82,sample_cpu0_freq,1900,MHz
+naive,1:82,sample_cpu1_freq,1900,MHz
+naive,1:82,sample_cpu2_freq,1900,MHz
+naive,1:82,sample_cpu3_freq,1900,MHz
+naive,1:82,sample_cpu4_freq,2500,MHz
+naive,1:82,sample_cpu5_freq,2500,MHz
+naive,1:82,sample_cpu6_freq,2500,MHz
+naive,1:82,sample_cpu7_freq,2500,MHz
+naive,1:83,sample_elapsed,12775,ms
+naive,1:83,sample_power,4.954,W
+naive,1:83,sample_process_cpu,458.642,% one core
+naive,1:83,sample_free_ram,1.095,GiB
+naive,1:83,sample_battery_temp,36.000,C
+naive,1:83,sample_thermal_status,1,Android PowerManager status
+naive,1:83,sample_cpu0_freq,1900,MHz
+naive,1:83,sample_cpu1_freq,1900,MHz
+naive,1:83,sample_cpu2_freq,1900,MHz
+naive,1:83,sample_cpu3_freq,1900,MHz
+naive,1:83,sample_cpu4_freq,2500,MHz
+naive,1:83,sample_cpu5_freq,2500,MHz
+naive,1:83,sample_cpu6_freq,2500,MHz
+naive,1:83,sample_cpu7_freq,2500,MHz
+naive,1:84,sample_elapsed,12929,ms
+naive,1:84,sample_power,4.954,W
+naive,1:84,sample_process_cpu,473.377,% one core
+naive,1:84,sample_free_ram,1.094,GiB
+naive,1:84,sample_battery_temp,36.000,C
+naive,1:84,sample_thermal_status,1,Android PowerManager status
+naive,1:84,sample_cpu0_freq,1900,MHz
+naive,1:84,sample_cpu1_freq,1900,MHz
+naive,1:84,sample_cpu2_freq,1900,MHz
+naive,1:84,sample_cpu3_freq,1900,MHz
+naive,1:84,sample_cpu4_freq,2500,MHz
+naive,1:84,sample_cpu5_freq,2500,MHz
+naive,1:84,sample_cpu6_freq,2500,MHz
+naive,1:84,sample_cpu7_freq,2500,MHz
+naive,1:85,sample_elapsed,13084,ms
+naive,1:85,sample_power,4.954,W
+naive,1:85,sample_process_cpu,472.258,% one core
+naive,1:85,sample_free_ram,1.094,GiB
+naive,1:85,sample_battery_temp,36.000,C
+naive,1:85,sample_thermal_status,1,Android PowerManager status
+naive,1:85,sample_cpu0_freq,1900,MHz
+naive,1:85,sample_cpu1_freq,1900,MHz
+naive,1:85,sample_cpu2_freq,1900,MHz
+naive,1:85,sample_cpu3_freq,1900,MHz
+naive,1:85,sample_cpu4_freq,2500,MHz
+naive,1:85,sample_cpu5_freq,2500,MHz
+naive,1:85,sample_cpu6_freq,2500,MHz
+naive,1:85,sample_cpu7_freq,2500,MHz
+naive,1:86,sample_elapsed,13239,ms
+naive,1:86,sample_power,4.972,W
+naive,1:86,sample_process_cpu,479.355,% one core
+naive,1:86,sample_free_ram,1.094,GiB
+naive,1:86,sample_battery_temp,36.000,C
+naive,1:86,sample_thermal_status,1,Android PowerManager status
+naive,1:86,sample_cpu0_freq,1900,MHz
+naive,1:86,sample_cpu1_freq,1900,MHz
+naive,1:86,sample_cpu2_freq,1900,MHz
+naive,1:86,sample_cpu3_freq,1900,MHz
+naive,1:86,sample_cpu4_freq,2500,MHz
+naive,1:86,sample_cpu5_freq,2500,MHz
+naive,1:86,sample_cpu6_freq,2500,MHz
+naive,1:86,sample_cpu7_freq,2500,MHz
+naive,1:87,sample_elapsed,13397,ms
+naive,1:87,sample_power,4.972,W
+naive,1:87,sample_process_cpu,470.253,% one core
+naive,1:87,sample_free_ram,1.093,GiB
+naive,1:87,sample_battery_temp,36.000,C
+naive,1:87,sample_thermal_status,1,Android PowerManager status
+naive,1:87,sample_cpu0_freq,1900,MHz
+naive,1:87,sample_cpu1_freq,1900,MHz
+naive,1:87,sample_cpu2_freq,1900,MHz
+naive,1:87,sample_cpu3_freq,1900,MHz
+naive,1:87,sample_cpu4_freq,2500,MHz
+naive,1:87,sample_cpu5_freq,2500,MHz
+naive,1:87,sample_cpu6_freq,2500,MHz
+naive,1:87,sample_cpu7_freq,2500,MHz
+naive,1:88,sample_elapsed,13556,ms
+naive,1:88,sample_power,4.972,W
+naive,1:88,sample_process_cpu,476.101,% one core
+naive,1:88,sample_free_ram,1.093,GiB
+naive,1:88,sample_battery_temp,36.000,C
+naive,1:88,sample_thermal_status,1,Android PowerManager status
+naive,1:88,sample_cpu0_freq,1900,MHz
+naive,1:88,sample_cpu1_freq,1900,MHz
+naive,1:88,sample_cpu2_freq,1900,MHz
+naive,1:88,sample_cpu3_freq,1900,MHz
+naive,1:88,sample_cpu4_freq,2500,MHz
+naive,1:88,sample_cpu5_freq,2500,MHz
+naive,1:88,sample_cpu6_freq,2500,MHz
+naive,1:88,sample_cpu7_freq,2500,MHz
+naive,1:89,sample_elapsed,13714,ms
+naive,1:89,sample_power,4.972,W
+naive,1:89,sample_process_cpu,474.684,% one core
+naive,1:89,sample_free_ram,1.093,GiB
+naive,1:89,sample_battery_temp,36.000,C
+naive,1:89,sample_thermal_status,1,Android PowerManager status
+naive,1:89,sample_cpu0_freq,1900,MHz
+naive,1:89,sample_cpu1_freq,1900,MHz
+naive,1:89,sample_cpu2_freq,1900,MHz
+naive,1:89,sample_cpu3_freq,1900,MHz
+naive,1:89,sample_cpu4_freq,2500,MHz
+naive,1:89,sample_cpu5_freq,2500,MHz
+naive,1:89,sample_cpu6_freq,2500,MHz
+naive,1:89,sample_cpu7_freq,2500,MHz
+naive,1:90,sample_elapsed,13869,ms
+naive,1:90,sample_power,4.335,W
+naive,1:90,sample_process_cpu,498.065,% one core
+naive,1:90,sample_free_ram,1.093,GiB
+naive,1:90,sample_battery_temp,36.000,C
+naive,1:90,sample_thermal_status,1,Android PowerManager status
+naive,1:90,sample_cpu0_freq,1900,MHz
+naive,1:90,sample_cpu1_freq,1900,MHz
+naive,1:90,sample_cpu2_freq,1900,MHz
+naive,1:90,sample_cpu3_freq,1900,MHz
+naive,1:90,sample_cpu4_freq,2500,MHz
+naive,1:90,sample_cpu5_freq,2500,MHz
+naive,1:90,sample_cpu6_freq,2500,MHz
+naive,1:90,sample_cpu7_freq,2500,MHz
+naive,1:91,sample_elapsed,14030,ms
+naive,1:91,sample_power,4.335,W
+naive,1:91,sample_process_cpu,462.112,% one core
+naive,1:91,sample_free_ram,1.093,GiB
+naive,1:91,sample_battery_temp,36.000,C
+naive,1:91,sample_thermal_status,1,Android PowerManager status
+naive,1:91,sample_cpu0_freq,700,MHz
+naive,1:91,sample_cpu1_freq,700,MHz
+naive,1:91,sample_cpu2_freq,700,MHz
+naive,1:91,sample_cpu3_freq,700,MHz
+naive,1:91,sample_cpu4_freq,2500,MHz
+naive,1:91,sample_cpu5_freq,2500,MHz
+naive,1:91,sample_cpu6_freq,2500,MHz
+naive,1:91,sample_cpu7_freq,2500,MHz
+naive,1:92,sample_elapsed,14184,ms
+naive,1:92,sample_power,4.335,W
+naive,1:92,sample_process_cpu,481.169,% one core
+naive,1:92,sample_free_ram,1.093,GiB
+naive,1:92,sample_battery_temp,36.000,C
+naive,1:92,sample_thermal_status,1,Android PowerManager status
+naive,1:92,sample_cpu0_freq,1900,MHz
+naive,1:92,sample_cpu1_freq,1900,MHz
+naive,1:92,sample_cpu2_freq,1900,MHz
+naive,1:92,sample_cpu3_freq,1900,MHz
+naive,1:92,sample_cpu4_freq,2500,MHz
+naive,1:92,sample_cpu5_freq,2500,MHz
+naive,1:92,sample_cpu6_freq,2500,MHz
+naive,1:92,sample_cpu7_freq,2500,MHz
+naive,1:93,sample_elapsed,14339,ms
+naive,1:93,sample_power,4.335,W
+naive,1:93,sample_process_cpu,472.258,% one core
+naive,1:93,sample_free_ram,1.090,GiB
+naive,1:93,sample_battery_temp,36.000,C
+naive,1:93,sample_thermal_status,1,Android PowerManager status
+naive,1:93,sample_cpu0_freq,1300,MHz
+naive,1:93,sample_cpu1_freq,1900,MHz
+naive,1:93,sample_cpu2_freq,1900,MHz
+naive,1:93,sample_cpu3_freq,1900,MHz
+naive,1:93,sample_cpu4_freq,2500,MHz
+naive,1:93,sample_cpu5_freq,2500,MHz
+naive,1:93,sample_cpu6_freq,2500,MHz
+naive,1:93,sample_cpu7_freq,2500,MHz
+naive,1:94,sample_elapsed,14494,ms
+naive,1:94,sample_power,4.462,W
+naive,1:94,sample_process_cpu,487.742,% one core
+naive,1:94,sample_free_ram,1.090,GiB
+naive,1:94,sample_battery_temp,36.000,C
+naive,1:94,sample_thermal_status,1,Android PowerManager status
+naive,1:94,sample_cpu0_freq,900,MHz
+naive,1:94,sample_cpu1_freq,900,MHz
+naive,1:94,sample_cpu2_freq,900,MHz
+naive,1:94,sample_cpu3_freq,900,MHz
+naive,1:94,sample_cpu4_freq,2500,MHz
+naive,1:94,sample_cpu5_freq,2500,MHz
+naive,1:94,sample_cpu6_freq,2500,MHz
+naive,1:94,sample_cpu7_freq,2500,MHz
+naive,1:95,sample_elapsed,14652,ms
+naive,1:95,sample_power,4.462,W
+naive,1:95,sample_process_cpu,486.076,% one core
+naive,1:95,sample_free_ram,1.090,GiB
+naive,1:95,sample_battery_temp,36.000,C
+naive,1:95,sample_thermal_status,1,Android PowerManager status
+naive,1:95,sample_cpu0_freq,1900,MHz
+naive,1:95,sample_cpu1_freq,1900,MHz
+naive,1:95,sample_cpu2_freq,1900,MHz
+naive,1:95,sample_cpu3_freq,1900,MHz
+naive,1:95,sample_cpu4_freq,2500,MHz
+naive,1:95,sample_cpu5_freq,2500,MHz
+naive,1:95,sample_cpu6_freq,2500,MHz
+naive,1:95,sample_cpu7_freq,2500,MHz
+naive,1:96,sample_elapsed,14813,ms
+naive,1:96,sample_power,4.462,W
+naive,1:96,sample_process_cpu,446.584,% one core
+naive,1:96,sample_free_ram,1.091,GiB
+naive,1:96,sample_battery_temp,36.000,C
+naive,1:96,sample_thermal_status,1,Android PowerManager status
+naive,1:96,sample_cpu0_freq,1900,MHz
+naive,1:96,sample_cpu1_freq,1900,MHz
+naive,1:96,sample_cpu2_freq,1900,MHz
+naive,1:96,sample_cpu3_freq,1900,MHz
+naive,1:96,sample_cpu4_freq,2500,MHz
+naive,1:96,sample_cpu5_freq,2500,MHz
+naive,1:96,sample_cpu6_freq,2500,MHz
+naive,1:96,sample_cpu7_freq,2500,MHz
+naive,1:97,sample_elapsed,14969,ms
+naive,1:97,sample_power,4.462,W
+naive,1:97,sample_process_cpu,466.667,% one core
+naive,1:97,sample_free_ram,1.091,GiB
+naive,1:97,sample_battery_temp,36.000,C
+naive,1:97,sample_thermal_status,1,Android PowerManager status
+naive,1:97,sample_cpu0_freq,1400,MHz
+naive,1:97,sample_cpu1_freq,450,MHz
+naive,1:97,sample_cpu2_freq,450,MHz
+naive,1:97,sample_cpu3_freq,450,MHz
+naive,1:97,sample_cpu4_freq,2500,MHz
+naive,1:97,sample_cpu5_freq,2500,MHz
+naive,1:97,sample_cpu6_freq,2500,MHz
+naive,1:97,sample_cpu7_freq,2500,MHz
+naive,1:98,sample_elapsed,15126,ms
+naive,1:98,sample_power,4.530,W
+naive,1:98,sample_process_cpu,473.248,% one core
+naive,1:98,sample_free_ram,1.091,GiB
+naive,1:98,sample_battery_temp,36.000,C
+naive,1:98,sample_thermal_status,1,Android PowerManager status
+naive,1:98,sample_cpu0_freq,1900,MHz
+naive,1:98,sample_cpu1_freq,1900,MHz
+naive,1:98,sample_cpu2_freq,1900,MHz
+naive,1:98,sample_cpu3_freq,1900,MHz
+naive,1:98,sample_cpu4_freq,2500,MHz
+naive,1:98,sample_cpu5_freq,2500,MHz
+naive,1:98,sample_cpu6_freq,2500,MHz
+naive,1:98,sample_cpu7_freq,2500,MHz
+naive,1:99,sample_elapsed,15284,ms
+naive,1:99,sample_power,4.530,W
+naive,1:99,sample_process_cpu,450.633,% one core
+naive,1:99,sample_free_ram,1.091,GiB
+naive,1:99,sample_battery_temp,36.000,C
+naive,1:99,sample_thermal_status,1,Android PowerManager status
+naive,1:99,sample_cpu0_freq,450,MHz
+naive,1:99,sample_cpu1_freq,450,MHz
+naive,1:99,sample_cpu2_freq,450,MHz
+naive,1:99,sample_cpu3_freq,450,MHz
+naive,1:99,sample_cpu4_freq,2500,MHz
+naive,1:99,sample_cpu5_freq,2500,MHz
+naive,1:99,sample_cpu6_freq,2500,MHz
+naive,1:99,sample_cpu7_freq,2500,MHz
+naive,1:100,sample_elapsed,15438,ms
+naive,1:100,sample_power,4.530,W
+naive,1:100,sample_process_cpu,461.688,% one core
+naive,1:100,sample_free_ram,1.090,GiB
+naive,1:100,sample_battery_temp,36.000,C
+naive,1:100,sample_thermal_status,1,Android PowerManager status
+naive,1:100,sample_cpu0_freq,1900,MHz
+naive,1:100,sample_cpu1_freq,1900,MHz
+naive,1:100,sample_cpu2_freq,1900,MHz
+naive,1:100,sample_cpu3_freq,1900,MHz
+naive,1:100,sample_cpu4_freq,2500,MHz
+naive,1:100,sample_cpu5_freq,2500,MHz
+naive,1:100,sample_cpu6_freq,2500,MHz
+naive,1:100,sample_cpu7_freq,2500,MHz
+naive,1:101,sample_elapsed,15592,ms
+naive,1:101,sample_power,4.530,W
+naive,1:101,sample_process_cpu,470.130,% one core
+naive,1:101,sample_free_ram,1.090,GiB
+naive,1:101,sample_battery_temp,36.000,C
+naive,1:101,sample_thermal_status,1,Android PowerManager status
+naive,1:101,sample_cpu0_freq,1900,MHz
+naive,1:101,sample_cpu1_freq,1900,MHz
+naive,1:101,sample_cpu2_freq,1900,MHz
+naive,1:101,sample_cpu3_freq,1900,MHz
+naive,1:101,sample_cpu4_freq,2500,MHz
+naive,1:101,sample_cpu5_freq,2500,MHz
+naive,1:101,sample_cpu6_freq,2500,MHz
+naive,1:101,sample_cpu7_freq,2500,MHz
+naive,1:102,sample_elapsed,15747,ms
+naive,1:102,sample_power,4.521,W
+naive,1:102,sample_process_cpu,478.065,% one core
+naive,1:102,sample_free_ram,1.090,GiB
+naive,1:102,sample_battery_temp,36.000,C
+naive,1:102,sample_thermal_status,1,Android PowerManager status
+naive,1:102,sample_cpu0_freq,600,MHz
+naive,1:102,sample_cpu1_freq,1100,MHz
+naive,1:102,sample_cpu2_freq,1100,MHz
+naive,1:102,sample_cpu3_freq,1700,MHz
+naive,1:102,sample_cpu4_freq,2500,MHz
+naive,1:102,sample_cpu5_freq,2500,MHz
+naive,1:102,sample_cpu6_freq,2500,MHz
+naive,1:102,sample_cpu7_freq,2500,MHz
+naive,1:103,sample_elapsed,15906,ms
+naive,1:103,sample_power,4.521,W
+naive,1:103,sample_process_cpu,454.717,% one core
+naive,1:103,sample_free_ram,1.089,GiB
+naive,1:103,sample_battery_temp,36.000,C
+naive,1:103,sample_thermal_status,1,Android PowerManager status
+naive,1:103,sample_cpu0_freq,1900,MHz
+naive,1:103,sample_cpu1_freq,1900,MHz
+naive,1:103,sample_cpu2_freq,1900,MHz
+naive,1:103,sample_cpu3_freq,1900,MHz
+naive,1:103,sample_cpu4_freq,2500,MHz
+naive,1:103,sample_cpu5_freq,2500,MHz
+naive,1:103,sample_cpu6_freq,2500,MHz
+naive,1:103,sample_cpu7_freq,2500,MHz
+naive,1:104,sample_elapsed,16061,ms
+naive,1:104,sample_power,4.521,W
+naive,1:104,sample_process_cpu,464.516,% one core
+naive,1:104,sample_free_ram,1.089,GiB
+naive,1:104,sample_battery_temp,36.000,C
+naive,1:104,sample_thermal_status,1,Android PowerManager status
+naive,1:104,sample_cpu0_freq,700,MHz
+naive,1:104,sample_cpu1_freq,700,MHz
+naive,1:104,sample_cpu2_freq,700,MHz
+naive,1:104,sample_cpu3_freq,700,MHz
+naive,1:104,sample_cpu4_freq,2500,MHz
+naive,1:104,sample_cpu5_freq,2500,MHz
+naive,1:104,sample_cpu6_freq,2500,MHz
+naive,1:104,sample_cpu7_freq,2500,MHz
+naive,1:105,sample_elapsed,16215,ms
+naive,1:105,sample_power,4.521,W
+naive,1:105,sample_process_cpu,462.338,% one core
+naive,1:105,sample_free_ram,1.089,GiB
+naive,1:105,sample_battery_temp,36.000,C
+naive,1:105,sample_thermal_status,1,Android PowerManager status
+naive,1:105,sample_cpu0_freq,1900,MHz
+naive,1:105,sample_cpu1_freq,1900,MHz
+naive,1:105,sample_cpu2_freq,1900,MHz
+naive,1:105,sample_cpu3_freq,1900,MHz
+naive,1:105,sample_cpu4_freq,2500,MHz
+naive,1:105,sample_cpu5_freq,2500,MHz
+naive,1:105,sample_cpu6_freq,2500,MHz
+naive,1:105,sample_cpu7_freq,2500,MHz
+naive,1:106,sample_elapsed,16371,ms
+naive,1:106,sample_power,4.441,W
+naive,1:106,sample_process_cpu,473.718,% one core
+naive,1:106,sample_free_ram,1.089,GiB
+naive,1:106,sample_battery_temp,36.000,C
+naive,1:106,sample_thermal_status,1,Android PowerManager status
+naive,1:106,sample_cpu0_freq,1900,MHz
+naive,1:106,sample_cpu1_freq,1900,MHz
+naive,1:106,sample_cpu2_freq,1900,MHz
+naive,1:106,sample_cpu3_freq,1900,MHz
+naive,1:106,sample_cpu4_freq,2500,MHz
+naive,1:106,sample_cpu5_freq,2500,MHz
+naive,1:106,sample_cpu6_freq,2500,MHz
+naive,1:106,sample_cpu7_freq,2500,MHz
+naive,1:107,sample_elapsed,16529,ms
+naive,1:107,sample_power,4.441,W
+naive,1:107,sample_process_cpu,497.468,% one core
+naive,1:107,sample_free_ram,1.087,GiB
+naive,1:107,sample_battery_temp,36.000,C
+naive,1:107,sample_thermal_status,1,Android PowerManager status
+naive,1:107,sample_cpu0_freq,1900,MHz
+naive,1:107,sample_cpu1_freq,1900,MHz
+naive,1:107,sample_cpu2_freq,1900,MHz
+naive,1:107,sample_cpu3_freq,1800,MHz
+naive,1:107,sample_cpu4_freq,2500,MHz
+naive,1:107,sample_cpu5_freq,2500,MHz
+naive,1:107,sample_cpu6_freq,2500,MHz
+naive,1:107,sample_cpu7_freq,2500,MHz
+naive,1:108,sample_elapsed,16684,ms
+naive,1:108,sample_power,4.441,W
+naive,1:108,sample_process_cpu,469.677,% one core
+naive,1:108,sample_free_ram,1.088,GiB
+naive,1:108,sample_battery_temp,36.000,C
+naive,1:108,sample_thermal_status,1,Android PowerManager status
+naive,1:108,sample_cpu0_freq,1900,MHz
+naive,1:108,sample_cpu1_freq,1900,MHz
+naive,1:108,sample_cpu2_freq,1900,MHz
+naive,1:108,sample_cpu3_freq,1900,MHz
+naive,1:108,sample_cpu4_freq,2500,MHz
+naive,1:108,sample_cpu5_freq,2500,MHz
+naive,1:108,sample_cpu6_freq,2500,MHz
+naive,1:108,sample_cpu7_freq,2500,MHz
+naive,1:109,sample_elapsed,16839,ms
+naive,1:109,sample_power,4.441,W
+naive,1:109,sample_process_cpu,464.516,% one core
+naive,1:109,sample_free_ram,1.088,GiB
+naive,1:109,sample_battery_temp,36.000,C
+naive,1:109,sample_thermal_status,1,Android PowerManager status
+naive,1:109,sample_cpu0_freq,1500,MHz
+naive,1:109,sample_cpu1_freq,1500,MHz
+naive,1:109,sample_cpu2_freq,1500,MHz
+naive,1:109,sample_cpu3_freq,1500,MHz
+naive,1:109,sample_cpu4_freq,2500,MHz
+naive,1:109,sample_cpu5_freq,2500,MHz
+naive,1:109,sample_cpu6_freq,2500,MHz
+naive,1:109,sample_cpu7_freq,2500,MHz
+naive,1:110,sample_elapsed,16993,ms
+naive,1:110,sample_power,4.481,W
+naive,1:110,sample_process_cpu,481.169,% one core
+naive,1:110,sample_free_ram,1.088,GiB
+naive,1:110,sample_battery_temp,36.000,C
+naive,1:110,sample_thermal_status,1,Android PowerManager status
+naive,1:110,sample_cpu0_freq,700,MHz
+naive,1:110,sample_cpu1_freq,700,MHz
+naive,1:110,sample_cpu2_freq,700,MHz
+naive,1:110,sample_cpu3_freq,700,MHz
+naive,1:110,sample_cpu4_freq,2500,MHz
+naive,1:110,sample_cpu5_freq,2500,MHz
+naive,1:110,sample_cpu6_freq,2500,MHz
+naive,1:110,sample_cpu7_freq,2500,MHz
+naive,1:111,sample_elapsed,17152,ms
+naive,1:111,sample_power,4.481,W
+naive,1:111,sample_process_cpu,467.296,% one core
+naive,1:111,sample_free_ram,1.088,GiB
+naive,1:111,sample_battery_temp,36.000,C
+naive,1:111,sample_thermal_status,1,Android PowerManager status
+naive,1:111,sample_cpu0_freq,900,MHz
+naive,1:111,sample_cpu1_freq,1900,MHz
+naive,1:111,sample_cpu2_freq,1900,MHz
+naive,1:111,sample_cpu3_freq,1900,MHz
+naive,1:111,sample_cpu4_freq,2500,MHz
+naive,1:111,sample_cpu5_freq,2500,MHz
+naive,1:111,sample_cpu6_freq,2500,MHz
+naive,1:111,sample_cpu7_freq,2500,MHz
+naive,1:112,sample_elapsed,17311,ms
+naive,1:112,sample_power,4.481,W
+naive,1:112,sample_process_cpu,475.472,% one core
+naive,1:112,sample_free_ram,1.088,GiB
+naive,1:112,sample_battery_temp,36.000,C
+naive,1:112,sample_thermal_status,1,Android PowerManager status
+naive,1:112,sample_cpu0_freq,1900,MHz
+naive,1:112,sample_cpu1_freq,1900,MHz
+naive,1:112,sample_cpu2_freq,1900,MHz
+naive,1:112,sample_cpu3_freq,1900,MHz
+naive,1:112,sample_cpu4_freq,2500,MHz
+naive,1:112,sample_cpu5_freq,2500,MHz
+naive,1:112,sample_cpu6_freq,2500,MHz
+naive,1:112,sample_cpu7_freq,2500,MHz
+naive,1:113,sample_elapsed,17472,ms
+naive,1:113,sample_power,4.481,W
+naive,1:113,sample_process_cpu,448.447,% one core
+naive,1:113,sample_free_ram,1.088,GiB
+naive,1:113,sample_battery_temp,36.000,C
+naive,1:113,sample_thermal_status,1,Android PowerManager status
+naive,1:113,sample_cpu0_freq,500,MHz
+naive,1:113,sample_cpu1_freq,500,MHz
+naive,1:113,sample_cpu2_freq,500,MHz
+naive,1:113,sample_cpu3_freq,500,MHz
+naive,1:113,sample_cpu4_freq,2500,MHz
+naive,1:113,sample_cpu5_freq,2500,MHz
+naive,1:113,sample_cpu6_freq,2500,MHz
+naive,1:113,sample_cpu7_freq,2500,MHz
+naive,1:114,sample_elapsed,17628,ms
+naive,1:114,sample_power,4.742,W
+naive,1:114,sample_process_cpu,476.923,% one core
+naive,1:114,sample_free_ram,1.088,GiB
+naive,1:114,sample_battery_temp,36.000,C
+naive,1:114,sample_thermal_status,1,Android PowerManager status
+naive,1:114,sample_cpu0_freq,1900,MHz
+naive,1:114,sample_cpu1_freq,1900,MHz
+naive,1:114,sample_cpu2_freq,1900,MHz
+naive,1:114,sample_cpu3_freq,1900,MHz
+naive,1:114,sample_cpu4_freq,2500,MHz
+naive,1:114,sample_cpu5_freq,2500,MHz
+naive,1:114,sample_cpu6_freq,2500,MHz
+naive,1:114,sample_cpu7_freq,2500,MHz
+naive,1:115,sample_elapsed,17785,ms
+naive,1:115,sample_power,4.742,W
+naive,1:115,sample_process_cpu,466.242,% one core
+naive,1:115,sample_free_ram,1.088,GiB
+naive,1:115,sample_battery_temp,36.000,C
+naive,1:115,sample_thermal_status,1,Android PowerManager status
+naive,1:115,sample_cpu0_freq,1900,MHz
+naive,1:115,sample_cpu1_freq,1900,MHz
+naive,1:115,sample_cpu2_freq,1900,MHz
+naive,1:115,sample_cpu3_freq,1900,MHz
+naive,1:115,sample_cpu4_freq,2500,MHz
+naive,1:115,sample_cpu5_freq,2500,MHz
+naive,1:115,sample_cpu6_freq,2500,MHz
+naive,1:115,sample_cpu7_freq,2500,MHz
+naive,1:116,sample_elapsed,17942,ms
+naive,1:116,sample_power,4.697,W
+naive,1:116,sample_process_cpu,461.783,% one core
+naive,1:116,sample_free_ram,1.087,GiB
+naive,1:116,sample_battery_temp,36.000,C
+naive,1:116,sample_thermal_status,1,Android PowerManager status
+naive,1:116,sample_cpu0_freq,1900,MHz
+naive,1:116,sample_cpu1_freq,1900,MHz
+naive,1:116,sample_cpu2_freq,1900,MHz
+naive,1:116,sample_cpu3_freq,1900,MHz
+naive,1:116,sample_cpu4_freq,2500,MHz
+naive,1:116,sample_cpu5_freq,2500,MHz
+naive,1:116,sample_cpu6_freq,2500,MHz
+naive,1:116,sample_cpu7_freq,2500,MHz
+naive,1:117,sample_elapsed,18095,ms
+naive,1:117,sample_power,4.697,W
+naive,1:117,sample_process_cpu,465.359,% one core
+naive,1:117,sample_free_ram,1.087,GiB
+naive,1:117,sample_battery_temp,36.000,C
+naive,1:117,sample_thermal_status,1,Android PowerManager status
+naive,1:117,sample_cpu0_freq,1900,MHz
+naive,1:117,sample_cpu1_freq,1900,MHz
+naive,1:117,sample_cpu2_freq,1900,MHz
+naive,1:117,sample_cpu3_freq,1900,MHz
+naive,1:117,sample_cpu4_freq,2500,MHz
+naive,1:117,sample_cpu5_freq,2500,MHz
+naive,1:117,sample_cpu6_freq,2500,MHz
+naive,1:117,sample_cpu7_freq,2500,MHz
+naive,1:118,sample_elapsed,18248,ms
+naive,1:118,sample_power,4.697,W
+naive,1:118,sample_process_cpu,477.124,% one core
+naive,1:118,sample_free_ram,1.087,GiB
+naive,1:118,sample_battery_temp,36.000,C
+naive,1:118,sample_thermal_status,1,Android PowerManager status
+naive,1:118,sample_cpu0_freq,1900,MHz
+naive,1:118,sample_cpu1_freq,1000,MHz
+naive,1:118,sample_cpu2_freq,1000,MHz
+naive,1:118,sample_cpu3_freq,1000,MHz
+naive,1:118,sample_cpu4_freq,2500,MHz
+naive,1:118,sample_cpu5_freq,2500,MHz
+naive,1:118,sample_cpu6_freq,2500,MHz
+naive,1:118,sample_cpu7_freq,2500,MHz
+naive,1:119,sample_elapsed,18406,ms
+naive,1:119,sample_power,4.686,W
+naive,1:119,sample_process_cpu,466.456,% one core
+naive,1:119,sample_free_ram,1.086,GiB
+naive,1:119,sample_battery_temp,36.000,C
+naive,1:119,sample_thermal_status,1,Android PowerManager status
+naive,1:119,sample_cpu0_freq,1900,MHz
+naive,1:119,sample_cpu1_freq,1900,MHz
+naive,1:119,sample_cpu2_freq,1900,MHz
+naive,1:119,sample_cpu3_freq,1900,MHz
+naive,1:119,sample_cpu4_freq,2500,MHz
+naive,1:119,sample_cpu5_freq,2500,MHz
+naive,1:119,sample_cpu6_freq,2500,MHz
+naive,1:119,sample_cpu7_freq,2500,MHz
+naive,1:120,sample_elapsed,18567,ms
+naive,1:120,sample_power,4.686,W
+naive,1:120,sample_process_cpu,464.596,% one core
+naive,1:120,sample_free_ram,1.086,GiB
+naive,1:120,sample_battery_temp,36.000,C
+naive,1:120,sample_thermal_status,1,Android PowerManager status
+naive,1:120,sample_cpu0_freq,1900,MHz
+naive,1:120,sample_cpu1_freq,1900,MHz
+naive,1:120,sample_cpu2_freq,1900,MHz
+naive,1:120,sample_cpu3_freq,1900,MHz
+naive,1:120,sample_cpu4_freq,2500,MHz
+naive,1:120,sample_cpu5_freq,2500,MHz
+naive,1:120,sample_cpu6_freq,2500,MHz
+naive,1:120,sample_cpu7_freq,2500,MHz
+naive,1:121,sample_elapsed,18726,ms
+naive,1:121,sample_power,4.686,W
+naive,1:121,sample_process_cpu,454.717,% one core
+naive,1:121,sample_free_ram,1.087,GiB
+naive,1:121,sample_battery_temp,36.000,C
+naive,1:121,sample_thermal_status,1,Android PowerManager status
+naive,1:121,sample_cpu0_freq,1900,MHz
+naive,1:121,sample_cpu1_freq,1900,MHz
+naive,1:121,sample_cpu2_freq,1900,MHz
+naive,1:121,sample_cpu3_freq,1900,MHz
+naive,1:121,sample_cpu4_freq,2500,MHz
+naive,1:121,sample_cpu5_freq,2500,MHz
+naive,1:121,sample_cpu6_freq,2500,MHz
+naive,1:121,sample_cpu7_freq,2500,MHz
+naive,1:122,sample_elapsed,18882,ms
+naive,1:122,sample_power,4.686,W
+naive,1:122,sample_process_cpu,471.795,% one core
+naive,1:122,sample_free_ram,1.087,GiB
+naive,1:122,sample_battery_temp,36.000,C
+naive,1:122,sample_thermal_status,1,Android PowerManager status
+naive,1:122,sample_cpu0_freq,1900,MHz
+naive,1:122,sample_cpu1_freq,1900,MHz
+naive,1:122,sample_cpu2_freq,1900,MHz
+naive,1:122,sample_cpu3_freq,1900,MHz
+naive,1:122,sample_cpu4_freq,2500,MHz
+naive,1:122,sample_cpu5_freq,2500,MHz
+naive,1:122,sample_cpu6_freq,2500,MHz
+naive,1:122,sample_cpu7_freq,2500,MHz
+naive,1:123,sample_elapsed,19037,ms
+naive,1:123,sample_power,4.256,W
+naive,1:123,sample_process_cpu,479.355,% one core
+naive,1:123,sample_free_ram,1.087,GiB
+naive,1:123,sample_battery_temp,36.000,C
+naive,1:123,sample_thermal_status,1,Android PowerManager status
+naive,1:123,sample_cpu0_freq,1900,MHz
+naive,1:123,sample_cpu1_freq,1900,MHz
+naive,1:123,sample_cpu2_freq,1900,MHz
+naive,1:123,sample_cpu3_freq,1900,MHz
+naive,1:123,sample_cpu4_freq,2500,MHz
+naive,1:123,sample_cpu5_freq,2500,MHz
+naive,1:123,sample_cpu6_freq,2500,MHz
+naive,1:123,sample_cpu7_freq,2500,MHz
+naive,1:124,sample_elapsed,19195,ms
+naive,1:124,sample_power,4.256,W
+naive,1:124,sample_process_cpu,461.392,% one core
+naive,1:124,sample_free_ram,1.087,GiB
+naive,1:124,sample_battery_temp,36.000,C
+naive,1:124,sample_thermal_status,1,Android PowerManager status
+naive,1:124,sample_cpu0_freq,800,MHz
+naive,1:124,sample_cpu1_freq,800,MHz
+naive,1:124,sample_cpu2_freq,800,MHz
+naive,1:124,sample_cpu3_freq,800,MHz
+naive,1:124,sample_cpu4_freq,2500,MHz
+naive,1:124,sample_cpu5_freq,2500,MHz
+naive,1:124,sample_cpu6_freq,2500,MHz
+naive,1:124,sample_cpu7_freq,2500,MHz
+naive,1:125,sample_elapsed,19352,ms
+naive,1:125,sample_power,4.256,W
+naive,1:125,sample_process_cpu,461.783,% one core
+naive,1:125,sample_free_ram,1.087,GiB
+naive,1:125,sample_battery_temp,36.000,C
+naive,1:125,sample_thermal_status,1,Android PowerManager status
+naive,1:125,sample_cpu0_freq,1900,MHz
+naive,1:125,sample_cpu1_freq,1900,MHz
+naive,1:125,sample_cpu2_freq,1900,MHz
+naive,1:125,sample_cpu3_freq,1900,MHz
+naive,1:125,sample_cpu4_freq,2500,MHz
+naive,1:125,sample_cpu5_freq,2500,MHz
+naive,1:125,sample_cpu6_freq,2500,MHz
+naive,1:125,sample_cpu7_freq,2500,MHz
+naive,1:126,sample_elapsed,19507,ms
+naive,1:126,sample_power,4.256,W
+naive,1:126,sample_process_cpu,476.129,% one core
+naive,1:126,sample_free_ram,1.086,GiB
+naive,1:126,sample_battery_temp,36.000,C
+naive,1:126,sample_thermal_status,1,Android PowerManager status
+naive,1:126,sample_cpu0_freq,1900,MHz
+naive,1:126,sample_cpu1_freq,1900,MHz
+naive,1:126,sample_cpu2_freq,1900,MHz
+naive,1:126,sample_cpu3_freq,1900,MHz
+naive,1:126,sample_cpu4_freq,2500,MHz
+naive,1:126,sample_cpu5_freq,2500,MHz
+naive,1:126,sample_cpu6_freq,2500,MHz
+naive,1:126,sample_cpu7_freq,2500,MHz
+naive,1:127,sample_elapsed,19663,ms
+naive,1:127,sample_power,4.831,W
+naive,1:127,sample_process_cpu,489.744,% one core
+naive,1:127,sample_free_ram,1.085,GiB
+naive,1:127,sample_battery_temp,36.000,C
+naive,1:127,sample_thermal_status,1,Android PowerManager status
+naive,1:127,sample_cpu0_freq,1900,MHz
+naive,1:127,sample_cpu1_freq,1900,MHz
+naive,1:127,sample_cpu2_freq,1900,MHz
+naive,1:127,sample_cpu3_freq,1900,MHz
+naive,1:127,sample_cpu4_freq,2500,MHz
+naive,1:127,sample_cpu5_freq,2500,MHz
+naive,1:127,sample_cpu6_freq,2500,MHz
+naive,1:127,sample_cpu7_freq,2500,MHz
+naive,1:128,sample_elapsed,19822,ms
+naive,1:128,sample_power,4.831,W
+naive,1:128,sample_process_cpu,459.119,% one core
+naive,1:128,sample_free_ram,1.084,GiB
+naive,1:128,sample_battery_temp,36.000,C
+naive,1:128,sample_thermal_status,1,Android PowerManager status
+naive,1:128,sample_cpu0_freq,1900,MHz
+naive,1:128,sample_cpu1_freq,1900,MHz
+naive,1:128,sample_cpu2_freq,1900,MHz
+naive,1:128,sample_cpu3_freq,1900,MHz
+naive,1:128,sample_cpu4_freq,2500,MHz
+naive,1:128,sample_cpu5_freq,2500,MHz
+naive,1:128,sample_cpu6_freq,2500,MHz
+naive,1:128,sample_cpu7_freq,2500,MHz
+naive,1:129,sample_elapsed,19977,ms
+naive,1:129,sample_power,4.831,W
+naive,1:129,sample_process_cpu,470.323,% one core
+naive,1:129,sample_free_ram,1.084,GiB
+naive,1:129,sample_battery_temp,36.000,C
+naive,1:129,sample_thermal_status,1,Android PowerManager status
+naive,1:129,sample_cpu0_freq,1900,MHz
+naive,1:129,sample_cpu1_freq,1900,MHz
+naive,1:129,sample_cpu2_freq,1900,MHz
+naive,1:129,sample_cpu3_freq,1900,MHz
+naive,1:129,sample_cpu4_freq,2500,MHz
+naive,1:129,sample_cpu5_freq,2500,MHz
+naive,1:129,sample_cpu6_freq,2500,MHz
+naive,1:129,sample_cpu7_freq,2500,MHz
+naive,1:130,sample_elapsed,20131,ms
+naive,1:130,sample_power,4.831,W
+naive,1:130,sample_process_cpu,462.338,% one core
+naive,1:130,sample_free_ram,1.084,GiB
+naive,1:130,sample_battery_temp,36.000,C
+naive,1:130,sample_thermal_status,1,Android PowerManager status
+naive,1:130,sample_cpu0_freq,1900,MHz
+naive,1:130,sample_cpu1_freq,900,MHz
+naive,1:130,sample_cpu2_freq,900,MHz
+naive,1:130,sample_cpu3_freq,700,MHz
+naive,1:130,sample_cpu4_freq,2500,MHz
+naive,1:130,sample_cpu5_freq,2500,MHz
+naive,1:130,sample_cpu6_freq,2500,MHz
+naive,1:130,sample_cpu7_freq,2500,MHz
+naive,1:131,sample_elapsed,20286,ms
+naive,1:131,sample_power,5.828,W
+naive,1:131,sample_process_cpu,470.968,% one core
+naive,1:131,sample_free_ram,1.083,GiB
+naive,1:131,sample_battery_temp,36.000,C
+naive,1:131,sample_thermal_status,1,Android PowerManager status
+naive,1:131,sample_cpu0_freq,1900,MHz
+naive,1:131,sample_cpu1_freq,1900,MHz
+naive,1:131,sample_cpu2_freq,1900,MHz
+naive,1:131,sample_cpu3_freq,1900,MHz
+naive,1:131,sample_cpu4_freq,2500,MHz
+naive,1:131,sample_cpu5_freq,2500,MHz
+naive,1:131,sample_cpu6_freq,2500,MHz
+naive,1:131,sample_cpu7_freq,2500,MHz
+naive,1:132,sample_elapsed,20443,ms
+naive,1:132,sample_power,5.828,W
+naive,1:132,sample_process_cpu,452.229,% one core
+naive,1:132,sample_free_ram,1.082,GiB
+naive,1:132,sample_battery_temp,36.000,C
+naive,1:132,sample_thermal_status,1,Android PowerManager status
+naive,1:132,sample_cpu0_freq,1900,MHz
+naive,1:132,sample_cpu1_freq,1900,MHz
+naive,1:132,sample_cpu2_freq,1900,MHz
+naive,1:132,sample_cpu3_freq,1900,MHz
+naive,1:132,sample_cpu4_freq,2500,MHz
+naive,1:132,sample_cpu5_freq,2500,MHz
+naive,1:132,sample_cpu6_freq,2500,MHz
+naive,1:132,sample_cpu7_freq,2500,MHz
+naive,1:133,sample_elapsed,20598,ms
+naive,1:133,sample_power,5.828,W
+naive,1:133,sample_process_cpu,467.097,% one core
+naive,1:133,sample_free_ram,1.080,GiB
+naive,1:133,sample_battery_temp,36.000,C
+naive,1:133,sample_thermal_status,1,Android PowerManager status
+naive,1:133,sample_cpu0_freq,1900,MHz
+naive,1:133,sample_cpu1_freq,1900,MHz
+naive,1:133,sample_cpu2_freq,1900,MHz
+naive,1:133,sample_cpu3_freq,1900,MHz
+naive,1:133,sample_cpu4_freq,2500,MHz
+naive,1:133,sample_cpu5_freq,2500,MHz
+naive,1:133,sample_cpu6_freq,2500,MHz
+naive,1:133,sample_cpu7_freq,2500,MHz
+naive,1:134,sample_elapsed,20756,ms
+naive,1:134,sample_power,5.828,W
+naive,1:134,sample_process_cpu,472.785,% one core
+naive,1:134,sample_free_ram,1.078,GiB
+naive,1:134,sample_battery_temp,36.000,C
+naive,1:134,sample_thermal_status,1,Android PowerManager status
+naive,1:134,sample_cpu0_freq,1900,MHz
+naive,1:134,sample_cpu1_freq,1900,MHz
+naive,1:134,sample_cpu2_freq,1900,MHz
+naive,1:134,sample_cpu3_freq,1900,MHz
+naive,1:134,sample_cpu4_freq,2500,MHz
+naive,1:134,sample_cpu5_freq,2500,MHz
+naive,1:134,sample_cpu6_freq,2500,MHz
+naive,1:134,sample_cpu7_freq,2500,MHz
+naive,median,pp,103.000,tok/s
+naive,stddev,pp,0.000,tok/s
+naive,median,tg,8.050,tok/s
+naive,stddev,tg,0.000,tok/s
+naive,median,power,4.570,W
+naive,stddev,power,0.000,W
+naive,median,tok_per_w,1.761,tok/W
+naive,stddev,tok_per_w,0.000,tok/W
+naive,median,ttft_pp512_derived,5095.097,ms
+naive,stddev,ttft_pp512_derived,0.000,ms
+naive,median,start_temp,36.000,C
+naive,stddev,start_temp,0.000,C
+naive,median,average_process_cpu,468.228,% one core
+naive,stddev,average_process_cpu,0.000,% one core
+naive,median,minimum_free_ram,1.078,GiB
+naive,stddev,minimum_free_ram,0.000,GiB
+naive,median,peak_battery_temp,36.000,C
+naive,stddev,peak_battery_temp,0.000,C
+naive,median,mean_perf_core_clock,2500.000,MHz
+naive,stddev,mean_perf_core_clock,0.000,MHz
+naive,median,mean_little_core_clock,1803.477,MHz
+naive,stddev,mean_little_core_clock,0.000,MHz
+threads_only,1,pp,126.000,tok/s
+threads_only,1,tg,14.800,tok/s
+threads_only,1,power,4.449,W
+threads_only,1,tok_per_w,3.326,tok/W
+threads_only,1,ttft_pp512_derived,4131.060,ms
+threads_only,1,start_temp,36.000,C
+threads_only,1,average_process_cpu,479.126,% one core
+threads_only,1,minimum_free_ram,1.056,GiB
+threads_only,1,peak_battery_temp,37.000,C
+threads_only,1,peak_thermal_status,1,Android PowerManager status
+threads_only,1:1,sample_elapsed,1,ms
+threads_only,1:1,sample_power,1.030,W
+threads_only,1:1,sample_process_cpu,1400.000,% one core
+threads_only,1:1,sample_free_ram,1.216,GiB
+threads_only,1:1,sample_battery_temp,36.000,C
+threads_only,1:1,sample_thermal_status,1,Android PowerManager status
+threads_only,1:1,sample_cpu0_freq,1300,MHz
+threads_only,1:1,sample_cpu1_freq,1200,MHz
+threads_only,1:1,sample_cpu2_freq,1200,MHz
+threads_only,1:1,sample_cpu3_freq,1800,MHz
+threads_only,1:1,sample_cpu4_freq,2200,MHz
+threads_only,1:1,sample_cpu5_freq,2200,MHz
+threads_only,1:1,sample_cpu6_freq,2200,MHz
+threads_only,1:1,sample_cpu7_freq,2200,MHz
+threads_only,1:2,sample_elapsed,175,ms
+threads_only,1:2,sample_power,1.030,W
+threads_only,1:2,sample_process_cpu,354.598,% one core
+threads_only,1:2,sample_free_ram,1.181,GiB
+threads_only,1:2,sample_battery_temp,36.000,C
+threads_only,1:2,sample_thermal_status,1,Android PowerManager status
+threads_only,1:2,sample_cpu0_freq,1900,MHz
+threads_only,1:2,sample_cpu1_freq,1900,MHz
+threads_only,1:2,sample_cpu2_freq,1900,MHz
+threads_only,1:2,sample_cpu3_freq,1900,MHz
+threads_only,1:2,sample_cpu4_freq,2500,MHz
+threads_only,1:2,sample_cpu5_freq,2500,MHz
+threads_only,1:2,sample_cpu6_freq,2500,MHz
+threads_only,1:2,sample_cpu7_freq,2500,MHz
+threads_only,1:3,sample_elapsed,331,ms
+threads_only,1:3,sample_power,1.030,W
+threads_only,1:3,sample_process_cpu,451.282,% one core
+threads_only,1:3,sample_free_ram,1.128,GiB
+threads_only,1:3,sample_battery_temp,36.000,C
+threads_only,1:3,sample_thermal_status,1,Android PowerManager status
+threads_only,1:3,sample_cpu0_freq,1600,MHz
+threads_only,1:3,sample_cpu1_freq,1600,MHz
+threads_only,1:3,sample_cpu2_freq,1900,MHz
+threads_only,1:3,sample_cpu3_freq,1900,MHz
+threads_only,1:3,sample_cpu4_freq,2500,MHz
+threads_only,1:3,sample_cpu5_freq,2500,MHz
+threads_only,1:3,sample_cpu6_freq,2500,MHz
+threads_only,1:3,sample_cpu7_freq,2500,MHz
+threads_only,1:4,sample_elapsed,486,ms
+threads_only,1:4,sample_power,1.030,W
+threads_only,1:4,sample_process_cpu,524.516,% one core
+threads_only,1:4,sample_free_ram,1.122,GiB
+threads_only,1:4,sample_battery_temp,36.000,C
+threads_only,1:4,sample_thermal_status,1,Android PowerManager status
+threads_only,1:4,sample_cpu0_freq,1100,MHz
+threads_only,1:4,sample_cpu1_freq,600,MHz
+threads_only,1:4,sample_cpu2_freq,700,MHz
+threads_only,1:4,sample_cpu3_freq,700,MHz
+threads_only,1:4,sample_cpu4_freq,2500,MHz
+threads_only,1:4,sample_cpu5_freq,2500,MHz
+threads_only,1:4,sample_cpu6_freq,2500,MHz
+threads_only,1:4,sample_cpu7_freq,2500,MHz
+threads_only,1:5,sample_elapsed,639,ms
+threads_only,1:5,sample_power,5.109,W
+threads_only,1:5,sample_process_cpu,464.706,% one core
+threads_only,1:5,sample_free_ram,1.120,GiB
+threads_only,1:5,sample_battery_temp,36.000,C
+threads_only,1:5,sample_thermal_status,1,Android PowerManager status
+threads_only,1:5,sample_cpu0_freq,1900,MHz
+threads_only,1:5,sample_cpu1_freq,1900,MHz
+threads_only,1:5,sample_cpu2_freq,1900,MHz
+threads_only,1:5,sample_cpu3_freq,1900,MHz
+threads_only,1:5,sample_cpu4_freq,2500,MHz
+threads_only,1:5,sample_cpu5_freq,2500,MHz
+threads_only,1:5,sample_cpu6_freq,2500,MHz
+threads_only,1:5,sample_cpu7_freq,2500,MHz
+threads_only,1:6,sample_elapsed,796,ms
+threads_only,1:6,sample_power,5.109,W
+threads_only,1:6,sample_process_cpu,443.312,% one core
+threads_only,1:6,sample_free_ram,1.109,GiB
+threads_only,1:6,sample_battery_temp,36.000,C
+threads_only,1:6,sample_thermal_status,1,Android PowerManager status
+threads_only,1:6,sample_cpu0_freq,600,MHz
+threads_only,1:6,sample_cpu1_freq,600,MHz
+threads_only,1:6,sample_cpu2_freq,600,MHz
+threads_only,1:6,sample_cpu3_freq,600,MHz
+threads_only,1:6,sample_cpu4_freq,2500,MHz
+threads_only,1:6,sample_cpu5_freq,2500,MHz
+threads_only,1:6,sample_cpu6_freq,2500,MHz
+threads_only,1:6,sample_cpu7_freq,2500,MHz
+threads_only,1:7,sample_elapsed,950,ms
+threads_only,1:7,sample_power,5.109,W
+threads_only,1:7,sample_process_cpu,461.688,% one core
+threads_only,1:7,sample_free_ram,1.121,GiB
+threads_only,1:7,sample_battery_temp,36.000,C
+threads_only,1:7,sample_thermal_status,1,Android PowerManager status
+threads_only,1:7,sample_cpu0_freq,1900,MHz
+threads_only,1:7,sample_cpu1_freq,1900,MHz
+threads_only,1:7,sample_cpu2_freq,1900,MHz
+threads_only,1:7,sample_cpu3_freq,1900,MHz
+threads_only,1:7,sample_cpu4_freq,2500,MHz
+threads_only,1:7,sample_cpu5_freq,2500,MHz
+threads_only,1:7,sample_cpu6_freq,2500,MHz
+threads_only,1:7,sample_cpu7_freq,2500,MHz
+threads_only,1:8,sample_elapsed,1104,ms
+threads_only,1:8,sample_power,5.109,W
+threads_only,1:8,sample_process_cpu,451.299,% one core
+threads_only,1:8,sample_free_ram,1.106,GiB
+threads_only,1:8,sample_battery_temp,36.000,C
+threads_only,1:8,sample_thermal_status,1,Android PowerManager status
+threads_only,1:8,sample_cpu0_freq,1900,MHz
+threads_only,1:8,sample_cpu1_freq,1900,MHz
+threads_only,1:8,sample_cpu2_freq,1900,MHz
+threads_only,1:8,sample_cpu3_freq,1900,MHz
+threads_only,1:8,sample_cpu4_freq,2500,MHz
+threads_only,1:8,sample_cpu5_freq,2500,MHz
+threads_only,1:8,sample_cpu6_freq,2500,MHz
+threads_only,1:8,sample_cpu7_freq,2500,MHz
+threads_only,1:9,sample_elapsed,1259,ms
+threads_only,1:9,sample_power,5.589,W
+threads_only,1:9,sample_process_cpu,458.065,% one core
+threads_only,1:9,sample_free_ram,1.104,GiB
+threads_only,1:9,sample_battery_temp,36.000,C
+threads_only,1:9,sample_thermal_status,1,Android PowerManager status
+threads_only,1:9,sample_cpu0_freq,1900,MHz
+threads_only,1:9,sample_cpu1_freq,1900,MHz
+threads_only,1:9,sample_cpu2_freq,1900,MHz
+threads_only,1:9,sample_cpu3_freq,1900,MHz
+threads_only,1:9,sample_cpu4_freq,2500,MHz
+threads_only,1:9,sample_cpu5_freq,2500,MHz
+threads_only,1:9,sample_cpu6_freq,2500,MHz
+threads_only,1:9,sample_cpu7_freq,2500,MHz
+threads_only,1:10,sample_elapsed,1415,ms
+threads_only,1:10,sample_power,5.589,W
+threads_only,1:10,sample_process_cpu,464.744,% one core
+threads_only,1:10,sample_free_ram,1.101,GiB
+threads_only,1:10,sample_battery_temp,36.000,C
+threads_only,1:10,sample_thermal_status,1,Android PowerManager status
+threads_only,1:10,sample_cpu0_freq,1900,MHz
+threads_only,1:10,sample_cpu1_freq,1900,MHz
+threads_only,1:10,sample_cpu2_freq,1900,MHz
+threads_only,1:10,sample_cpu3_freq,1900,MHz
+threads_only,1:10,sample_cpu4_freq,2500,MHz
+threads_only,1:10,sample_cpu5_freq,2500,MHz
+threads_only,1:10,sample_cpu6_freq,2500,MHz
+threads_only,1:10,sample_cpu7_freq,2500,MHz
+threads_only,1:11,sample_elapsed,1569,ms
+threads_only,1:11,sample_power,5.589,W
+threads_only,1:11,sample_process_cpu,477.273,% one core
+threads_only,1:11,sample_free_ram,1.100,GiB
+threads_only,1:11,sample_battery_temp,36.000,C
+threads_only,1:11,sample_thermal_status,1,Android PowerManager status
+threads_only,1:11,sample_cpu0_freq,900,MHz
+threads_only,1:11,sample_cpu1_freq,1900,MHz
+threads_only,1:11,sample_cpu2_freq,1900,MHz
+threads_only,1:11,sample_cpu3_freq,1900,MHz
+threads_only,1:11,sample_cpu4_freq,2500,MHz
+threads_only,1:11,sample_cpu5_freq,2500,MHz
+threads_only,1:11,sample_cpu6_freq,2500,MHz
+threads_only,1:11,sample_cpu7_freq,2500,MHz
+threads_only,1:12,sample_elapsed,1726,ms
+threads_only,1:12,sample_power,5.589,W
+threads_only,1:12,sample_process_cpu,455.414,% one core
+threads_only,1:12,sample_free_ram,1.099,GiB
+threads_only,1:12,sample_battery_temp,36.000,C
+threads_only,1:12,sample_thermal_status,1,Android PowerManager status
+threads_only,1:12,sample_cpu0_freq,1900,MHz
+threads_only,1:12,sample_cpu1_freq,1900,MHz
+threads_only,1:12,sample_cpu2_freq,1900,MHz
+threads_only,1:12,sample_cpu3_freq,1900,MHz
+threads_only,1:12,sample_cpu4_freq,2500,MHz
+threads_only,1:12,sample_cpu5_freq,2500,MHz
+threads_only,1:12,sample_cpu6_freq,2500,MHz
+threads_only,1:12,sample_cpu7_freq,2500,MHz
+threads_only,1:13,sample_elapsed,1881,ms
+threads_only,1:13,sample_power,4.361,W
+threads_only,1:13,sample_process_cpu,466.452,% one core
+threads_only,1:13,sample_free_ram,1.092,GiB
+threads_only,1:13,sample_battery_temp,36.000,C
+threads_only,1:13,sample_thermal_status,1,Android PowerManager status
+threads_only,1:13,sample_cpu0_freq,1900,MHz
+threads_only,1:13,sample_cpu1_freq,1900,MHz
+threads_only,1:13,sample_cpu2_freq,1900,MHz
+threads_only,1:13,sample_cpu3_freq,1900,MHz
+threads_only,1:13,sample_cpu4_freq,2500,MHz
+threads_only,1:13,sample_cpu5_freq,2500,MHz
+threads_only,1:13,sample_cpu6_freq,2500,MHz
+threads_only,1:13,sample_cpu7_freq,2500,MHz
+threads_only,1:14,sample_elapsed,2035,ms
+threads_only,1:14,sample_power,4.361,W
+threads_only,1:14,sample_process_cpu,471.429,% one core
+threads_only,1:14,sample_free_ram,1.087,GiB
+threads_only,1:14,sample_battery_temp,36.000,C
+threads_only,1:14,sample_thermal_status,1,Android PowerManager status
+threads_only,1:14,sample_cpu0_freq,1900,MHz
+threads_only,1:14,sample_cpu1_freq,1900,MHz
+threads_only,1:14,sample_cpu2_freq,1900,MHz
+threads_only,1:14,sample_cpu3_freq,1900,MHz
+threads_only,1:14,sample_cpu4_freq,2500,MHz
+threads_only,1:14,sample_cpu5_freq,2500,MHz
+threads_only,1:14,sample_cpu6_freq,2500,MHz
+threads_only,1:14,sample_cpu7_freq,2500,MHz
+threads_only,1:15,sample_elapsed,2190,ms
+threads_only,1:15,sample_power,4.361,W
+threads_only,1:15,sample_process_cpu,467.097,% one core
+threads_only,1:15,sample_free_ram,1.087,GiB
+threads_only,1:15,sample_battery_temp,36.000,C
+threads_only,1:15,sample_thermal_status,1,Android PowerManager status
+threads_only,1:15,sample_cpu0_freq,900,MHz
+threads_only,1:15,sample_cpu1_freq,600,MHz
+threads_only,1:15,sample_cpu2_freq,600,MHz
+threads_only,1:15,sample_cpu3_freq,600,MHz
+threads_only,1:15,sample_cpu4_freq,2500,MHz
+threads_only,1:15,sample_cpu5_freq,2500,MHz
+threads_only,1:15,sample_cpu6_freq,2500,MHz
+threads_only,1:15,sample_cpu7_freq,2500,MHz
+threads_only,1:16,sample_elapsed,2344,ms
+threads_only,1:16,sample_power,4.605,W
+threads_only,1:16,sample_process_cpu,467.532,% one core
+threads_only,1:16,sample_free_ram,1.085,GiB
+threads_only,1:16,sample_battery_temp,36.000,C
+threads_only,1:16,sample_thermal_status,1,Android PowerManager status
+threads_only,1:16,sample_cpu0_freq,1900,MHz
+threads_only,1:16,sample_cpu1_freq,1900,MHz
+threads_only,1:16,sample_cpu2_freq,1900,MHz
+threads_only,1:16,sample_cpu3_freq,1900,MHz
+threads_only,1:16,sample_cpu4_freq,2500,MHz
+threads_only,1:16,sample_cpu5_freq,2500,MHz
+threads_only,1:16,sample_cpu6_freq,2500,MHz
+threads_only,1:16,sample_cpu7_freq,2500,MHz
+threads_only,1:17,sample_elapsed,2505,ms
+threads_only,1:17,sample_power,4.605,W
+threads_only,1:17,sample_process_cpu,459.006,% one core
+threads_only,1:17,sample_free_ram,1.085,GiB
+threads_only,1:17,sample_battery_temp,36.000,C
+threads_only,1:17,sample_thermal_status,1,Android PowerManager status
+threads_only,1:17,sample_cpu0_freq,1900,MHz
+threads_only,1:17,sample_cpu1_freq,1900,MHz
+threads_only,1:17,sample_cpu2_freq,1900,MHz
+threads_only,1:17,sample_cpu3_freq,1900,MHz
+threads_only,1:17,sample_cpu4_freq,2500,MHz
+threads_only,1:17,sample_cpu5_freq,2500,MHz
+threads_only,1:17,sample_cpu6_freq,2500,MHz
+threads_only,1:17,sample_cpu7_freq,2500,MHz
+threads_only,1:18,sample_elapsed,2659,ms
+threads_only,1:18,sample_power,4.605,W
+threads_only,1:18,sample_process_cpu,453.896,% one core
+threads_only,1:18,sample_free_ram,1.084,GiB
+threads_only,1:18,sample_battery_temp,36.000,C
+threads_only,1:18,sample_thermal_status,1,Android PowerManager status
+threads_only,1:18,sample_cpu0_freq,1900,MHz
+threads_only,1:18,sample_cpu1_freq,1900,MHz
+threads_only,1:18,sample_cpu2_freq,1900,MHz
+threads_only,1:18,sample_cpu3_freq,1900,MHz
+threads_only,1:18,sample_cpu4_freq,2500,MHz
+threads_only,1:18,sample_cpu5_freq,2500,MHz
+threads_only,1:18,sample_cpu6_freq,2500,MHz
+threads_only,1:18,sample_cpu7_freq,2500,MHz
+threads_only,1:19,sample_elapsed,2813,ms
+threads_only,1:19,sample_power,4.605,W
+threads_only,1:19,sample_process_cpu,462.987,% one core
+threads_only,1:19,sample_free_ram,1.085,GiB
+threads_only,1:19,sample_battery_temp,36.000,C
+threads_only,1:19,sample_thermal_status,1,Android PowerManager status
+threads_only,1:19,sample_cpu0_freq,1900,MHz
+threads_only,1:19,sample_cpu1_freq,1900,MHz
+threads_only,1:19,sample_cpu2_freq,1900,MHz
+threads_only,1:19,sample_cpu3_freq,1900,MHz
+threads_only,1:19,sample_cpu4_freq,2500,MHz
+threads_only,1:19,sample_cpu5_freq,2500,MHz
+threads_only,1:19,sample_cpu6_freq,2500,MHz
+threads_only,1:19,sample_cpu7_freq,2500,MHz
+threads_only,1:20,sample_elapsed,2967,ms
+threads_only,1:20,sample_power,4.592,W
+threads_only,1:20,sample_process_cpu,474.026,% one core
+threads_only,1:20,sample_free_ram,1.084,GiB
+threads_only,1:20,sample_battery_temp,36.000,C
+threads_only,1:20,sample_thermal_status,1,Android PowerManager status
+threads_only,1:20,sample_cpu0_freq,700,MHz
+threads_only,1:20,sample_cpu1_freq,700,MHz
+threads_only,1:20,sample_cpu2_freq,700,MHz
+threads_only,1:20,sample_cpu3_freq,1900,MHz
+threads_only,1:20,sample_cpu4_freq,2500,MHz
+threads_only,1:20,sample_cpu5_freq,2500,MHz
+threads_only,1:20,sample_cpu6_freq,2500,MHz
+threads_only,1:20,sample_cpu7_freq,2500,MHz
+threads_only,1:21,sample_elapsed,3125,ms
+threads_only,1:21,sample_power,4.592,W
+threads_only,1:21,sample_process_cpu,454.430,% one core
+threads_only,1:21,sample_free_ram,1.084,GiB
+threads_only,1:21,sample_battery_temp,36.000,C
+threads_only,1:21,sample_thermal_status,1,Android PowerManager status
+threads_only,1:21,sample_cpu0_freq,1000,MHz
+threads_only,1:21,sample_cpu1_freq,1000,MHz
+threads_only,1:21,sample_cpu2_freq,1000,MHz
+threads_only,1:21,sample_cpu3_freq,900,MHz
+threads_only,1:21,sample_cpu4_freq,2500,MHz
+threads_only,1:21,sample_cpu5_freq,2500,MHz
+threads_only,1:21,sample_cpu6_freq,2500,MHz
+threads_only,1:21,sample_cpu7_freq,2500,MHz
+threads_only,1:22,sample_elapsed,3281,ms
+threads_only,1:22,sample_power,4.592,W
+threads_only,1:22,sample_process_cpu,469.872,% one core
+threads_only,1:22,sample_free_ram,1.084,GiB
+threads_only,1:22,sample_battery_temp,36.000,C
+threads_only,1:22,sample_thermal_status,1,Android PowerManager status
+threads_only,1:22,sample_cpu0_freq,1900,MHz
+threads_only,1:22,sample_cpu1_freq,1900,MHz
+threads_only,1:22,sample_cpu2_freq,1900,MHz
+threads_only,1:22,sample_cpu3_freq,1900,MHz
+threads_only,1:22,sample_cpu4_freq,2500,MHz
+threads_only,1:22,sample_cpu5_freq,2500,MHz
+threads_only,1:22,sample_cpu6_freq,2500,MHz
+threads_only,1:22,sample_cpu7_freq,2500,MHz
+threads_only,1:23,sample_elapsed,3436,ms
+threads_only,1:23,sample_power,4.592,W
+threads_only,1:23,sample_process_cpu,467.097,% one core
+threads_only,1:23,sample_free_ram,1.085,GiB
+threads_only,1:23,sample_battery_temp,36.000,C
+threads_only,1:23,sample_thermal_status,1,Android PowerManager status
+threads_only,1:23,sample_cpu0_freq,1900,MHz
+threads_only,1:23,sample_cpu1_freq,1900,MHz
+threads_only,1:23,sample_cpu2_freq,1900,MHz
+threads_only,1:23,sample_cpu3_freq,1900,MHz
+threads_only,1:23,sample_cpu4_freq,2500,MHz
+threads_only,1:23,sample_cpu5_freq,2500,MHz
+threads_only,1:23,sample_cpu6_freq,2500,MHz
+threads_only,1:23,sample_cpu7_freq,2500,MHz
+threads_only,1:24,sample_elapsed,3592,ms
+threads_only,1:24,sample_power,3.936,W
+threads_only,1:24,sample_process_cpu,480.128,% one core
+threads_only,1:24,sample_free_ram,1.087,GiB
+threads_only,1:24,sample_battery_temp,36.000,C
+threads_only,1:24,sample_thermal_status,1,Android PowerManager status
+threads_only,1:24,sample_cpu0_freq,1900,MHz
+threads_only,1:24,sample_cpu1_freq,600,MHz
+threads_only,1:24,sample_cpu2_freq,1900,MHz
+threads_only,1:24,sample_cpu3_freq,1900,MHz
+threads_only,1:24,sample_cpu4_freq,2500,MHz
+threads_only,1:24,sample_cpu5_freq,2500,MHz
+threads_only,1:24,sample_cpu6_freq,2500,MHz
+threads_only,1:24,sample_cpu7_freq,2500,MHz
+threads_only,1:25,sample_elapsed,3751,ms
+threads_only,1:25,sample_power,3.936,W
+threads_only,1:25,sample_process_cpu,454.717,% one core
+threads_only,1:25,sample_free_ram,1.087,GiB
+threads_only,1:25,sample_battery_temp,36.000,C
+threads_only,1:25,sample_thermal_status,1,Android PowerManager status
+threads_only,1:25,sample_cpu0_freq,1900,MHz
+threads_only,1:25,sample_cpu1_freq,1900,MHz
+threads_only,1:25,sample_cpu2_freq,1900,MHz
+threads_only,1:25,sample_cpu3_freq,1900,MHz
+threads_only,1:25,sample_cpu4_freq,2500,MHz
+threads_only,1:25,sample_cpu5_freq,2500,MHz
+threads_only,1:25,sample_cpu6_freq,2500,MHz
+threads_only,1:25,sample_cpu7_freq,2500,MHz
+threads_only,1:26,sample_elapsed,3907,ms
+threads_only,1:26,sample_power,3.936,W
+threads_only,1:26,sample_process_cpu,458.974,% one core
+threads_only,1:26,sample_free_ram,1.086,GiB
+threads_only,1:26,sample_battery_temp,36.000,C
+threads_only,1:26,sample_thermal_status,1,Android PowerManager status
+threads_only,1:26,sample_cpu0_freq,600,MHz
+threads_only,1:26,sample_cpu1_freq,600,MHz
+threads_only,1:26,sample_cpu2_freq,600,MHz
+threads_only,1:26,sample_cpu3_freq,600,MHz
+threads_only,1:26,sample_cpu4_freq,2500,MHz
+threads_only,1:26,sample_cpu5_freq,2500,MHz
+threads_only,1:26,sample_cpu6_freq,2500,MHz
+threads_only,1:26,sample_cpu7_freq,2500,MHz
+threads_only,1:27,sample_elapsed,4061,ms
+threads_only,1:27,sample_power,3.936,W
+threads_only,1:27,sample_process_cpu,480.519,% one core
+threads_only,1:27,sample_free_ram,1.085,GiB
+threads_only,1:27,sample_battery_temp,36.000,C
+threads_only,1:27,sample_thermal_status,1,Android PowerManager status
+threads_only,1:27,sample_cpu0_freq,1900,MHz
+threads_only,1:27,sample_cpu1_freq,1900,MHz
+threads_only,1:27,sample_cpu2_freq,1900,MHz
+threads_only,1:27,sample_cpu3_freq,1900,MHz
+threads_only,1:27,sample_cpu4_freq,2500,MHz
+threads_only,1:27,sample_cpu5_freq,2500,MHz
+threads_only,1:27,sample_cpu6_freq,2500,MHz
+threads_only,1:27,sample_cpu7_freq,2500,MHz
+threads_only,1:28,sample_elapsed,4225,ms
+threads_only,1:28,sample_power,4.140,W
+threads_only,1:28,sample_process_cpu,496.341,% one core
+threads_only,1:28,sample_free_ram,1.067,GiB
+threads_only,1:28,sample_battery_temp,36.000,C
+threads_only,1:28,sample_thermal_status,1,Android PowerManager status
+threads_only,1:28,sample_cpu0_freq,1900,MHz
+threads_only,1:28,sample_cpu1_freq,1900,MHz
+threads_only,1:28,sample_cpu2_freq,1900,MHz
+threads_only,1:28,sample_cpu3_freq,1900,MHz
+threads_only,1:28,sample_cpu4_freq,2500,MHz
+threads_only,1:28,sample_cpu5_freq,2500,MHz
+threads_only,1:28,sample_cpu6_freq,2500,MHz
+threads_only,1:28,sample_cpu7_freq,2500,MHz
+threads_only,1:29,sample_elapsed,4388,ms
+threads_only,1:29,sample_power,4.140,W
+threads_only,1:29,sample_process_cpu,465.031,% one core
+threads_only,1:29,sample_free_ram,1.063,GiB
+threads_only,1:29,sample_battery_temp,36.000,C
+threads_only,1:29,sample_thermal_status,1,Android PowerManager status
+threads_only,1:29,sample_cpu0_freq,1900,MHz
+threads_only,1:29,sample_cpu1_freq,1900,MHz
+threads_only,1:29,sample_cpu2_freq,1900,MHz
+threads_only,1:29,sample_cpu3_freq,1900,MHz
+threads_only,1:29,sample_cpu4_freq,2500,MHz
+threads_only,1:29,sample_cpu5_freq,2500,MHz
+threads_only,1:29,sample_cpu6_freq,2500,MHz
+threads_only,1:29,sample_cpu7_freq,2500,MHz
+threads_only,1:30,sample_elapsed,4544,ms
+threads_only,1:30,sample_power,4.140,W
+threads_only,1:30,sample_process_cpu,495.513,% one core
+threads_only,1:30,sample_free_ram,1.064,GiB
+threads_only,1:30,sample_battery_temp,36.000,C
+threads_only,1:30,sample_thermal_status,1,Android PowerManager status
+threads_only,1:30,sample_cpu0_freq,1900,MHz
+threads_only,1:30,sample_cpu1_freq,1900,MHz
+threads_only,1:30,sample_cpu2_freq,1900,MHz
+threads_only,1:30,sample_cpu3_freq,1900,MHz
+threads_only,1:30,sample_cpu4_freq,2500,MHz
+threads_only,1:30,sample_cpu5_freq,2500,MHz
+threads_only,1:30,sample_cpu6_freq,2500,MHz
+threads_only,1:30,sample_cpu7_freq,2500,MHz
+threads_only,1:31,sample_elapsed,4708,ms
+threads_only,1:31,sample_power,4.140,W
+threads_only,1:31,sample_process_cpu,453.659,% one core
+threads_only,1:31,sample_free_ram,1.078,GiB
+threads_only,1:31,sample_battery_temp,36.000,C
+threads_only,1:31,sample_thermal_status,1,Android PowerManager status
+threads_only,1:31,sample_cpu0_freq,1900,MHz
+threads_only,1:31,sample_cpu1_freq,1900,MHz
+threads_only,1:31,sample_cpu2_freq,1900,MHz
+threads_only,1:31,sample_cpu3_freq,1900,MHz
+threads_only,1:31,sample_cpu4_freq,2500,MHz
+threads_only,1:31,sample_cpu5_freq,2500,MHz
+threads_only,1:31,sample_cpu6_freq,2500,MHz
+threads_only,1:31,sample_cpu7_freq,2500,MHz
+threads_only,1:32,sample_elapsed,4869,ms
+threads_only,1:32,sample_power,5.149,W
+threads_only,1:32,sample_process_cpu,460.870,% one core
+threads_only,1:32,sample_free_ram,1.083,GiB
+threads_only,1:32,sample_battery_temp,36.000,C
+threads_only,1:32,sample_thermal_status,1,Android PowerManager status
+threads_only,1:32,sample_cpu0_freq,1900,MHz
+threads_only,1:32,sample_cpu1_freq,1900,MHz
+threads_only,1:32,sample_cpu2_freq,1900,MHz
+threads_only,1:32,sample_cpu3_freq,1900,MHz
+threads_only,1:32,sample_cpu4_freq,2500,MHz
+threads_only,1:32,sample_cpu5_freq,2500,MHz
+threads_only,1:32,sample_cpu6_freq,2500,MHz
+threads_only,1:32,sample_cpu7_freq,2500,MHz
+threads_only,1:33,sample_elapsed,5026,ms
+threads_only,1:33,sample_power,5.149,W
+threads_only,1:33,sample_process_cpu,475.159,% one core
+threads_only,1:33,sample_free_ram,1.083,GiB
+threads_only,1:33,sample_battery_temp,36.000,C
+threads_only,1:33,sample_thermal_status,1,Android PowerManager status
+threads_only,1:33,sample_cpu0_freq,1900,MHz
+threads_only,1:33,sample_cpu1_freq,1900,MHz
+threads_only,1:33,sample_cpu2_freq,1900,MHz
+threads_only,1:33,sample_cpu3_freq,1900,MHz
+threads_only,1:33,sample_cpu4_freq,2500,MHz
+threads_only,1:33,sample_cpu5_freq,2500,MHz
+threads_only,1:33,sample_cpu6_freq,2500,MHz
+threads_only,1:33,sample_cpu7_freq,2500,MHz
+threads_only,1:34,sample_elapsed,5181,ms
+threads_only,1:34,sample_power,5.149,W
+threads_only,1:34,sample_process_cpu,500.000,% one core
+threads_only,1:34,sample_free_ram,1.082,GiB
+threads_only,1:34,sample_battery_temp,36.000,C
+threads_only,1:34,sample_thermal_status,1,Android PowerManager status
+threads_only,1:34,sample_cpu0_freq,1900,MHz
+threads_only,1:34,sample_cpu1_freq,1900,MHz
+threads_only,1:34,sample_cpu2_freq,1900,MHz
+threads_only,1:34,sample_cpu3_freq,1900,MHz
+threads_only,1:34,sample_cpu4_freq,2500,MHz
+threads_only,1:34,sample_cpu5_freq,2500,MHz
+threads_only,1:34,sample_cpu6_freq,2500,MHz
+threads_only,1:34,sample_cpu7_freq,2500,MHz
+threads_only,1:35,sample_elapsed,5347,ms
+threads_only,1:35,sample_power,5.149,W
+threads_only,1:35,sample_process_cpu,487.952,% one core
+threads_only,1:35,sample_free_ram,1.083,GiB
+threads_only,1:35,sample_battery_temp,36.000,C
+threads_only,1:35,sample_thermal_status,1,Android PowerManager status
+threads_only,1:35,sample_cpu0_freq,1900,MHz
+threads_only,1:35,sample_cpu1_freq,1900,MHz
+threads_only,1:35,sample_cpu2_freq,1900,MHz
+threads_only,1:35,sample_cpu3_freq,1900,MHz
+threads_only,1:35,sample_cpu4_freq,2500,MHz
+threads_only,1:35,sample_cpu5_freq,2500,MHz
+threads_only,1:35,sample_cpu6_freq,2500,MHz
+threads_only,1:35,sample_cpu7_freq,2500,MHz
+threads_only,1:36,sample_elapsed,5507,ms
+threads_only,1:36,sample_power,4.812,W
+threads_only,1:36,sample_process_cpu,500.625,% one core
+threads_only,1:36,sample_free_ram,1.082,GiB
+threads_only,1:36,sample_battery_temp,36.000,C
+threads_only,1:36,sample_thermal_status,1,Android PowerManager status
+threads_only,1:36,sample_cpu0_freq,1900,MHz
+threads_only,1:36,sample_cpu1_freq,700,MHz
+threads_only,1:36,sample_cpu2_freq,700,MHz
+threads_only,1:36,sample_cpu3_freq,700,MHz
+threads_only,1:36,sample_cpu4_freq,2500,MHz
+threads_only,1:36,sample_cpu5_freq,2500,MHz
+threads_only,1:36,sample_cpu6_freq,2500,MHz
+threads_only,1:36,sample_cpu7_freq,2500,MHz
+threads_only,1:37,sample_elapsed,5667,ms
+threads_only,1:37,sample_power,4.812,W
+threads_only,1:37,sample_process_cpu,498.750,% one core
+threads_only,1:37,sample_free_ram,1.082,GiB
+threads_only,1:37,sample_battery_temp,36.000,C
+threads_only,1:37,sample_thermal_status,1,Android PowerManager status
+threads_only,1:37,sample_cpu0_freq,1900,MHz
+threads_only,1:37,sample_cpu1_freq,1900,MHz
+threads_only,1:37,sample_cpu2_freq,1900,MHz
+threads_only,1:37,sample_cpu3_freq,1900,MHz
+threads_only,1:37,sample_cpu4_freq,2500,MHz
+threads_only,1:37,sample_cpu5_freq,2500,MHz
+threads_only,1:37,sample_cpu6_freq,2500,MHz
+threads_only,1:37,sample_cpu7_freq,2500,MHz
+threads_only,1:38,sample_elapsed,5826,ms
+threads_only,1:38,sample_power,4.812,W
+threads_only,1:38,sample_process_cpu,488.679,% one core
+threads_only,1:38,sample_free_ram,1.082,GiB
+threads_only,1:38,sample_battery_temp,36.000,C
+threads_only,1:38,sample_thermal_status,1,Android PowerManager status
+threads_only,1:38,sample_cpu0_freq,1900,MHz
+threads_only,1:38,sample_cpu1_freq,1900,MHz
+threads_only,1:38,sample_cpu2_freq,1900,MHz
+threads_only,1:38,sample_cpu3_freq,1900,MHz
+threads_only,1:38,sample_cpu4_freq,2500,MHz
+threads_only,1:38,sample_cpu5_freq,2500,MHz
+threads_only,1:38,sample_cpu6_freq,2500,MHz
+threads_only,1:38,sample_cpu7_freq,2500,MHz
+threads_only,1:39,sample_elapsed,5990,ms
+threads_only,1:39,sample_power,4.812,W
+threads_only,1:39,sample_process_cpu,523.780,% one core
+threads_only,1:39,sample_free_ram,1.082,GiB
+threads_only,1:39,sample_battery_temp,36.000,C
+threads_only,1:39,sample_thermal_status,1,Android PowerManager status
+threads_only,1:39,sample_cpu0_freq,1900,MHz
+threads_only,1:39,sample_cpu1_freq,1900,MHz
+threads_only,1:39,sample_cpu2_freq,1900,MHz
+threads_only,1:39,sample_cpu3_freq,1900,MHz
+threads_only,1:39,sample_cpu4_freq,2500,MHz
+threads_only,1:39,sample_cpu5_freq,2500,MHz
+threads_only,1:39,sample_cpu6_freq,2500,MHz
+threads_only,1:39,sample_cpu7_freq,2500,MHz
+threads_only,1:40,sample_elapsed,6158,ms
+threads_only,1:40,sample_power,4.051,W
+threads_only,1:40,sample_process_cpu,464.286,% one core
+threads_only,1:40,sample_free_ram,1.082,GiB
+threads_only,1:40,sample_battery_temp,36.000,C
+threads_only,1:40,sample_thermal_status,1,Android PowerManager status
+threads_only,1:40,sample_cpu0_freq,1900,MHz
+threads_only,1:40,sample_cpu1_freq,1900,MHz
+threads_only,1:40,sample_cpu2_freq,1900,MHz
+threads_only,1:40,sample_cpu3_freq,1900,MHz
+threads_only,1:40,sample_cpu4_freq,2500,MHz
+threads_only,1:40,sample_cpu5_freq,2500,MHz
+threads_only,1:40,sample_cpu6_freq,2500,MHz
+threads_only,1:40,sample_cpu7_freq,2500,MHz
+threads_only,1:41,sample_elapsed,6314,ms
+threads_only,1:41,sample_power,4.051,W
+threads_only,1:41,sample_process_cpu,492.308,% one core
+threads_only,1:41,sample_free_ram,1.081,GiB
+threads_only,1:41,sample_battery_temp,36.000,C
+threads_only,1:41,sample_thermal_status,1,Android PowerManager status
+threads_only,1:41,sample_cpu0_freq,1900,MHz
+threads_only,1:41,sample_cpu1_freq,1900,MHz
+threads_only,1:41,sample_cpu2_freq,1900,MHz
+threads_only,1:41,sample_cpu3_freq,1900,MHz
+threads_only,1:41,sample_cpu4_freq,2500,MHz
+threads_only,1:41,sample_cpu5_freq,2500,MHz
+threads_only,1:41,sample_cpu6_freq,2500,MHz
+threads_only,1:41,sample_cpu7_freq,2500,MHz
+threads_only,1:42,sample_elapsed,6476,ms
+threads_only,1:42,sample_power,4.051,W
+threads_only,1:42,sample_process_cpu,492.593,% one core
+threads_only,1:42,sample_free_ram,1.080,GiB
+threads_only,1:42,sample_battery_temp,36.000,C
+threads_only,1:42,sample_thermal_status,1,Android PowerManager status
+threads_only,1:42,sample_cpu0_freq,1900,MHz
+threads_only,1:42,sample_cpu1_freq,1900,MHz
+threads_only,1:42,sample_cpu2_freq,1900,MHz
+threads_only,1:42,sample_cpu3_freq,1900,MHz
+threads_only,1:42,sample_cpu4_freq,2500,MHz
+threads_only,1:42,sample_cpu5_freq,2500,MHz
+threads_only,1:42,sample_cpu6_freq,2500,MHz
+threads_only,1:42,sample_cpu7_freq,2500,MHz
+threads_only,1:43,sample_elapsed,6634,ms
+threads_only,1:43,sample_power,4.051,W
+threads_only,1:43,sample_process_cpu,499.367,% one core
+threads_only,1:43,sample_free_ram,1.080,GiB
+threads_only,1:43,sample_battery_temp,36.000,C
+threads_only,1:43,sample_thermal_status,1,Android PowerManager status
+threads_only,1:43,sample_cpu0_freq,1900,MHz
+threads_only,1:43,sample_cpu1_freq,1900,MHz
+threads_only,1:43,sample_cpu2_freq,1900,MHz
+threads_only,1:43,sample_cpu3_freq,1900,MHz
+threads_only,1:43,sample_cpu4_freq,2500,MHz
+threads_only,1:43,sample_cpu5_freq,2500,MHz
+threads_only,1:43,sample_cpu6_freq,2500,MHz
+threads_only,1:43,sample_cpu7_freq,2500,MHz
+threads_only,1:44,sample_elapsed,6795,ms
+threads_only,1:44,sample_power,4.272,W
+threads_only,1:44,sample_process_cpu,504.348,% one core
+threads_only,1:44,sample_free_ram,1.080,GiB
+threads_only,1:44,sample_battery_temp,36.000,C
+threads_only,1:44,sample_thermal_status,1,Android PowerManager status
+threads_only,1:44,sample_cpu0_freq,1900,MHz
+threads_only,1:44,sample_cpu1_freq,1900,MHz
+threads_only,1:44,sample_cpu2_freq,1900,MHz
+threads_only,1:44,sample_cpu3_freq,1900,MHz
+threads_only,1:44,sample_cpu4_freq,2500,MHz
+threads_only,1:44,sample_cpu5_freq,2500,MHz
+threads_only,1:44,sample_cpu6_freq,2500,MHz
+threads_only,1:44,sample_cpu7_freq,2500,MHz
+threads_only,1:45,sample_elapsed,6958,ms
+threads_only,1:45,sample_power,4.272,W
+threads_only,1:45,sample_process_cpu,498.773,% one core
+threads_only,1:45,sample_free_ram,1.080,GiB
+threads_only,1:45,sample_battery_temp,36.000,C
+threads_only,1:45,sample_thermal_status,1,Android PowerManager status
+threads_only,1:45,sample_cpu0_freq,1900,MHz
+threads_only,1:45,sample_cpu1_freq,1100,MHz
+threads_only,1:45,sample_cpu2_freq,1100,MHz
+threads_only,1:45,sample_cpu3_freq,1100,MHz
+threads_only,1:45,sample_cpu4_freq,2500,MHz
+threads_only,1:45,sample_cpu5_freq,2500,MHz
+threads_only,1:45,sample_cpu6_freq,2500,MHz
+threads_only,1:45,sample_cpu7_freq,2500,MHz
+threads_only,1:46,sample_elapsed,7113,ms
+threads_only,1:46,sample_power,4.272,W
+threads_only,1:46,sample_process_cpu,499.355,% one core
+threads_only,1:46,sample_free_ram,1.080,GiB
+threads_only,1:46,sample_battery_temp,36.000,C
+threads_only,1:46,sample_thermal_status,1,Android PowerManager status
+threads_only,1:46,sample_cpu0_freq,1900,MHz
+threads_only,1:46,sample_cpu1_freq,1900,MHz
+threads_only,1:46,sample_cpu2_freq,1900,MHz
+threads_only,1:46,sample_cpu3_freq,1900,MHz
+threads_only,1:46,sample_cpu4_freq,2500,MHz
+threads_only,1:46,sample_cpu5_freq,2500,MHz
+threads_only,1:46,sample_cpu6_freq,2500,MHz
+threads_only,1:46,sample_cpu7_freq,2500,MHz
+threads_only,1:47,sample_elapsed,7273,ms
+threads_only,1:47,sample_power,4.272,W
+threads_only,1:47,sample_process_cpu,485.000,% one core
+threads_only,1:47,sample_free_ram,1.079,GiB
+threads_only,1:47,sample_battery_temp,36.000,C
+threads_only,1:47,sample_thermal_status,1,Android PowerManager status
+threads_only,1:47,sample_cpu0_freq,1900,MHz
+threads_only,1:47,sample_cpu1_freq,1900,MHz
+threads_only,1:47,sample_cpu2_freq,1900,MHz
+threads_only,1:47,sample_cpu3_freq,1900,MHz
+threads_only,1:47,sample_cpu4_freq,2500,MHz
+threads_only,1:47,sample_cpu5_freq,2500,MHz
+threads_only,1:47,sample_cpu6_freq,2500,MHz
+threads_only,1:47,sample_cpu7_freq,2500,MHz
+threads_only,1:48,sample_elapsed,7432,ms
+threads_only,1:48,sample_power,4.671,W
+threads_only,1:48,sample_process_cpu,547.799,% one core
+threads_only,1:48,sample_free_ram,1.079,GiB
+threads_only,1:48,sample_battery_temp,36.000,C
+threads_only,1:48,sample_thermal_status,1,Android PowerManager status
+threads_only,1:48,sample_cpu0_freq,1900,MHz
+threads_only,1:48,sample_cpu1_freq,1900,MHz
+threads_only,1:48,sample_cpu2_freq,1900,MHz
+threads_only,1:48,sample_cpu3_freq,1900,MHz
+threads_only,1:48,sample_cpu4_freq,2500,MHz
+threads_only,1:48,sample_cpu5_freq,2500,MHz
+threads_only,1:48,sample_cpu6_freq,2500,MHz
+threads_only,1:48,sample_cpu7_freq,2500,MHz
+threads_only,1:49,sample_elapsed,7602,ms
+threads_only,1:49,sample_power,4.671,W
+threads_only,1:49,sample_process_cpu,457.059,% one core
+threads_only,1:49,sample_free_ram,1.079,GiB
+threads_only,1:49,sample_battery_temp,36.000,C
+threads_only,1:49,sample_thermal_status,1,Android PowerManager status
+threads_only,1:49,sample_cpu0_freq,1900,MHz
+threads_only,1:49,sample_cpu1_freq,1900,MHz
+threads_only,1:49,sample_cpu2_freq,1900,MHz
+threads_only,1:49,sample_cpu3_freq,1900,MHz
+threads_only,1:49,sample_cpu4_freq,2500,MHz
+threads_only,1:49,sample_cpu5_freq,2500,MHz
+threads_only,1:49,sample_cpu6_freq,2500,MHz
+threads_only,1:49,sample_cpu7_freq,2500,MHz
+threads_only,1:50,sample_elapsed,7771,ms
+threads_only,1:50,sample_power,4.671,W
+threads_only,1:50,sample_process_cpu,464.497,% one core
+threads_only,1:50,sample_free_ram,1.078,GiB
+threads_only,1:50,sample_battery_temp,36.000,C
+threads_only,1:50,sample_thermal_status,1,Android PowerManager status
+threads_only,1:50,sample_cpu0_freq,1900,MHz
+threads_only,1:50,sample_cpu1_freq,1900,MHz
+threads_only,1:50,sample_cpu2_freq,1900,MHz
+threads_only,1:50,sample_cpu3_freq,1900,MHz
+threads_only,1:50,sample_cpu4_freq,2500,MHz
+threads_only,1:50,sample_cpu5_freq,2500,MHz
+threads_only,1:50,sample_cpu6_freq,2500,MHz
+threads_only,1:50,sample_cpu7_freq,2500,MHz
+threads_only,1:51,sample_elapsed,7924,ms
+threads_only,1:51,sample_power,4.671,W
+threads_only,1:51,sample_process_cpu,453.595,% one core
+threads_only,1:51,sample_free_ram,1.078,GiB
+threads_only,1:51,sample_battery_temp,36.000,C
+threads_only,1:51,sample_thermal_status,1,Android PowerManager status
+threads_only,1:51,sample_cpu0_freq,1900,MHz
+threads_only,1:51,sample_cpu1_freq,1900,MHz
+threads_only,1:51,sample_cpu2_freq,1900,MHz
+threads_only,1:51,sample_cpu3_freq,1900,MHz
+threads_only,1:51,sample_cpu4_freq,2500,MHz
+threads_only,1:51,sample_cpu5_freq,2500,MHz
+threads_only,1:51,sample_cpu6_freq,2500,MHz
+threads_only,1:51,sample_cpu7_freq,2500,MHz
+threads_only,1:52,sample_elapsed,8083,ms
+threads_only,1:52,sample_power,4.382,W
+threads_only,1:52,sample_process_cpu,513.208,% one core
+threads_only,1:52,sample_free_ram,1.077,GiB
+threads_only,1:52,sample_battery_temp,36.000,C
+threads_only,1:52,sample_thermal_status,1,Android PowerManager status
+threads_only,1:52,sample_cpu0_freq,1900,MHz
+threads_only,1:52,sample_cpu1_freq,1900,MHz
+threads_only,1:52,sample_cpu2_freq,1900,MHz
+threads_only,1:52,sample_cpu3_freq,1900,MHz
+threads_only,1:52,sample_cpu4_freq,2500,MHz
+threads_only,1:52,sample_cpu5_freq,2500,MHz
+threads_only,1:52,sample_cpu6_freq,2500,MHz
+threads_only,1:52,sample_cpu7_freq,2500,MHz
+threads_only,1:53,sample_elapsed,8246,ms
+threads_only,1:53,sample_power,4.382,W
+threads_only,1:53,sample_process_cpu,466.258,% one core
+threads_only,1:53,sample_free_ram,1.076,GiB
+threads_only,1:53,sample_battery_temp,36.000,C
+threads_only,1:53,sample_thermal_status,1,Android PowerManager status
+threads_only,1:53,sample_cpu0_freq,1900,MHz
+threads_only,1:53,sample_cpu1_freq,1900,MHz
+threads_only,1:53,sample_cpu2_freq,1900,MHz
+threads_only,1:53,sample_cpu3_freq,1900,MHz
+threads_only,1:53,sample_cpu4_freq,2500,MHz
+threads_only,1:53,sample_cpu5_freq,2500,MHz
+threads_only,1:53,sample_cpu6_freq,2500,MHz
+threads_only,1:53,sample_cpu7_freq,2500,MHz
+threads_only,1:54,sample_elapsed,8407,ms
+threads_only,1:54,sample_power,4.382,W
+threads_only,1:54,sample_process_cpu,488.820,% one core
+threads_only,1:54,sample_free_ram,1.076,GiB
+threads_only,1:54,sample_battery_temp,36.000,C
+threads_only,1:54,sample_thermal_status,1,Android PowerManager status
+threads_only,1:54,sample_cpu0_freq,1900,MHz
+threads_only,1:54,sample_cpu1_freq,1900,MHz
+threads_only,1:54,sample_cpu2_freq,1900,MHz
+threads_only,1:54,sample_cpu3_freq,1900,MHz
+threads_only,1:54,sample_cpu4_freq,2500,MHz
+threads_only,1:54,sample_cpu5_freq,2500,MHz
+threads_only,1:54,sample_cpu6_freq,2500,MHz
+threads_only,1:54,sample_cpu7_freq,2500,MHz
+threads_only,1:55,sample_elapsed,8567,ms
+threads_only,1:55,sample_power,4.382,W
+threads_only,1:55,sample_process_cpu,511.250,% one core
+threads_only,1:55,sample_free_ram,1.076,GiB
+threads_only,1:55,sample_battery_temp,36.000,C
+threads_only,1:55,sample_thermal_status,1,Android PowerManager status
+threads_only,1:55,sample_cpu0_freq,1900,MHz
+threads_only,1:55,sample_cpu1_freq,1900,MHz
+threads_only,1:55,sample_cpu2_freq,1900,MHz
+threads_only,1:55,sample_cpu3_freq,1900,MHz
+threads_only,1:55,sample_cpu4_freq,2500,MHz
+threads_only,1:55,sample_cpu5_freq,2500,MHz
+threads_only,1:55,sample_cpu6_freq,2500,MHz
+threads_only,1:55,sample_cpu7_freq,2500,MHz
+threads_only,1:56,sample_elapsed,8733,ms
+threads_only,1:56,sample_power,4.477,W
+threads_only,1:56,sample_process_cpu,479.518,% one core
+threads_only,1:56,sample_free_ram,1.076,GiB
+threads_only,1:56,sample_battery_temp,36.000,C
+threads_only,1:56,sample_thermal_status,1,Android PowerManager status
+threads_only,1:56,sample_cpu0_freq,1900,MHz
+threads_only,1:56,sample_cpu1_freq,1900,MHz
+threads_only,1:56,sample_cpu2_freq,1900,MHz
+threads_only,1:56,sample_cpu3_freq,1900,MHz
+threads_only,1:56,sample_cpu4_freq,2500,MHz
+threads_only,1:56,sample_cpu5_freq,2500,MHz
+threads_only,1:56,sample_cpu6_freq,2500,MHz
+threads_only,1:56,sample_cpu7_freq,2500,MHz
+threads_only,1:57,sample_elapsed,8889,ms
+threads_only,1:57,sample_power,4.477,W
+threads_only,1:57,sample_process_cpu,506.410,% one core
+threads_only,1:57,sample_free_ram,1.076,GiB
+threads_only,1:57,sample_battery_temp,36.000,C
+threads_only,1:57,sample_thermal_status,1,Android PowerManager status
+threads_only,1:57,sample_cpu0_freq,1900,MHz
+threads_only,1:57,sample_cpu1_freq,1900,MHz
+threads_only,1:57,sample_cpu2_freq,1900,MHz
+threads_only,1:57,sample_cpu3_freq,1900,MHz
+threads_only,1:57,sample_cpu4_freq,2500,MHz
+threads_only,1:57,sample_cpu5_freq,2500,MHz
+threads_only,1:57,sample_cpu6_freq,2500,MHz
+threads_only,1:57,sample_cpu7_freq,2500,MHz
+threads_only,1:58,sample_elapsed,9049,ms
+threads_only,1:58,sample_power,4.477,W
+threads_only,1:58,sample_process_cpu,506.250,% one core
+threads_only,1:58,sample_free_ram,1.076,GiB
+threads_only,1:58,sample_battery_temp,36.000,C
+threads_only,1:58,sample_thermal_status,1,Android PowerManager status
+threads_only,1:58,sample_cpu0_freq,1900,MHz
+threads_only,1:58,sample_cpu1_freq,1900,MHz
+threads_only,1:58,sample_cpu2_freq,1900,MHz
+threads_only,1:58,sample_cpu3_freq,1900,MHz
+threads_only,1:58,sample_cpu4_freq,2500,MHz
+threads_only,1:58,sample_cpu5_freq,2500,MHz
+threads_only,1:58,sample_cpu6_freq,2500,MHz
+threads_only,1:58,sample_cpu7_freq,2500,MHz
+threads_only,1:59,sample_elapsed,9210,ms
+threads_only,1:59,sample_power,4.477,W
+threads_only,1:59,sample_process_cpu,483.230,% one core
+threads_only,1:59,sample_free_ram,1.076,GiB
+threads_only,1:59,sample_battery_temp,36.000,C
+threads_only,1:59,sample_thermal_status,1,Android PowerManager status
+threads_only,1:59,sample_cpu0_freq,450,MHz
+threads_only,1:59,sample_cpu1_freq,1900,MHz
+threads_only,1:59,sample_cpu2_freq,1900,MHz
+threads_only,1:59,sample_cpu3_freq,1900,MHz
+threads_only,1:59,sample_cpu4_freq,2500,MHz
+threads_only,1:59,sample_cpu5_freq,2500,MHz
+threads_only,1:59,sample_cpu6_freq,2500,MHz
+threads_only,1:59,sample_cpu7_freq,2500,MHz
+threads_only,1:60,sample_elapsed,9363,ms
+threads_only,1:60,sample_power,4.387,W
+threads_only,1:60,sample_process_cpu,500.654,% one core
+threads_only,1:60,sample_free_ram,1.074,GiB
+threads_only,1:60,sample_battery_temp,36.000,C
+threads_only,1:60,sample_thermal_status,1,Android PowerManager status
+threads_only,1:60,sample_cpu0_freq,1900,MHz
+threads_only,1:60,sample_cpu1_freq,1900,MHz
+threads_only,1:60,sample_cpu2_freq,1900,MHz
+threads_only,1:60,sample_cpu3_freq,1900,MHz
+threads_only,1:60,sample_cpu4_freq,2500,MHz
+threads_only,1:60,sample_cpu5_freq,2500,MHz
+threads_only,1:60,sample_cpu6_freq,2500,MHz
+threads_only,1:60,sample_cpu7_freq,2500,MHz
+threads_only,1:61,sample_elapsed,9523,ms
+threads_only,1:61,sample_power,4.387,W
+threads_only,1:61,sample_process_cpu,490.000,% one core
+threads_only,1:61,sample_free_ram,1.075,GiB
+threads_only,1:61,sample_battery_temp,36.000,C
+threads_only,1:61,sample_thermal_status,1,Android PowerManager status
+threads_only,1:61,sample_cpu0_freq,1900,MHz
+threads_only,1:61,sample_cpu1_freq,1900,MHz
+threads_only,1:61,sample_cpu2_freq,1900,MHz
+threads_only,1:61,sample_cpu3_freq,1900,MHz
+threads_only,1:61,sample_cpu4_freq,2500,MHz
+threads_only,1:61,sample_cpu5_freq,2500,MHz
+threads_only,1:61,sample_cpu6_freq,2500,MHz
+threads_only,1:61,sample_cpu7_freq,2500,MHz
+threads_only,1:62,sample_elapsed,9687,ms
+threads_only,1:62,sample_power,4.387,W
+threads_only,1:62,sample_process_cpu,503.049,% one core
+threads_only,1:62,sample_free_ram,1.074,GiB
+threads_only,1:62,sample_battery_temp,36.000,C
+threads_only,1:62,sample_thermal_status,1,Android PowerManager status
+threads_only,1:62,sample_cpu0_freq,1900,MHz
+threads_only,1:62,sample_cpu1_freq,1900,MHz
+threads_only,1:62,sample_cpu2_freq,1900,MHz
+threads_only,1:62,sample_cpu3_freq,1900,MHz
+threads_only,1:62,sample_cpu4_freq,2500,MHz
+threads_only,1:62,sample_cpu5_freq,2500,MHz
+threads_only,1:62,sample_cpu6_freq,2500,MHz
+threads_only,1:62,sample_cpu7_freq,2500,MHz
+threads_only,1:63,sample_elapsed,9863,ms
+threads_only,1:63,sample_power,4.959,W
+threads_only,1:63,sample_process_cpu,507.386,% one core
+threads_only,1:63,sample_free_ram,1.074,GiB
+threads_only,1:63,sample_battery_temp,36.000,C
+threads_only,1:63,sample_thermal_status,1,Android PowerManager status
+threads_only,1:63,sample_cpu0_freq,1900,MHz
+threads_only,1:63,sample_cpu1_freq,1900,MHz
+threads_only,1:63,sample_cpu2_freq,1900,MHz
+threads_only,1:63,sample_cpu3_freq,1900,MHz
+threads_only,1:63,sample_cpu4_freq,2500,MHz
+threads_only,1:63,sample_cpu5_freq,2500,MHz
+threads_only,1:63,sample_cpu6_freq,2500,MHz
+threads_only,1:63,sample_cpu7_freq,2500,MHz
+threads_only,1:64,sample_elapsed,10026,ms
+threads_only,1:64,sample_power,4.959,W
+threads_only,1:64,sample_process_cpu,462.577,% one core
+threads_only,1:64,sample_free_ram,1.073,GiB
+threads_only,1:64,sample_battery_temp,36.000,C
+threads_only,1:64,sample_thermal_status,1,Android PowerManager status
+threads_only,1:64,sample_cpu0_freq,1900,MHz
+threads_only,1:64,sample_cpu1_freq,1900,MHz
+threads_only,1:64,sample_cpu2_freq,1900,MHz
+threads_only,1:64,sample_cpu3_freq,1900,MHz
+threads_only,1:64,sample_cpu4_freq,2500,MHz
+threads_only,1:64,sample_cpu5_freq,2500,MHz
+threads_only,1:64,sample_cpu6_freq,2500,MHz
+threads_only,1:64,sample_cpu7_freq,2500,MHz
+threads_only,1:65,sample_elapsed,10182,ms
+threads_only,1:65,sample_power,4.959,W
+threads_only,1:65,sample_process_cpu,546.795,% one core
+threads_only,1:65,sample_free_ram,1.071,GiB
+threads_only,1:65,sample_battery_temp,36.000,C
+threads_only,1:65,sample_thermal_status,1,Android PowerManager status
+threads_only,1:65,sample_cpu0_freq,1900,MHz
+threads_only,1:65,sample_cpu1_freq,1900,MHz
+threads_only,1:65,sample_cpu2_freq,1900,MHz
+threads_only,1:65,sample_cpu3_freq,1900,MHz
+threads_only,1:65,sample_cpu4_freq,2500,MHz
+threads_only,1:65,sample_cpu5_freq,2500,MHz
+threads_only,1:65,sample_cpu6_freq,2500,MHz
+threads_only,1:65,sample_cpu7_freq,2500,MHz
+threads_only,1:66,sample_elapsed,10363,ms
+threads_only,1:66,sample_power,4.959,W
+threads_only,1:66,sample_process_cpu,430.387,% one core
+threads_only,1:66,sample_free_ram,1.069,GiB
+threads_only,1:66,sample_battery_temp,36.000,C
+threads_only,1:66,sample_thermal_status,1,Android PowerManager status
+threads_only,1:66,sample_cpu0_freq,1900,MHz
+threads_only,1:66,sample_cpu1_freq,1900,MHz
+threads_only,1:66,sample_cpu2_freq,1900,MHz
+threads_only,1:66,sample_cpu3_freq,1900,MHz
+threads_only,1:66,sample_cpu4_freq,2500,MHz
+threads_only,1:66,sample_cpu5_freq,2500,MHz
+threads_only,1:66,sample_cpu6_freq,2500,MHz
+threads_only,1:66,sample_cpu7_freq,2500,MHz
+threads_only,1:67,sample_elapsed,10525,ms
+threads_only,1:67,sample_power,4.477,W
+threads_only,1:67,sample_process_cpu,506.173,% one core
+threads_only,1:67,sample_free_ram,1.066,GiB
+threads_only,1:67,sample_battery_temp,36.000,C
+threads_only,1:67,sample_thermal_status,1,Android PowerManager status
+threads_only,1:67,sample_cpu0_freq,1900,MHz
+threads_only,1:67,sample_cpu1_freq,1900,MHz
+threads_only,1:67,sample_cpu2_freq,1900,MHz
+threads_only,1:67,sample_cpu3_freq,1900,MHz
+threads_only,1:67,sample_cpu4_freq,2500,MHz
+threads_only,1:67,sample_cpu5_freq,2500,MHz
+threads_only,1:67,sample_cpu6_freq,2500,MHz
+threads_only,1:67,sample_cpu7_freq,2500,MHz
+threads_only,1:68,sample_elapsed,10692,ms
+threads_only,1:68,sample_power,4.477,W
+threads_only,1:68,sample_process_cpu,455.090,% one core
+threads_only,1:68,sample_free_ram,1.065,GiB
+threads_only,1:68,sample_battery_temp,36.000,C
+threads_only,1:68,sample_thermal_status,1,Android PowerManager status
+threads_only,1:68,sample_cpu0_freq,1900,MHz
+threads_only,1:68,sample_cpu1_freq,1900,MHz
+threads_only,1:68,sample_cpu2_freq,1900,MHz
+threads_only,1:68,sample_cpu3_freq,1900,MHz
+threads_only,1:68,sample_cpu4_freq,2500,MHz
+threads_only,1:68,sample_cpu5_freq,2500,MHz
+threads_only,1:68,sample_cpu6_freq,2500,MHz
+threads_only,1:68,sample_cpu7_freq,2500,MHz
+threads_only,1:69,sample_elapsed,10850,ms
+threads_only,1:69,sample_power,4.923,W
+threads_only,1:69,sample_process_cpu,627.848,% one core
+threads_only,1:69,sample_free_ram,1.063,GiB
+threads_only,1:69,sample_battery_temp,37.000,C
+threads_only,1:69,sample_thermal_status,1,Android PowerManager status
+threads_only,1:69,sample_cpu0_freq,1900,MHz
+threads_only,1:69,sample_cpu1_freq,1900,MHz
+threads_only,1:69,sample_cpu2_freq,1900,MHz
+threads_only,1:69,sample_cpu3_freq,1900,MHz
+threads_only,1:69,sample_cpu4_freq,2500,MHz
+threads_only,1:69,sample_cpu5_freq,2500,MHz
+threads_only,1:69,sample_cpu6_freq,2500,MHz
+threads_only,1:69,sample_cpu7_freq,2500,MHz
+threads_only,1:70,sample_elapsed,11058,ms
+threads_only,1:70,sample_power,5.274,W
+threads_only,1:70,sample_process_cpu,439.904,% one core
+threads_only,1:70,sample_free_ram,1.087,GiB
+threads_only,1:70,sample_battery_temp,36.000,C
+threads_only,1:70,sample_thermal_status,1,Android PowerManager status
+threads_only,1:70,sample_cpu0_freq,1900,MHz
+threads_only,1:70,sample_cpu1_freq,1900,MHz
+threads_only,1:70,sample_cpu2_freq,1900,MHz
+threads_only,1:70,sample_cpu3_freq,1900,MHz
+threads_only,1:70,sample_cpu4_freq,2500,MHz
+threads_only,1:70,sample_cpu5_freq,2500,MHz
+threads_only,1:70,sample_cpu6_freq,2500,MHz
+threads_only,1:70,sample_cpu7_freq,2500,MHz
+threads_only,1:71,sample_elapsed,11268,ms
+threads_only,1:71,sample_power,5.274,W
+threads_only,1:71,sample_process_cpu,372.857,% one core
+threads_only,1:71,sample_free_ram,1.086,GiB
+threads_only,1:71,sample_battery_temp,36.000,C
+threads_only,1:71,sample_thermal_status,1,Android PowerManager status
+threads_only,1:71,sample_cpu0_freq,1900,MHz
+threads_only,1:71,sample_cpu1_freq,1900,MHz
+threads_only,1:71,sample_cpu2_freq,1900,MHz
+threads_only,1:71,sample_cpu3_freq,1900,MHz
+threads_only,1:71,sample_cpu4_freq,2500,MHz
+threads_only,1:71,sample_cpu5_freq,2500,MHz
+threads_only,1:71,sample_cpu6_freq,2500,MHz
+threads_only,1:71,sample_cpu7_freq,2500,MHz
+threads_only,1:72,sample_elapsed,11429,ms
+threads_only,1:72,sample_power,5.274,W
+threads_only,1:72,sample_process_cpu,484.472,% one core
+threads_only,1:72,sample_free_ram,1.085,GiB
+threads_only,1:72,sample_battery_temp,36.000,C
+threads_only,1:72,sample_thermal_status,1,Android PowerManager status
+threads_only,1:72,sample_cpu0_freq,1900,MHz
+threads_only,1:72,sample_cpu1_freq,1900,MHz
+threads_only,1:72,sample_cpu2_freq,1900,MHz
+threads_only,1:72,sample_cpu3_freq,1900,MHz
+threads_only,1:72,sample_cpu4_freq,2500,MHz
+threads_only,1:72,sample_cpu5_freq,2500,MHz
+threads_only,1:72,sample_cpu6_freq,2500,MHz
+threads_only,1:72,sample_cpu7_freq,2500,MHz
+threads_only,1:73,sample_elapsed,11582,ms
+threads_only,1:73,sample_power,4.648,W
+threads_only,1:73,sample_process_cpu,458.170,% one core
+threads_only,1:73,sample_free_ram,1.081,GiB
+threads_only,1:73,sample_battery_temp,36.000,C
+threads_only,1:73,sample_thermal_status,1,Android PowerManager status
+threads_only,1:73,sample_cpu0_freq,1900,MHz
+threads_only,1:73,sample_cpu1_freq,1900,MHz
+threads_only,1:73,sample_cpu2_freq,1900,MHz
+threads_only,1:73,sample_cpu3_freq,1900,MHz
+threads_only,1:73,sample_cpu4_freq,2500,MHz
+threads_only,1:73,sample_cpu5_freq,2500,MHz
+threads_only,1:73,sample_cpu6_freq,2500,MHz
+threads_only,1:73,sample_cpu7_freq,2500,MHz
+threads_only,1:74,sample_elapsed,11736,ms
+threads_only,1:74,sample_power,4.648,W
+threads_only,1:74,sample_process_cpu,493.506,% one core
+threads_only,1:74,sample_free_ram,1.075,GiB
+threads_only,1:74,sample_battery_temp,36.000,C
+threads_only,1:74,sample_thermal_status,1,Android PowerManager status
+threads_only,1:74,sample_cpu0_freq,1900,MHz
+threads_only,1:74,sample_cpu1_freq,1900,MHz
+threads_only,1:74,sample_cpu2_freq,1900,MHz
+threads_only,1:74,sample_cpu3_freq,1900,MHz
+threads_only,1:74,sample_cpu4_freq,2500,MHz
+threads_only,1:74,sample_cpu5_freq,2500,MHz
+threads_only,1:74,sample_cpu6_freq,2500,MHz
+threads_only,1:74,sample_cpu7_freq,2500,MHz
+threads_only,1:75,sample_elapsed,11896,ms
+threads_only,1:75,sample_power,4.648,W
+threads_only,1:75,sample_process_cpu,494.375,% one core
+threads_only,1:75,sample_free_ram,1.070,GiB
+threads_only,1:75,sample_battery_temp,36.000,C
+threads_only,1:75,sample_thermal_status,1,Android PowerManager status
+threads_only,1:75,sample_cpu0_freq,1900,MHz
+threads_only,1:75,sample_cpu1_freq,1900,MHz
+threads_only,1:75,sample_cpu2_freq,1900,MHz
+threads_only,1:75,sample_cpu3_freq,1900,MHz
+threads_only,1:75,sample_cpu4_freq,2500,MHz
+threads_only,1:75,sample_cpu5_freq,2500,MHz
+threads_only,1:75,sample_cpu6_freq,2500,MHz
+threads_only,1:75,sample_cpu7_freq,2500,MHz
+threads_only,1:76,sample_elapsed,12053,ms
+threads_only,1:76,sample_power,4.648,W
+threads_only,1:76,sample_process_cpu,488.535,% one core
+threads_only,1:76,sample_free_ram,1.067,GiB
+threads_only,1:76,sample_battery_temp,36.000,C
+threads_only,1:76,sample_thermal_status,1,Android PowerManager status
+threads_only,1:76,sample_cpu0_freq,1900,MHz
+threads_only,1:76,sample_cpu1_freq,1900,MHz
+threads_only,1:76,sample_cpu2_freq,1900,MHz
+threads_only,1:76,sample_cpu3_freq,1900,MHz
+threads_only,1:76,sample_cpu4_freq,2500,MHz
+threads_only,1:76,sample_cpu5_freq,2500,MHz
+threads_only,1:76,sample_cpu6_freq,2500,MHz
+threads_only,1:76,sample_cpu7_freq,2500,MHz
+threads_only,1:77,sample_elapsed,12208,ms
+threads_only,1:77,sample_power,4.652,W
+threads_only,1:77,sample_process_cpu,486.452,% one core
+threads_only,1:77,sample_free_ram,1.066,GiB
+threads_only,1:77,sample_battery_temp,36.000,C
+threads_only,1:77,sample_thermal_status,1,Android PowerManager status
+threads_only,1:77,sample_cpu0_freq,1900,MHz
+threads_only,1:77,sample_cpu1_freq,1900,MHz
+threads_only,1:77,sample_cpu2_freq,1900,MHz
+threads_only,1:77,sample_cpu3_freq,1900,MHz
+threads_only,1:77,sample_cpu4_freq,2500,MHz
+threads_only,1:77,sample_cpu5_freq,2500,MHz
+threads_only,1:77,sample_cpu6_freq,2500,MHz
+threads_only,1:77,sample_cpu7_freq,2500,MHz
+threads_only,1:78,sample_elapsed,12365,ms
+threads_only,1:78,sample_power,4.652,W
+threads_only,1:78,sample_process_cpu,480.892,% one core
+threads_only,1:78,sample_free_ram,1.064,GiB
+threads_only,1:78,sample_battery_temp,36.000,C
+threads_only,1:78,sample_thermal_status,1,Android PowerManager status
+threads_only,1:78,sample_cpu0_freq,1900,MHz
+threads_only,1:78,sample_cpu1_freq,1900,MHz
+threads_only,1:78,sample_cpu2_freq,1900,MHz
+threads_only,1:78,sample_cpu3_freq,1900,MHz
+threads_only,1:78,sample_cpu4_freq,2500,MHz
+threads_only,1:78,sample_cpu5_freq,2500,MHz
+threads_only,1:78,sample_cpu6_freq,2500,MHz
+threads_only,1:78,sample_cpu7_freq,2500,MHz
+threads_only,1:79,sample_elapsed,12518,ms
+threads_only,1:79,sample_power,4.502,W
+threads_only,1:79,sample_process_cpu,488.889,% one core
+threads_only,1:79,sample_free_ram,1.062,GiB
+threads_only,1:79,sample_battery_temp,36.000,C
+threads_only,1:79,sample_thermal_status,1,Android PowerManager status
+threads_only,1:79,sample_cpu0_freq,1900,MHz
+threads_only,1:79,sample_cpu1_freq,1900,MHz
+threads_only,1:79,sample_cpu2_freq,1900,MHz
+threads_only,1:79,sample_cpu3_freq,1900,MHz
+threads_only,1:79,sample_cpu4_freq,2500,MHz
+threads_only,1:79,sample_cpu5_freq,2500,MHz
+threads_only,1:79,sample_cpu6_freq,2500,MHz
+threads_only,1:79,sample_cpu7_freq,2500,MHz
+threads_only,1:80,sample_elapsed,12679,ms
+threads_only,1:80,sample_power,4.502,W
+threads_only,1:80,sample_process_cpu,477.640,% one core
+threads_only,1:80,sample_free_ram,1.056,GiB
+threads_only,1:80,sample_battery_temp,36.000,C
+threads_only,1:80,sample_thermal_status,1,Android PowerManager status
+threads_only,1:80,sample_cpu0_freq,1900,MHz
+threads_only,1:80,sample_cpu1_freq,1900,MHz
+threads_only,1:80,sample_cpu2_freq,1900,MHz
+threads_only,1:80,sample_cpu3_freq,1900,MHz
+threads_only,1:80,sample_cpu4_freq,2500,MHz
+threads_only,1:80,sample_cpu5_freq,2500,MHz
+threads_only,1:80,sample_cpu6_freq,2500,MHz
+threads_only,1:80,sample_cpu7_freq,2500,MHz
+threads_only,median,pp,126.000,tok/s
+threads_only,stddev,pp,0.000,tok/s
+threads_only,median,tg,14.800,tok/s
+threads_only,stddev,tg,0.000,tok/s
+threads_only,median,power,4.449,W
+threads_only,stddev,power,0.000,W
+threads_only,median,tok_per_w,3.326,tok/W
+threads_only,stddev,tok_per_w,0.000,tok/W
+threads_only,median,ttft_pp512_derived,4131.060,ms
+threads_only,stddev,ttft_pp512_derived,0.000,ms
+threads_only,median,start_temp,36.000,C
+threads_only,stddev,start_temp,0.000,C
+threads_only,median,average_process_cpu,479.126,% one core
+threads_only,stddev,average_process_cpu,0.000,% one core
+threads_only,median,minimum_free_ram,1.056,GiB
+threads_only,stddev,minimum_free_ram,0.000,GiB
+threads_only,median,peak_battery_temp,37.000,C
+threads_only,stddev,peak_battery_temp,0.000,C
+threads_only,median,mean_perf_core_clock,2500.000,MHz
+threads_only,stddev,mean_perf_core_clock,0.000,MHz
+threads_only,median,mean_little_core_clock,1781.487,MHz
+threads_only,stddev,mean_little_core_clock,0.000,MHz
+optimized,1,pp,133.000,tok/s
+optimized,1,tg,16.100,tok/s
+optimized,1,power,4.305,W
+optimized,1,tok_per_w,3.740,tok/W
+optimized,1,ttft_pp512_derived,3911.736,ms
+optimized,1,start_temp,36.000,C
+optimized,1,average_process_cpu,486.956,% one core
+optimized,1,minimum_free_ram,1.082,GiB
+optimized,1,peak_battery_temp,36.000,C
+optimized,1,peak_thermal_status,1,Android PowerManager status
+optimized,1:1,sample_elapsed,1,ms
+optimized,1:1,sample_power,0.997,W
+optimized,1:1,sample_process_cpu,1500.000,% one core
+optimized,1:1,sample_free_ram,1.165,GiB
+optimized,1:1,sample_battery_temp,36.000,C
+optimized,1:1,sample_thermal_status,1,Android PowerManager status
+optimized,1:1,sample_cpu0_freq,450,MHz
+optimized,1:1,sample_cpu1_freq,900,MHz
+optimized,1:1,sample_cpu2_freq,900,MHz
+optimized,1:1,sample_cpu3_freq,900,MHz
+optimized,1:1,sample_cpu4_freq,500,MHz
+optimized,1:1,sample_cpu5_freq,500,MHz
+optimized,1:1,sample_cpu6_freq,500,MHz
+optimized,1:1,sample_cpu7_freq,700,MHz
+optimized,1:2,sample_elapsed,166,ms
+optimized,1:2,sample_power,0.997,W
+optimized,1:2,sample_process_cpu,403.636,% one core
+optimized,1:2,sample_free_ram,1.102,GiB
+optimized,1:2,sample_battery_temp,36.000,C
+optimized,1:2,sample_thermal_status,1,Android PowerManager status
+optimized,1:2,sample_cpu0_freq,1900,MHz
+optimized,1:2,sample_cpu1_freq,1900,MHz
+optimized,1:2,sample_cpu2_freq,1900,MHz
+optimized,1:2,sample_cpu3_freq,1900,MHz
+optimized,1:2,sample_cpu4_freq,2500,MHz
+optimized,1:2,sample_cpu5_freq,2500,MHz
+optimized,1:2,sample_cpu6_freq,2500,MHz
+optimized,1:2,sample_cpu7_freq,2500,MHz
+optimized,1:3,sample_elapsed,320,ms
+optimized,1:3,sample_power,0.997,W
+optimized,1:3,sample_process_cpu,473.377,% one core
+optimized,1:3,sample_free_ram,1.092,GiB
+optimized,1:3,sample_battery_temp,36.000,C
+optimized,1:3,sample_thermal_status,1,Android PowerManager status
+optimized,1:3,sample_cpu0_freq,1900,MHz
+optimized,1:3,sample_cpu1_freq,1900,MHz
+optimized,1:3,sample_cpu2_freq,1900,MHz
+optimized,1:3,sample_cpu3_freq,1900,MHz
+optimized,1:3,sample_cpu4_freq,2500,MHz
+optimized,1:3,sample_cpu5_freq,2500,MHz
+optimized,1:3,sample_cpu6_freq,2500,MHz
+optimized,1:3,sample_cpu7_freq,2500,MHz
+optimized,1:4,sample_elapsed,475,ms
+optimized,1:4,sample_power,0.997,W
+optimized,1:4,sample_process_cpu,460.000,% one core
+optimized,1:4,sample_free_ram,1.092,GiB
+optimized,1:4,sample_battery_temp,36.000,C
+optimized,1:4,sample_thermal_status,1,Android PowerManager status
+optimized,1:4,sample_cpu0_freq,1900,MHz
+optimized,1:4,sample_cpu1_freq,1900,MHz
+optimized,1:4,sample_cpu2_freq,1900,MHz
+optimized,1:4,sample_cpu3_freq,1900,MHz
+optimized,1:4,sample_cpu4_freq,2500,MHz
+optimized,1:4,sample_cpu5_freq,2500,MHz
+optimized,1:4,sample_cpu6_freq,2500,MHz
+optimized,1:4,sample_cpu7_freq,2500,MHz
+optimized,1:5,sample_elapsed,629,ms
+optimized,1:5,sample_power,4.752,W
+optimized,1:5,sample_process_cpu,474.026,% one core
+optimized,1:5,sample_free_ram,1.091,GiB
+optimized,1:5,sample_battery_temp,36.000,C
+optimized,1:5,sample_thermal_status,1,Android PowerManager status
+optimized,1:5,sample_cpu0_freq,1900,MHz
+optimized,1:5,sample_cpu1_freq,1300,MHz
+optimized,1:5,sample_cpu2_freq,1900,MHz
+optimized,1:5,sample_cpu3_freq,1900,MHz
+optimized,1:5,sample_cpu4_freq,2500,MHz
+optimized,1:5,sample_cpu5_freq,2500,MHz
+optimized,1:5,sample_cpu6_freq,2500,MHz
+optimized,1:5,sample_cpu7_freq,2500,MHz
+optimized,1:6,sample_elapsed,785,ms
+optimized,1:6,sample_power,4.752,W
+optimized,1:6,sample_process_cpu,450.641,% one core
+optimized,1:6,sample_free_ram,1.091,GiB
+optimized,1:6,sample_battery_temp,36.000,C
+optimized,1:6,sample_thermal_status,1,Android PowerManager status
+optimized,1:6,sample_cpu0_freq,1900,MHz
+optimized,1:6,sample_cpu1_freq,1900,MHz
+optimized,1:6,sample_cpu2_freq,600,MHz
+optimized,1:6,sample_cpu3_freq,600,MHz
+optimized,1:6,sample_cpu4_freq,2500,MHz
+optimized,1:6,sample_cpu5_freq,2500,MHz
+optimized,1:6,sample_cpu6_freq,2500,MHz
+optimized,1:6,sample_cpu7_freq,2500,MHz
+optimized,1:7,sample_elapsed,942,ms
+optimized,1:7,sample_power,4.752,W
+optimized,1:7,sample_process_cpu,466.879,% one core
+optimized,1:7,sample_free_ram,1.091,GiB
+optimized,1:7,sample_battery_temp,36.000,C
+optimized,1:7,sample_thermal_status,1,Android PowerManager status
+optimized,1:7,sample_cpu0_freq,1000,MHz
+optimized,1:7,sample_cpu1_freq,450,MHz
+optimized,1:7,sample_cpu2_freq,450,MHz
+optimized,1:7,sample_cpu3_freq,1900,MHz
+optimized,1:7,sample_cpu4_freq,2500,MHz
+optimized,1:7,sample_cpu5_freq,2500,MHz
+optimized,1:7,sample_cpu6_freq,2500,MHz
+optimized,1:7,sample_cpu7_freq,2500,MHz
+optimized,1:8,sample_elapsed,1097,ms
+optimized,1:8,sample_power,4.752,W
+optimized,1:8,sample_process_cpu,471.613,% one core
+optimized,1:8,sample_free_ram,1.090,GiB
+optimized,1:8,sample_battery_temp,36.000,C
+optimized,1:8,sample_thermal_status,1,Android PowerManager status
+optimized,1:8,sample_cpu0_freq,1900,MHz
+optimized,1:8,sample_cpu1_freq,1900,MHz
+optimized,1:8,sample_cpu2_freq,1900,MHz
+optimized,1:8,sample_cpu3_freq,1900,MHz
+optimized,1:8,sample_cpu4_freq,2500,MHz
+optimized,1:8,sample_cpu5_freq,2500,MHz
+optimized,1:8,sample_cpu6_freq,2500,MHz
+optimized,1:8,sample_cpu7_freq,2500,MHz
+optimized,1:9,sample_elapsed,1252,ms
+optimized,1:9,sample_power,4.678,W
+optimized,1:9,sample_process_cpu,513.548,% one core
+optimized,1:9,sample_free_ram,1.091,GiB
+optimized,1:9,sample_battery_temp,36.000,C
+optimized,1:9,sample_thermal_status,1,Android PowerManager status
+optimized,1:9,sample_cpu0_freq,1900,MHz
+optimized,1:9,sample_cpu1_freq,1900,MHz
+optimized,1:9,sample_cpu2_freq,1900,MHz
+optimized,1:9,sample_cpu3_freq,1900,MHz
+optimized,1:9,sample_cpu4_freq,2500,MHz
+optimized,1:9,sample_cpu5_freq,2500,MHz
+optimized,1:9,sample_cpu6_freq,2500,MHz
+optimized,1:9,sample_cpu7_freq,2500,MHz
+optimized,1:10,sample_elapsed,1408,ms
+optimized,1:10,sample_power,4.678,W
+optimized,1:10,sample_process_cpu,460.256,% one core
+optimized,1:10,sample_free_ram,1.091,GiB
+optimized,1:10,sample_battery_temp,36.000,C
+optimized,1:10,sample_thermal_status,1,Android PowerManager status
+optimized,1:10,sample_cpu0_freq,1900,MHz
+optimized,1:10,sample_cpu1_freq,1900,MHz
+optimized,1:10,sample_cpu2_freq,1900,MHz
+optimized,1:10,sample_cpu3_freq,1900,MHz
+optimized,1:10,sample_cpu4_freq,2500,MHz
+optimized,1:10,sample_cpu5_freq,2500,MHz
+optimized,1:10,sample_cpu6_freq,2500,MHz
+optimized,1:10,sample_cpu7_freq,2500,MHz
+optimized,1:11,sample_elapsed,1562,ms
+optimized,1:11,sample_power,4.678,W
+optimized,1:11,sample_process_cpu,468.831,% one core
+optimized,1:11,sample_free_ram,1.091,GiB
+optimized,1:11,sample_battery_temp,36.000,C
+optimized,1:11,sample_thermal_status,1,Android PowerManager status
+optimized,1:11,sample_cpu0_freq,1900,MHz
+optimized,1:11,sample_cpu1_freq,1900,MHz
+optimized,1:11,sample_cpu2_freq,1900,MHz
+optimized,1:11,sample_cpu3_freq,1900,MHz
+optimized,1:11,sample_cpu4_freq,2500,MHz
+optimized,1:11,sample_cpu5_freq,2500,MHz
+optimized,1:11,sample_cpu6_freq,2500,MHz
+optimized,1:11,sample_cpu7_freq,2500,MHz
+optimized,1:12,sample_elapsed,1717,ms
+optimized,1:12,sample_power,4.678,W
+optimized,1:12,sample_process_cpu,461.935,% one core
+optimized,1:12,sample_free_ram,1.091,GiB
+optimized,1:12,sample_battery_temp,36.000,C
+optimized,1:12,sample_thermal_status,1,Android PowerManager status
+optimized,1:12,sample_cpu0_freq,1900,MHz
+optimized,1:12,sample_cpu1_freq,1900,MHz
+optimized,1:12,sample_cpu2_freq,1900,MHz
+optimized,1:12,sample_cpu3_freq,1900,MHz
+optimized,1:12,sample_cpu4_freq,2500,MHz
+optimized,1:12,sample_cpu5_freq,2500,MHz
+optimized,1:12,sample_cpu6_freq,2500,MHz
+optimized,1:12,sample_cpu7_freq,2500,MHz
+optimized,1:13,sample_elapsed,1872,ms
+optimized,1:13,sample_power,4.276,W
+optimized,1:13,sample_process_cpu,474.194,% one core
+optimized,1:13,sample_free_ram,1.091,GiB
+optimized,1:13,sample_battery_temp,36.000,C
+optimized,1:13,sample_thermal_status,1,Android PowerManager status
+optimized,1:13,sample_cpu0_freq,1900,MHz
+optimized,1:13,sample_cpu1_freq,1900,MHz
+optimized,1:13,sample_cpu2_freq,1900,MHz
+optimized,1:13,sample_cpu3_freq,1900,MHz
+optimized,1:13,sample_cpu4_freq,2500,MHz
+optimized,1:13,sample_cpu5_freq,2500,MHz
+optimized,1:13,sample_cpu6_freq,2500,MHz
+optimized,1:13,sample_cpu7_freq,2500,MHz
+optimized,1:14,sample_elapsed,2029,ms
+optimized,1:14,sample_power,4.276,W
+optimized,1:14,sample_process_cpu,462.420,% one core
+optimized,1:14,sample_free_ram,1.091,GiB
+optimized,1:14,sample_battery_temp,36.000,C
+optimized,1:14,sample_thermal_status,1,Android PowerManager status
+optimized,1:14,sample_cpu0_freq,1600,MHz
+optimized,1:14,sample_cpu1_freq,1600,MHz
+optimized,1:14,sample_cpu2_freq,1600,MHz
+optimized,1:14,sample_cpu3_freq,1600,MHz
+optimized,1:14,sample_cpu4_freq,2500,MHz
+optimized,1:14,sample_cpu5_freq,2500,MHz
+optimized,1:14,sample_cpu6_freq,2500,MHz
+optimized,1:14,sample_cpu7_freq,2500,MHz
+optimized,1:15,sample_elapsed,2185,ms
+optimized,1:15,sample_power,4.276,W
+optimized,1:15,sample_process_cpu,464.744,% one core
+optimized,1:15,sample_free_ram,1.090,GiB
+optimized,1:15,sample_battery_temp,36.000,C
+optimized,1:15,sample_thermal_status,1,Android PowerManager status
+optimized,1:15,sample_cpu0_freq,1900,MHz
+optimized,1:15,sample_cpu1_freq,1900,MHz
+optimized,1:15,sample_cpu2_freq,800,MHz
+optimized,1:15,sample_cpu3_freq,900,MHz
+optimized,1:15,sample_cpu4_freq,2500,MHz
+optimized,1:15,sample_cpu5_freq,2500,MHz
+optimized,1:15,sample_cpu6_freq,2500,MHz
+optimized,1:15,sample_cpu7_freq,2500,MHz
+optimized,1:16,sample_elapsed,2339,ms
+optimized,1:16,sample_power,4.276,W
+optimized,1:16,sample_process_cpu,470.779,% one core
+optimized,1:16,sample_free_ram,1.090,GiB
+optimized,1:16,sample_battery_temp,36.000,C
+optimized,1:16,sample_thermal_status,1,Android PowerManager status
+optimized,1:16,sample_cpu0_freq,1900,MHz
+optimized,1:16,sample_cpu1_freq,1900,MHz
+optimized,1:16,sample_cpu2_freq,1900,MHz
+optimized,1:16,sample_cpu3_freq,1900,MHz
+optimized,1:16,sample_cpu4_freq,2500,MHz
+optimized,1:16,sample_cpu5_freq,2500,MHz
+optimized,1:16,sample_cpu6_freq,2500,MHz
+optimized,1:16,sample_cpu7_freq,2500,MHz
+optimized,1:17,sample_elapsed,2494,ms
+optimized,1:17,sample_power,4.309,W
+optimized,1:17,sample_process_cpu,476.129,% one core
+optimized,1:17,sample_free_ram,1.089,GiB
+optimized,1:17,sample_battery_temp,36.000,C
+optimized,1:17,sample_thermal_status,1,Android PowerManager status
+optimized,1:17,sample_cpu0_freq,600,MHz
+optimized,1:17,sample_cpu1_freq,600,MHz
+optimized,1:17,sample_cpu2_freq,600,MHz
+optimized,1:17,sample_cpu3_freq,600,MHz
+optimized,1:17,sample_cpu4_freq,2500,MHz
+optimized,1:17,sample_cpu5_freq,2500,MHz
+optimized,1:17,sample_cpu6_freq,2500,MHz
+optimized,1:17,sample_cpu7_freq,2500,MHz
+optimized,1:18,sample_elapsed,2652,ms
+optimized,1:18,sample_power,4.309,W
+optimized,1:18,sample_process_cpu,459.494,% one core
+optimized,1:18,sample_free_ram,1.092,GiB
+optimized,1:18,sample_battery_temp,36.000,C
+optimized,1:18,sample_thermal_status,1,Android PowerManager status
+optimized,1:18,sample_cpu0_freq,1900,MHz
+optimized,1:18,sample_cpu1_freq,1900,MHz
+optimized,1:18,sample_cpu2_freq,1900,MHz
+optimized,1:18,sample_cpu3_freq,1900,MHz
+optimized,1:18,sample_cpu4_freq,2500,MHz
+optimized,1:18,sample_cpu5_freq,2500,MHz
+optimized,1:18,sample_cpu6_freq,2500,MHz
+optimized,1:18,sample_cpu7_freq,2500,MHz
+optimized,1:19,sample_elapsed,2807,ms
+optimized,1:19,sample_power,4.309,W
+optimized,1:19,sample_process_cpu,461.935,% one core
+optimized,1:19,sample_free_ram,1.091,GiB
+optimized,1:19,sample_battery_temp,36.000,C
+optimized,1:19,sample_thermal_status,1,Android PowerManager status
+optimized,1:19,sample_cpu0_freq,1900,MHz
+optimized,1:19,sample_cpu1_freq,1900,MHz
+optimized,1:19,sample_cpu2_freq,1900,MHz
+optimized,1:19,sample_cpu3_freq,1900,MHz
+optimized,1:19,sample_cpu4_freq,2500,MHz
+optimized,1:19,sample_cpu5_freq,2500,MHz
+optimized,1:19,sample_cpu6_freq,2500,MHz
+optimized,1:19,sample_cpu7_freq,2500,MHz
+optimized,1:20,sample_elapsed,2960,ms
+optimized,1:20,sample_power,4.309,W
+optimized,1:20,sample_process_cpu,463.399,% one core
+optimized,1:20,sample_free_ram,1.091,GiB
+optimized,1:20,sample_battery_temp,36.000,C
+optimized,1:20,sample_thermal_status,1,Android PowerManager status
+optimized,1:20,sample_cpu0_freq,1800,MHz
+optimized,1:20,sample_cpu1_freq,1800,MHz
+optimized,1:20,sample_cpu2_freq,1800,MHz
+optimized,1:20,sample_cpu3_freq,1800,MHz
+optimized,1:20,sample_cpu4_freq,2500,MHz
+optimized,1:20,sample_cpu5_freq,2500,MHz
+optimized,1:20,sample_cpu6_freq,2500,MHz
+optimized,1:20,sample_cpu7_freq,2500,MHz
+optimized,1:21,sample_elapsed,3115,ms
+optimized,1:21,sample_power,4.320,W
+optimized,1:21,sample_process_cpu,475.484,% one core
+optimized,1:21,sample_free_ram,1.091,GiB
+optimized,1:21,sample_battery_temp,36.000,C
+optimized,1:21,sample_thermal_status,1,Android PowerManager status
+optimized,1:21,sample_cpu0_freq,1900,MHz
+optimized,1:21,sample_cpu1_freq,1900,MHz
+optimized,1:21,sample_cpu2_freq,1900,MHz
+optimized,1:21,sample_cpu3_freq,1900,MHz
+optimized,1:21,sample_cpu4_freq,2500,MHz
+optimized,1:21,sample_cpu5_freq,2500,MHz
+optimized,1:21,sample_cpu6_freq,2500,MHz
+optimized,1:21,sample_cpu7_freq,2500,MHz
+optimized,1:22,sample_elapsed,3272,ms
+optimized,1:22,sample_power,4.320,W
+optimized,1:22,sample_process_cpu,459.236,% one core
+optimized,1:22,sample_free_ram,1.092,GiB
+optimized,1:22,sample_battery_temp,36.000,C
+optimized,1:22,sample_thermal_status,1,Android PowerManager status
+optimized,1:22,sample_cpu0_freq,1900,MHz
+optimized,1:22,sample_cpu1_freq,1300,MHz
+optimized,1:22,sample_cpu2_freq,1300,MHz
+optimized,1:22,sample_cpu3_freq,1300,MHz
+optimized,1:22,sample_cpu4_freq,2500,MHz
+optimized,1:22,sample_cpu5_freq,2500,MHz
+optimized,1:22,sample_cpu6_freq,2500,MHz
+optimized,1:22,sample_cpu7_freq,2500,MHz
+optimized,1:23,sample_elapsed,3426,ms
+optimized,1:23,sample_power,4.320,W
+optimized,1:23,sample_process_cpu,469.481,% one core
+optimized,1:23,sample_free_ram,1.092,GiB
+optimized,1:23,sample_battery_temp,36.000,C
+optimized,1:23,sample_thermal_status,1,Android PowerManager status
+optimized,1:23,sample_cpu0_freq,1100,MHz
+optimized,1:23,sample_cpu1_freq,1100,MHz
+optimized,1:23,sample_cpu2_freq,1800,MHz
+optimized,1:23,sample_cpu3_freq,1800,MHz
+optimized,1:23,sample_cpu4_freq,2500,MHz
+optimized,1:23,sample_cpu5_freq,2500,MHz
+optimized,1:23,sample_cpu6_freq,2500,MHz
+optimized,1:23,sample_cpu7_freq,2500,MHz
+optimized,1:24,sample_elapsed,3580,ms
+optimized,1:24,sample_power,4.320,W
+optimized,1:24,sample_process_cpu,461.688,% one core
+optimized,1:24,sample_free_ram,1.092,GiB
+optimized,1:24,sample_battery_temp,36.000,C
+optimized,1:24,sample_thermal_status,1,Android PowerManager status
+optimized,1:24,sample_cpu0_freq,1900,MHz
+optimized,1:24,sample_cpu1_freq,1800,MHz
+optimized,1:24,sample_cpu2_freq,1500,MHz
+optimized,1:24,sample_cpu3_freq,1700,MHz
+optimized,1:24,sample_cpu4_freq,2500,MHz
+optimized,1:24,sample_cpu5_freq,2500,MHz
+optimized,1:24,sample_cpu6_freq,2500,MHz
+optimized,1:24,sample_cpu7_freq,2500,MHz
+optimized,1:25,sample_elapsed,3735,ms
+optimized,1:25,sample_power,4.923,W
+optimized,1:25,sample_process_cpu,452.258,% one core
+optimized,1:25,sample_free_ram,1.091,GiB
+optimized,1:25,sample_battery_temp,36.000,C
+optimized,1:25,sample_thermal_status,1,Android PowerManager status
+optimized,1:25,sample_cpu0_freq,1900,MHz
+optimized,1:25,sample_cpu1_freq,1900,MHz
+optimized,1:25,sample_cpu2_freq,1900,MHz
+optimized,1:25,sample_cpu3_freq,1900,MHz
+optimized,1:25,sample_cpu4_freq,2500,MHz
+optimized,1:25,sample_cpu5_freq,2500,MHz
+optimized,1:25,sample_cpu6_freq,2500,MHz
+optimized,1:25,sample_cpu7_freq,2500,MHz
+optimized,1:26,sample_elapsed,3891,ms
+optimized,1:26,sample_power,4.923,W
+optimized,1:26,sample_process_cpu,458.974,% one core
+optimized,1:26,sample_free_ram,1.090,GiB
+optimized,1:26,sample_battery_temp,36.000,C
+optimized,1:26,sample_thermal_status,1,Android PowerManager status
+optimized,1:26,sample_cpu0_freq,1900,MHz
+optimized,1:26,sample_cpu1_freq,1900,MHz
+optimized,1:26,sample_cpu2_freq,1900,MHz
+optimized,1:26,sample_cpu3_freq,1900,MHz
+optimized,1:26,sample_cpu4_freq,2500,MHz
+optimized,1:26,sample_cpu5_freq,2500,MHz
+optimized,1:26,sample_cpu6_freq,2500,MHz
+optimized,1:26,sample_cpu7_freq,2500,MHz
+optimized,1:27,sample_elapsed,4044,ms
+optimized,1:27,sample_power,4.923,W
+optimized,1:27,sample_process_cpu,503.922,% one core
+optimized,1:27,sample_free_ram,1.090,GiB
+optimized,1:27,sample_battery_temp,36.000,C
+optimized,1:27,sample_thermal_status,1,Android PowerManager status
+optimized,1:27,sample_cpu0_freq,1900,MHz
+optimized,1:27,sample_cpu1_freq,1900,MHz
+optimized,1:27,sample_cpu2_freq,1900,MHz
+optimized,1:27,sample_cpu3_freq,1900,MHz
+optimized,1:27,sample_cpu4_freq,2500,MHz
+optimized,1:27,sample_cpu5_freq,2500,MHz
+optimized,1:27,sample_cpu6_freq,2500,MHz
+optimized,1:27,sample_cpu7_freq,2500,MHz
+optimized,1:28,sample_elapsed,4202,ms
+optimized,1:28,sample_power,4.923,W
+optimized,1:28,sample_process_cpu,502.532,% one core
+optimized,1:28,sample_free_ram,1.090,GiB
+optimized,1:28,sample_battery_temp,36.000,C
+optimized,1:28,sample_thermal_status,1,Android PowerManager status
+optimized,1:28,sample_cpu0_freq,1900,MHz
+optimized,1:28,sample_cpu1_freq,1900,MHz
+optimized,1:28,sample_cpu2_freq,1900,MHz
+optimized,1:28,sample_cpu3_freq,1900,MHz
+optimized,1:28,sample_cpu4_freq,2500,MHz
+optimized,1:28,sample_cpu5_freq,2500,MHz
+optimized,1:28,sample_cpu6_freq,2500,MHz
+optimized,1:28,sample_cpu7_freq,2500,MHz
+optimized,1:29,sample_elapsed,4360,ms
+optimized,1:29,sample_power,3.982,W
+optimized,1:29,sample_process_cpu,518.354,% one core
+optimized,1:29,sample_free_ram,1.090,GiB
+optimized,1:29,sample_battery_temp,36.000,C
+optimized,1:29,sample_thermal_status,1,Android PowerManager status
+optimized,1:29,sample_cpu0_freq,1900,MHz
+optimized,1:29,sample_cpu1_freq,1900,MHz
+optimized,1:29,sample_cpu2_freq,1900,MHz
+optimized,1:29,sample_cpu3_freq,1000,MHz
+optimized,1:29,sample_cpu4_freq,2500,MHz
+optimized,1:29,sample_cpu5_freq,2500,MHz
+optimized,1:29,sample_cpu6_freq,2500,MHz
+optimized,1:29,sample_cpu7_freq,2500,MHz
+optimized,1:30,sample_elapsed,4524,ms
+optimized,1:30,sample_power,3.982,W
+optimized,1:30,sample_process_cpu,476.220,% one core
+optimized,1:30,sample_free_ram,1.090,GiB
+optimized,1:30,sample_battery_temp,36.000,C
+optimized,1:30,sample_thermal_status,1,Android PowerManager status
+optimized,1:30,sample_cpu0_freq,1900,MHz
+optimized,1:30,sample_cpu1_freq,1900,MHz
+optimized,1:30,sample_cpu2_freq,1900,MHz
+optimized,1:30,sample_cpu3_freq,1900,MHz
+optimized,1:30,sample_cpu4_freq,2500,MHz
+optimized,1:30,sample_cpu5_freq,2500,MHz
+optimized,1:30,sample_cpu6_freq,2500,MHz
+optimized,1:30,sample_cpu7_freq,2500,MHz
+optimized,1:31,sample_elapsed,4680,ms
+optimized,1:31,sample_power,3.982,W
+optimized,1:31,sample_process_cpu,492.949,% one core
+optimized,1:31,sample_free_ram,1.089,GiB
+optimized,1:31,sample_battery_temp,36.000,C
+optimized,1:31,sample_thermal_status,1,Android PowerManager status
+optimized,1:31,sample_cpu0_freq,1900,MHz
+optimized,1:31,sample_cpu1_freq,1900,MHz
+optimized,1:31,sample_cpu2_freq,1900,MHz
+optimized,1:31,sample_cpu3_freq,1900,MHz
+optimized,1:31,sample_cpu4_freq,2500,MHz
+optimized,1:31,sample_cpu5_freq,2500,MHz
+optimized,1:31,sample_cpu6_freq,2500,MHz
+optimized,1:31,sample_cpu7_freq,2500,MHz
+optimized,1:32,sample_elapsed,4834,ms
+optimized,1:32,sample_power,3.982,W
+optimized,1:32,sample_process_cpu,488.312,% one core
+optimized,1:32,sample_free_ram,1.089,GiB
+optimized,1:32,sample_battery_temp,36.000,C
+optimized,1:32,sample_thermal_status,1,Android PowerManager status
+optimized,1:32,sample_cpu0_freq,1900,MHz
+optimized,1:32,sample_cpu1_freq,1900,MHz
+optimized,1:32,sample_cpu2_freq,1900,MHz
+optimized,1:32,sample_cpu3_freq,1900,MHz
+optimized,1:32,sample_cpu4_freq,2500,MHz
+optimized,1:32,sample_cpu5_freq,2500,MHz
+optimized,1:32,sample_cpu6_freq,2500,MHz
+optimized,1:32,sample_cpu7_freq,2500,MHz
+optimized,1:33,sample_elapsed,4992,ms
+optimized,1:33,sample_power,4.444,W
+optimized,1:33,sample_process_cpu,517.089,% one core
+optimized,1:33,sample_free_ram,1.089,GiB
+optimized,1:33,sample_battery_temp,36.000,C
+optimized,1:33,sample_thermal_status,1,Android PowerManager status
+optimized,1:33,sample_cpu0_freq,1900,MHz
+optimized,1:33,sample_cpu1_freq,1900,MHz
+optimized,1:33,sample_cpu2_freq,1900,MHz
+optimized,1:33,sample_cpu3_freq,1900,MHz
+optimized,1:33,sample_cpu4_freq,2500,MHz
+optimized,1:33,sample_cpu5_freq,2500,MHz
+optimized,1:33,sample_cpu6_freq,2500,MHz
+optimized,1:33,sample_cpu7_freq,2500,MHz
+optimized,1:34,sample_elapsed,5150,ms
+optimized,1:34,sample_power,4.540,W
+optimized,1:34,sample_process_cpu,481.646,% one core
+optimized,1:34,sample_free_ram,1.089,GiB
+optimized,1:34,sample_battery_temp,36.000,C
+optimized,1:34,sample_thermal_status,1,Android PowerManager status
+optimized,1:34,sample_cpu0_freq,1900,MHz
+optimized,1:34,sample_cpu1_freq,1900,MHz
+optimized,1:34,sample_cpu2_freq,1900,MHz
+optimized,1:34,sample_cpu3_freq,1900,MHz
+optimized,1:34,sample_cpu4_freq,2500,MHz
+optimized,1:34,sample_cpu5_freq,2500,MHz
+optimized,1:34,sample_cpu6_freq,2500,MHz
+optimized,1:34,sample_cpu7_freq,2500,MHz
+optimized,1:35,sample_elapsed,5310,ms
+optimized,1:35,sample_power,4.540,W
+optimized,1:35,sample_process_cpu,498.750,% one core
+optimized,1:35,sample_free_ram,1.089,GiB
+optimized,1:35,sample_battery_temp,36.000,C
+optimized,1:35,sample_thermal_status,1,Android PowerManager status
+optimized,1:35,sample_cpu0_freq,1900,MHz
+optimized,1:35,sample_cpu1_freq,1900,MHz
+optimized,1:35,sample_cpu2_freq,1900,MHz
+optimized,1:35,sample_cpu3_freq,1900,MHz
+optimized,1:35,sample_cpu4_freq,2500,MHz
+optimized,1:35,sample_cpu5_freq,2500,MHz
+optimized,1:35,sample_cpu6_freq,2500,MHz
+optimized,1:35,sample_cpu7_freq,2500,MHz
+optimized,1:36,sample_elapsed,5465,ms
+optimized,1:36,sample_power,4.540,W
+optimized,1:36,sample_process_cpu,507.742,% one core
+optimized,1:36,sample_free_ram,1.089,GiB
+optimized,1:36,sample_battery_temp,36.000,C
+optimized,1:36,sample_thermal_status,1,Android PowerManager status
+optimized,1:36,sample_cpu0_freq,1900,MHz
+optimized,1:36,sample_cpu1_freq,1900,MHz
+optimized,1:36,sample_cpu2_freq,1900,MHz
+optimized,1:36,sample_cpu3_freq,1900,MHz
+optimized,1:36,sample_cpu4_freq,2500,MHz
+optimized,1:36,sample_cpu5_freq,2500,MHz
+optimized,1:36,sample_cpu6_freq,2500,MHz
+optimized,1:36,sample_cpu7_freq,2500,MHz
+optimized,1:37,sample_elapsed,5622,ms
+optimized,1:37,sample_power,4.470,W
+optimized,1:37,sample_process_cpu,498.726,% one core
+optimized,1:37,sample_free_ram,1.089,GiB
+optimized,1:37,sample_battery_temp,36.000,C
+optimized,1:37,sample_thermal_status,1,Android PowerManager status
+optimized,1:37,sample_cpu0_freq,1900,MHz
+optimized,1:37,sample_cpu1_freq,1900,MHz
+optimized,1:37,sample_cpu2_freq,1900,MHz
+optimized,1:37,sample_cpu3_freq,1900,MHz
+optimized,1:37,sample_cpu4_freq,2500,MHz
+optimized,1:37,sample_cpu5_freq,2500,MHz
+optimized,1:37,sample_cpu6_freq,2500,MHz
+optimized,1:37,sample_cpu7_freq,2500,MHz
+optimized,1:38,sample_elapsed,5784,ms
+optimized,1:38,sample_power,4.470,W
+optimized,1:38,sample_process_cpu,492.593,% one core
+optimized,1:38,sample_free_ram,1.089,GiB
+optimized,1:38,sample_battery_temp,36.000,C
+optimized,1:38,sample_thermal_status,1,Android PowerManager status
+optimized,1:38,sample_cpu0_freq,1900,MHz
+optimized,1:38,sample_cpu1_freq,1900,MHz
+optimized,1:38,sample_cpu2_freq,1900,MHz
+optimized,1:38,sample_cpu3_freq,1900,MHz
+optimized,1:38,sample_cpu4_freq,2500,MHz
+optimized,1:38,sample_cpu5_freq,2500,MHz
+optimized,1:38,sample_cpu6_freq,2500,MHz
+optimized,1:38,sample_cpu7_freq,2500,MHz
+optimized,1:39,sample_elapsed,5943,ms
+optimized,1:39,sample_power,4.470,W
+optimized,1:39,sample_process_cpu,480.503,% one core
+optimized,1:39,sample_free_ram,1.089,GiB
+optimized,1:39,sample_battery_temp,36.000,C
+optimized,1:39,sample_thermal_status,1,Android PowerManager status
+optimized,1:39,sample_cpu0_freq,1900,MHz
+optimized,1:39,sample_cpu1_freq,1900,MHz
+optimized,1:39,sample_cpu2_freq,1900,MHz
+optimized,1:39,sample_cpu3_freq,1900,MHz
+optimized,1:39,sample_cpu4_freq,2500,MHz
+optimized,1:39,sample_cpu5_freq,2500,MHz
+optimized,1:39,sample_cpu6_freq,2500,MHz
+optimized,1:39,sample_cpu7_freq,2500,MHz
+optimized,1:40,sample_elapsed,6110,ms
+optimized,1:40,sample_power,4.470,W
+optimized,1:40,sample_process_cpu,501.796,% one core
+optimized,1:40,sample_free_ram,1.088,GiB
+optimized,1:40,sample_battery_temp,36.000,C
+optimized,1:40,sample_thermal_status,1,Android PowerManager status
+optimized,1:40,sample_cpu0_freq,1900,MHz
+optimized,1:40,sample_cpu1_freq,1900,MHz
+optimized,1:40,sample_cpu2_freq,1900,MHz
+optimized,1:40,sample_cpu3_freq,1900,MHz
+optimized,1:40,sample_cpu4_freq,2500,MHz
+optimized,1:40,sample_cpu5_freq,2500,MHz
+optimized,1:40,sample_cpu6_freq,2500,MHz
+optimized,1:40,sample_cpu7_freq,2500,MHz
+optimized,1:41,sample_elapsed,6264,ms
+optimized,1:41,sample_power,4.425,W
+optimized,1:41,sample_process_cpu,505.195,% one core
+optimized,1:41,sample_free_ram,1.088,GiB
+optimized,1:41,sample_battery_temp,36.000,C
+optimized,1:41,sample_thermal_status,1,Android PowerManager status
+optimized,1:41,sample_cpu0_freq,1900,MHz
+optimized,1:41,sample_cpu1_freq,1900,MHz
+optimized,1:41,sample_cpu2_freq,1900,MHz
+optimized,1:41,sample_cpu3_freq,1900,MHz
+optimized,1:41,sample_cpu4_freq,2500,MHz
+optimized,1:41,sample_cpu5_freq,2500,MHz
+optimized,1:41,sample_cpu6_freq,2500,MHz
+optimized,1:41,sample_cpu7_freq,2500,MHz
+optimized,1:42,sample_elapsed,6424,ms
+optimized,1:42,sample_power,4.425,W
+optimized,1:42,sample_process_cpu,500.625,% one core
+optimized,1:42,sample_free_ram,1.088,GiB
+optimized,1:42,sample_battery_temp,36.000,C
+optimized,1:42,sample_thermal_status,1,Android PowerManager status
+optimized,1:42,sample_cpu0_freq,1900,MHz
+optimized,1:42,sample_cpu1_freq,1900,MHz
+optimized,1:42,sample_cpu2_freq,1900,MHz
+optimized,1:42,sample_cpu3_freq,1900,MHz
+optimized,1:42,sample_cpu4_freq,2500,MHz
+optimized,1:42,sample_cpu5_freq,2500,MHz
+optimized,1:42,sample_cpu6_freq,2500,MHz
+optimized,1:42,sample_cpu7_freq,2500,MHz
+optimized,1:43,sample_elapsed,6587,ms
+optimized,1:43,sample_power,4.425,W
+optimized,1:43,sample_process_cpu,492.638,% one core
+optimized,1:43,sample_free_ram,1.088,GiB
+optimized,1:43,sample_battery_temp,36.000,C
+optimized,1:43,sample_thermal_status,1,Android PowerManager status
+optimized,1:43,sample_cpu0_freq,1900,MHz
+optimized,1:43,sample_cpu1_freq,1900,MHz
+optimized,1:43,sample_cpu2_freq,1900,MHz
+optimized,1:43,sample_cpu3_freq,1900,MHz
+optimized,1:43,sample_cpu4_freq,2500,MHz
+optimized,1:43,sample_cpu5_freq,2500,MHz
+optimized,1:43,sample_cpu6_freq,2500,MHz
+optimized,1:43,sample_cpu7_freq,2500,MHz
+optimized,1:44,sample_elapsed,6746,ms
+optimized,1:44,sample_power,4.425,W
+optimized,1:44,sample_process_cpu,494.340,% one core
+optimized,1:44,sample_free_ram,1.087,GiB
+optimized,1:44,sample_battery_temp,36.000,C
+optimized,1:44,sample_thermal_status,1,Android PowerManager status
+optimized,1:44,sample_cpu0_freq,1900,MHz
+optimized,1:44,sample_cpu1_freq,1900,MHz
+optimized,1:44,sample_cpu2_freq,1900,MHz
+optimized,1:44,sample_cpu3_freq,1900,MHz
+optimized,1:44,sample_cpu4_freq,2500,MHz
+optimized,1:44,sample_cpu5_freq,2500,MHz
+optimized,1:44,sample_cpu6_freq,2500,MHz
+optimized,1:44,sample_cpu7_freq,2500,MHz
+optimized,1:45,sample_elapsed,6908,ms
+optimized,1:45,sample_power,4.425,W
+optimized,1:45,sample_process_cpu,520.988,% one core
+optimized,1:45,sample_free_ram,1.087,GiB
+optimized,1:45,sample_battery_temp,36.000,C
+optimized,1:45,sample_thermal_status,1,Android PowerManager status
+optimized,1:45,sample_cpu0_freq,1900,MHz
+optimized,1:45,sample_cpu1_freq,1900,MHz
+optimized,1:45,sample_cpu2_freq,1900,MHz
+optimized,1:45,sample_cpu3_freq,1900,MHz
+optimized,1:45,sample_cpu4_freq,2500,MHz
+optimized,1:45,sample_cpu5_freq,2500,MHz
+optimized,1:45,sample_cpu6_freq,2500,MHz
+optimized,1:45,sample_cpu7_freq,2500,MHz
+optimized,1:46,sample_elapsed,7078,ms
+optimized,1:46,sample_power,4.425,W
+optimized,1:46,sample_process_cpu,475.882,% one core
+optimized,1:46,sample_free_ram,1.087,GiB
+optimized,1:46,sample_battery_temp,36.000,C
+optimized,1:46,sample_thermal_status,1,Android PowerManager status
+optimized,1:46,sample_cpu0_freq,1900,MHz
+optimized,1:46,sample_cpu1_freq,1900,MHz
+optimized,1:46,sample_cpu2_freq,1900,MHz
+optimized,1:46,sample_cpu3_freq,1900,MHz
+optimized,1:46,sample_cpu4_freq,2500,MHz
+optimized,1:46,sample_cpu5_freq,2500,MHz
+optimized,1:46,sample_cpu6_freq,2500,MHz
+optimized,1:46,sample_cpu7_freq,2500,MHz
+optimized,1:47,sample_elapsed,7238,ms
+optimized,1:47,sample_power,4.425,W
+optimized,1:47,sample_process_cpu,501.250,% one core
+optimized,1:47,sample_free_ram,1.087,GiB
+optimized,1:47,sample_battery_temp,36.000,C
+optimized,1:47,sample_thermal_status,1,Android PowerManager status
+optimized,1:47,sample_cpu0_freq,1900,MHz
+optimized,1:47,sample_cpu1_freq,1900,MHz
+optimized,1:47,sample_cpu2_freq,1900,MHz
+optimized,1:47,sample_cpu3_freq,1900,MHz
+optimized,1:47,sample_cpu4_freq,2500,MHz
+optimized,1:47,sample_cpu5_freq,2500,MHz
+optimized,1:47,sample_cpu6_freq,2500,MHz
+optimized,1:47,sample_cpu7_freq,2500,MHz
+optimized,1:48,sample_elapsed,7392,ms
+optimized,1:48,sample_power,4.425,W
+optimized,1:48,sample_process_cpu,504.545,% one core
+optimized,1:48,sample_free_ram,1.087,GiB
+optimized,1:48,sample_battery_temp,36.000,C
+optimized,1:48,sample_thermal_status,1,Android PowerManager status
+optimized,1:48,sample_cpu0_freq,1900,MHz
+optimized,1:48,sample_cpu1_freq,1900,MHz
+optimized,1:48,sample_cpu2_freq,1900,MHz
+optimized,1:48,sample_cpu3_freq,1900,MHz
+optimized,1:48,sample_cpu4_freq,2500,MHz
+optimized,1:48,sample_cpu5_freq,2500,MHz
+optimized,1:48,sample_cpu6_freq,2500,MHz
+optimized,1:48,sample_cpu7_freq,2500,MHz
+optimized,1:49,sample_elapsed,7549,ms
+optimized,1:49,sample_power,4.682,W
+optimized,1:49,sample_process_cpu,497.452,% one core
+optimized,1:49,sample_free_ram,1.087,GiB
+optimized,1:49,sample_battery_temp,36.000,C
+optimized,1:49,sample_thermal_status,1,Android PowerManager status
+optimized,1:49,sample_cpu0_freq,1900,MHz
+optimized,1:49,sample_cpu1_freq,1900,MHz
+optimized,1:49,sample_cpu2_freq,1900,MHz
+optimized,1:49,sample_cpu3_freq,1900,MHz
+optimized,1:49,sample_cpu4_freq,2500,MHz
+optimized,1:49,sample_cpu5_freq,2500,MHz
+optimized,1:49,sample_cpu6_freq,2500,MHz
+optimized,1:49,sample_cpu7_freq,2500,MHz
+optimized,1:50,sample_elapsed,7711,ms
+optimized,1:50,sample_power,4.682,W
+optimized,1:50,sample_process_cpu,535.185,% one core
+optimized,1:50,sample_free_ram,1.086,GiB
+optimized,1:50,sample_battery_temp,36.000,C
+optimized,1:50,sample_thermal_status,1,Android PowerManager status
+optimized,1:50,sample_cpu0_freq,1900,MHz
+optimized,1:50,sample_cpu1_freq,1900,MHz
+optimized,1:50,sample_cpu2_freq,1900,MHz
+optimized,1:50,sample_cpu3_freq,1900,MHz
+optimized,1:50,sample_cpu4_freq,2500,MHz
+optimized,1:50,sample_cpu5_freq,2500,MHz
+optimized,1:50,sample_cpu6_freq,2500,MHz
+optimized,1:50,sample_cpu7_freq,2500,MHz
+optimized,1:51,sample_elapsed,7893,ms
+optimized,1:51,sample_power,4.682,W
+optimized,1:51,sample_process_cpu,459.890,% one core
+optimized,1:51,sample_free_ram,1.086,GiB
+optimized,1:51,sample_battery_temp,36.000,C
+optimized,1:51,sample_thermal_status,1,Android PowerManager status
+optimized,1:51,sample_cpu0_freq,1900,MHz
+optimized,1:51,sample_cpu1_freq,1900,MHz
+optimized,1:51,sample_cpu2_freq,1900,MHz
+optimized,1:51,sample_cpu3_freq,1900,MHz
+optimized,1:51,sample_cpu4_freq,2500,MHz
+optimized,1:51,sample_cpu5_freq,2500,MHz
+optimized,1:51,sample_cpu6_freq,2500,MHz
+optimized,1:51,sample_cpu7_freq,2500,MHz
+optimized,1:52,sample_elapsed,8054,ms
+optimized,1:52,sample_power,4.633,W
+optimized,1:52,sample_process_cpu,494.410,% one core
+optimized,1:52,sample_free_ram,1.086,GiB
+optimized,1:52,sample_battery_temp,36.000,C
+optimized,1:52,sample_thermal_status,1,Android PowerManager status
+optimized,1:52,sample_cpu0_freq,1900,MHz
+optimized,1:52,sample_cpu1_freq,1900,MHz
+optimized,1:52,sample_cpu2_freq,1900,MHz
+optimized,1:52,sample_cpu3_freq,1900,MHz
+optimized,1:52,sample_cpu4_freq,2500,MHz
+optimized,1:52,sample_cpu5_freq,2500,MHz
+optimized,1:52,sample_cpu6_freq,2500,MHz
+optimized,1:52,sample_cpu7_freq,2500,MHz
+optimized,1:53,sample_elapsed,8210,ms
+optimized,1:53,sample_power,4.633,W
+optimized,1:53,sample_process_cpu,505.769,% one core
+optimized,1:53,sample_free_ram,1.086,GiB
+optimized,1:53,sample_battery_temp,36.000,C
+optimized,1:53,sample_thermal_status,1,Android PowerManager status
+optimized,1:53,sample_cpu0_freq,1900,MHz
+optimized,1:53,sample_cpu1_freq,1900,MHz
+optimized,1:53,sample_cpu2_freq,1900,MHz
+optimized,1:53,sample_cpu3_freq,1900,MHz
+optimized,1:53,sample_cpu4_freq,2500,MHz
+optimized,1:53,sample_cpu5_freq,2500,MHz
+optimized,1:53,sample_cpu6_freq,2500,MHz
+optimized,1:53,sample_cpu7_freq,2500,MHz
+optimized,1:54,sample_elapsed,8368,ms
+optimized,1:54,sample_power,4.633,W
+optimized,1:54,sample_process_cpu,491.139,% one core
+optimized,1:54,sample_free_ram,1.086,GiB
+optimized,1:54,sample_battery_temp,36.000,C
+optimized,1:54,sample_thermal_status,1,Android PowerManager status
+optimized,1:54,sample_cpu0_freq,1900,MHz
+optimized,1:54,sample_cpu1_freq,1900,MHz
+optimized,1:54,sample_cpu2_freq,1900,MHz
+optimized,1:54,sample_cpu3_freq,1900,MHz
+optimized,1:54,sample_cpu4_freq,2500,MHz
+optimized,1:54,sample_cpu5_freq,2500,MHz
+optimized,1:54,sample_cpu6_freq,2500,MHz
+optimized,1:54,sample_cpu7_freq,2500,MHz
+optimized,1:55,sample_elapsed,8523,ms
+optimized,1:55,sample_power,4.633,W
+optimized,1:55,sample_process_cpu,507.742,% one core
+optimized,1:55,sample_free_ram,1.086,GiB
+optimized,1:55,sample_battery_temp,36.000,C
+optimized,1:55,sample_thermal_status,1,Android PowerManager status
+optimized,1:55,sample_cpu0_freq,1900,MHz
+optimized,1:55,sample_cpu1_freq,1900,MHz
+optimized,1:55,sample_cpu2_freq,1900,MHz
+optimized,1:55,sample_cpu3_freq,1900,MHz
+optimized,1:55,sample_cpu4_freq,2500,MHz
+optimized,1:55,sample_cpu5_freq,2500,MHz
+optimized,1:55,sample_cpu6_freq,2500,MHz
+optimized,1:55,sample_cpu7_freq,2500,MHz
+optimized,1:56,sample_elapsed,8684,ms
+optimized,1:56,sample_power,4.444,W
+optimized,1:56,sample_process_cpu,521.118,% one core
+optimized,1:56,sample_free_ram,1.086,GiB
+optimized,1:56,sample_battery_temp,36.000,C
+optimized,1:56,sample_thermal_status,1,Android PowerManager status
+optimized,1:56,sample_cpu0_freq,1900,MHz
+optimized,1:56,sample_cpu1_freq,1900,MHz
+optimized,1:56,sample_cpu2_freq,1900,MHz
+optimized,1:56,sample_cpu3_freq,1900,MHz
+optimized,1:56,sample_cpu4_freq,2500,MHz
+optimized,1:56,sample_cpu5_freq,2500,MHz
+optimized,1:56,sample_cpu6_freq,2500,MHz
+optimized,1:56,sample_cpu7_freq,2500,MHz
+optimized,1:57,sample_elapsed,8850,ms
+optimized,1:57,sample_power,4.444,W
+optimized,1:57,sample_process_cpu,465.060,% one core
+optimized,1:57,sample_free_ram,1.085,GiB
+optimized,1:57,sample_battery_temp,36.000,C
+optimized,1:57,sample_thermal_status,1,Android PowerManager status
+optimized,1:57,sample_cpu0_freq,1900,MHz
+optimized,1:57,sample_cpu1_freq,1900,MHz
+optimized,1:57,sample_cpu2_freq,1900,MHz
+optimized,1:57,sample_cpu3_freq,1900,MHz
+optimized,1:57,sample_cpu4_freq,2500,MHz
+optimized,1:57,sample_cpu5_freq,2500,MHz
+optimized,1:57,sample_cpu6_freq,2500,MHz
+optimized,1:57,sample_cpu7_freq,2500,MHz
+optimized,1:58,sample_elapsed,9006,ms
+optimized,1:58,sample_power,4.444,W
+optimized,1:58,sample_process_cpu,488.462,% one core
+optimized,1:58,sample_free_ram,1.084,GiB
+optimized,1:58,sample_battery_temp,36.000,C
+optimized,1:58,sample_thermal_status,1,Android PowerManager status
+optimized,1:58,sample_cpu0_freq,1900,MHz
+optimized,1:58,sample_cpu1_freq,1900,MHz
+optimized,1:58,sample_cpu2_freq,1900,MHz
+optimized,1:58,sample_cpu3_freq,1900,MHz
+optimized,1:58,sample_cpu4_freq,2500,MHz
+optimized,1:58,sample_cpu5_freq,2500,MHz
+optimized,1:58,sample_cpu6_freq,2500,MHz
+optimized,1:58,sample_cpu7_freq,2500,MHz
+optimized,1:59,sample_elapsed,9159,ms
+optimized,1:59,sample_power,4.444,W
+optimized,1:59,sample_process_cpu,504.575,% one core
+optimized,1:59,sample_free_ram,1.084,GiB
+optimized,1:59,sample_battery_temp,36.000,C
+optimized,1:59,sample_thermal_status,1,Android PowerManager status
+optimized,1:59,sample_cpu0_freq,1900,MHz
+optimized,1:59,sample_cpu1_freq,1900,MHz
+optimized,1:59,sample_cpu2_freq,1900,MHz
+optimized,1:59,sample_cpu3_freq,1900,MHz
+optimized,1:59,sample_cpu4_freq,2500,MHz
+optimized,1:59,sample_cpu5_freq,2500,MHz
+optimized,1:59,sample_cpu6_freq,2500,MHz
+optimized,1:59,sample_cpu7_freq,2500,MHz
+optimized,1:60,sample_elapsed,9315,ms
+optimized,1:60,sample_power,4.369,W
+optimized,1:60,sample_process_cpu,524.359,% one core
+optimized,1:60,sample_free_ram,1.084,GiB
+optimized,1:60,sample_battery_temp,36.000,C
+optimized,1:60,sample_thermal_status,1,Android PowerManager status
+optimized,1:60,sample_cpu0_freq,1900,MHz
+optimized,1:60,sample_cpu1_freq,1900,MHz
+optimized,1:60,sample_cpu2_freq,1900,MHz
+optimized,1:60,sample_cpu3_freq,1900,MHz
+optimized,1:60,sample_cpu4_freq,2500,MHz
+optimized,1:60,sample_cpu5_freq,2500,MHz
+optimized,1:60,sample_cpu6_freq,2500,MHz
+optimized,1:60,sample_cpu7_freq,2500,MHz
+optimized,1:61,sample_elapsed,9476,ms
+optimized,1:61,sample_power,4.369,W
+optimized,1:61,sample_process_cpu,500.000,% one core
+optimized,1:61,sample_free_ram,1.084,GiB
+optimized,1:61,sample_battery_temp,36.000,C
+optimized,1:61,sample_thermal_status,1,Android PowerManager status
+optimized,1:61,sample_cpu0_freq,1900,MHz
+optimized,1:61,sample_cpu1_freq,1900,MHz
+optimized,1:61,sample_cpu2_freq,1900,MHz
+optimized,1:61,sample_cpu3_freq,1900,MHz
+optimized,1:61,sample_cpu4_freq,2500,MHz
+optimized,1:61,sample_cpu5_freq,2500,MHz
+optimized,1:61,sample_cpu6_freq,2500,MHz
+optimized,1:61,sample_cpu7_freq,2500,MHz
+optimized,1:62,sample_elapsed,9633,ms
+optimized,1:62,sample_power,4.369,W
+optimized,1:62,sample_process_cpu,494.268,% one core
+optimized,1:62,sample_free_ram,1.084,GiB
+optimized,1:62,sample_battery_temp,36.000,C
+optimized,1:62,sample_thermal_status,1,Android PowerManager status
+optimized,1:62,sample_cpu0_freq,1900,MHz
+optimized,1:62,sample_cpu1_freq,1900,MHz
+optimized,1:62,sample_cpu2_freq,1900,MHz
+optimized,1:62,sample_cpu3_freq,1900,MHz
+optimized,1:62,sample_cpu4_freq,2500,MHz
+optimized,1:62,sample_cpu5_freq,2500,MHz
+optimized,1:62,sample_cpu6_freq,2500,MHz
+optimized,1:62,sample_cpu7_freq,2500,MHz
+optimized,1:63,sample_elapsed,9791,ms
+optimized,1:63,sample_power,4.369,W
+optimized,1:63,sample_process_cpu,498.101,% one core
+optimized,1:63,sample_free_ram,1.083,GiB
+optimized,1:63,sample_battery_temp,36.000,C
+optimized,1:63,sample_thermal_status,1,Android PowerManager status
+optimized,1:63,sample_cpu0_freq,1900,MHz
+optimized,1:63,sample_cpu1_freq,1900,MHz
+optimized,1:63,sample_cpu2_freq,1900,MHz
+optimized,1:63,sample_cpu3_freq,1900,MHz
+optimized,1:63,sample_cpu4_freq,2500,MHz
+optimized,1:63,sample_cpu5_freq,2500,MHz
+optimized,1:63,sample_cpu6_freq,2500,MHz
+optimized,1:63,sample_cpu7_freq,2500,MHz
+optimized,1:64,sample_elapsed,9963,ms
+optimized,1:64,sample_power,4.458,W
+optimized,1:64,sample_process_cpu,519.186,% one core
+optimized,1:64,sample_free_ram,1.083,GiB
+optimized,1:64,sample_battery_temp,36.000,C
+optimized,1:64,sample_thermal_status,1,Android PowerManager status
+optimized,1:64,sample_cpu0_freq,1900,MHz
+optimized,1:64,sample_cpu1_freq,1900,MHz
+optimized,1:64,sample_cpu2_freq,1900,MHz
+optimized,1:64,sample_cpu3_freq,1900,MHz
+optimized,1:64,sample_cpu4_freq,2500,MHz
+optimized,1:64,sample_cpu5_freq,2500,MHz
+optimized,1:64,sample_cpu6_freq,2500,MHz
+optimized,1:64,sample_cpu7_freq,2500,MHz
+optimized,1:65,sample_elapsed,10124,ms
+optimized,1:65,sample_power,4.458,W
+optimized,1:65,sample_process_cpu,486.957,% one core
+optimized,1:65,sample_free_ram,1.083,GiB
+optimized,1:65,sample_battery_temp,36.000,C
+optimized,1:65,sample_thermal_status,1,Android PowerManager status
+optimized,1:65,sample_cpu0_freq,1900,MHz
+optimized,1:65,sample_cpu1_freq,1900,MHz
+optimized,1:65,sample_cpu2_freq,1900,MHz
+optimized,1:65,sample_cpu3_freq,1900,MHz
+optimized,1:65,sample_cpu4_freq,2500,MHz
+optimized,1:65,sample_cpu5_freq,2500,MHz
+optimized,1:65,sample_cpu6_freq,2500,MHz
+optimized,1:65,sample_cpu7_freq,2500,MHz
+optimized,1:66,sample_elapsed,10282,ms
+optimized,1:66,sample_power,4.458,W
+optimized,1:66,sample_process_cpu,494.937,% one core
+optimized,1:66,sample_free_ram,1.083,GiB
+optimized,1:66,sample_battery_temp,36.000,C
+optimized,1:66,sample_thermal_status,1,Android PowerManager status
+optimized,1:66,sample_cpu0_freq,1900,MHz
+optimized,1:66,sample_cpu1_freq,1900,MHz
+optimized,1:66,sample_cpu2_freq,1900,MHz
+optimized,1:66,sample_cpu3_freq,1900,MHz
+optimized,1:66,sample_cpu4_freq,2500,MHz
+optimized,1:66,sample_cpu5_freq,2500,MHz
+optimized,1:66,sample_cpu6_freq,2500,MHz
+optimized,1:66,sample_cpu7_freq,2500,MHz
+optimized,1:67,sample_elapsed,10447,ms
+optimized,1:67,sample_power,4.458,W
+optimized,1:67,sample_process_cpu,499.394,% one core
+optimized,1:67,sample_free_ram,1.083,GiB
+optimized,1:67,sample_battery_temp,36.000,C
+optimized,1:67,sample_thermal_status,1,Android PowerManager status
+optimized,1:67,sample_cpu0_freq,1900,MHz
+optimized,1:67,sample_cpu1_freq,1900,MHz
+optimized,1:67,sample_cpu2_freq,1900,MHz
+optimized,1:67,sample_cpu3_freq,1900,MHz
+optimized,1:67,sample_cpu4_freq,2500,MHz
+optimized,1:67,sample_cpu5_freq,2500,MHz
+optimized,1:67,sample_cpu6_freq,2500,MHz
+optimized,1:67,sample_cpu7_freq,2500,MHz
+optimized,1:68,sample_elapsed,10609,ms
+optimized,1:68,sample_power,4.739,W
+optimized,1:68,sample_process_cpu,494.444,% one core
+optimized,1:68,sample_free_ram,1.083,GiB
+optimized,1:68,sample_battery_temp,36.000,C
+optimized,1:68,sample_thermal_status,1,Android PowerManager status
+optimized,1:68,sample_cpu0_freq,1900,MHz
+optimized,1:68,sample_cpu1_freq,1900,MHz
+optimized,1:68,sample_cpu2_freq,1900,MHz
+optimized,1:68,sample_cpu3_freq,1900,MHz
+optimized,1:68,sample_cpu4_freq,2500,MHz
+optimized,1:68,sample_cpu5_freq,2500,MHz
+optimized,1:68,sample_cpu6_freq,2500,MHz
+optimized,1:68,sample_cpu7_freq,2500,MHz
+optimized,1:69,sample_elapsed,10764,ms
+optimized,1:69,sample_power,4.739,W
+optimized,1:69,sample_process_cpu,487.097,% one core
+optimized,1:69,sample_free_ram,1.083,GiB
+optimized,1:69,sample_battery_temp,36.000,C
+optimized,1:69,sample_thermal_status,1,Android PowerManager status
+optimized,1:69,sample_cpu0_freq,1900,MHz
+optimized,1:69,sample_cpu1_freq,1900,MHz
+optimized,1:69,sample_cpu2_freq,1900,MHz
+optimized,1:69,sample_cpu3_freq,1900,MHz
+optimized,1:69,sample_cpu4_freq,2500,MHz
+optimized,1:69,sample_cpu5_freq,2500,MHz
+optimized,1:69,sample_cpu6_freq,2500,MHz
+optimized,1:69,sample_cpu7_freq,2500,MHz
+optimized,1:70,sample_elapsed,10917,ms
+optimized,1:70,sample_power,4.739,W
+optimized,1:70,sample_process_cpu,503.268,% one core
+optimized,1:70,sample_free_ram,1.082,GiB
+optimized,1:70,sample_battery_temp,36.000,C
+optimized,1:70,sample_thermal_status,1,Android PowerManager status
+optimized,1:70,sample_cpu0_freq,1900,MHz
+optimized,1:70,sample_cpu1_freq,1900,MHz
+optimized,1:70,sample_cpu2_freq,1900,MHz
+optimized,1:70,sample_cpu3_freq,1900,MHz
+optimized,1:70,sample_cpu4_freq,2500,MHz
+optimized,1:70,sample_cpu5_freq,2500,MHz
+optimized,1:70,sample_cpu6_freq,2500,MHz
+optimized,1:70,sample_cpu7_freq,2500,MHz
+optimized,1:71,sample_elapsed,11078,ms
+optimized,1:71,sample_power,4.739,W
+optimized,1:71,sample_process_cpu,495.031,% one core
+optimized,1:71,sample_free_ram,1.082,GiB
+optimized,1:71,sample_battery_temp,36.000,C
+optimized,1:71,sample_thermal_status,1,Android PowerManager status
+optimized,1:71,sample_cpu0_freq,1900,MHz
+optimized,1:71,sample_cpu1_freq,1900,MHz
+optimized,1:71,sample_cpu2_freq,1900,MHz
+optimized,1:71,sample_cpu3_freq,1900,MHz
+optimized,1:71,sample_cpu4_freq,2500,MHz
+optimized,1:71,sample_cpu5_freq,2500,MHz
+optimized,1:71,sample_cpu6_freq,2500,MHz
+optimized,1:71,sample_cpu7_freq,2500,MHz
+optimized,1:72,sample_elapsed,11238,ms
+optimized,1:72,sample_power,4.493,W
+optimized,1:72,sample_process_cpu,525.625,% one core
+optimized,1:72,sample_free_ram,1.082,GiB
+optimized,1:72,sample_battery_temp,36.000,C
+optimized,1:72,sample_thermal_status,1,Android PowerManager status
+optimized,1:72,sample_cpu0_freq,1900,MHz
+optimized,1:72,sample_cpu1_freq,1900,MHz
+optimized,1:72,sample_cpu2_freq,1900,MHz
+optimized,1:72,sample_cpu3_freq,1900,MHz
+optimized,1:72,sample_cpu4_freq,2500,MHz
+optimized,1:72,sample_cpu5_freq,2500,MHz
+optimized,1:72,sample_cpu6_freq,2500,MHz
+optimized,1:72,sample_cpu7_freq,2500,MHz
+optimized,1:73,sample_elapsed,11400,ms
+optimized,1:73,sample_power,4.493,W
+optimized,1:73,sample_process_cpu,475.926,% one core
+optimized,1:73,sample_free_ram,1.082,GiB
+optimized,1:73,sample_battery_temp,36.000,C
+optimized,1:73,sample_thermal_status,1,Android PowerManager status
+optimized,1:73,sample_cpu0_freq,1900,MHz
+optimized,1:73,sample_cpu1_freq,1900,MHz
+optimized,1:73,sample_cpu2_freq,1900,MHz
+optimized,1:73,sample_cpu3_freq,1900,MHz
+optimized,1:73,sample_cpu4_freq,2500,MHz
+optimized,1:73,sample_cpu5_freq,2500,MHz
+optimized,1:73,sample_cpu6_freq,2500,MHz
+optimized,1:73,sample_cpu7_freq,2500,MHz
+optimized,1:74,sample_elapsed,11558,ms
+optimized,1:74,sample_power,4.493,W
+optimized,1:74,sample_process_cpu,499.367,% one core
+optimized,1:74,sample_free_ram,1.082,GiB
+optimized,1:74,sample_battery_temp,36.000,C
+optimized,1:74,sample_thermal_status,1,Android PowerManager status
+optimized,1:74,sample_cpu0_freq,1900,MHz
+optimized,1:74,sample_cpu1_freq,1900,MHz
+optimized,1:74,sample_cpu2_freq,1900,MHz
+optimized,1:74,sample_cpu3_freq,1900,MHz
+optimized,1:74,sample_cpu4_freq,2500,MHz
+optimized,1:74,sample_cpu5_freq,2500,MHz
+optimized,1:74,sample_cpu6_freq,2500,MHz
+optimized,1:74,sample_cpu7_freq,2500,MHz
+optimized,1:75,sample_elapsed,11720,ms
+optimized,1:75,sample_power,4.493,W
+optimized,1:75,sample_process_cpu,494.444,% one core
+optimized,1:75,sample_free_ram,1.082,GiB
+optimized,1:75,sample_battery_temp,36.000,C
+optimized,1:75,sample_thermal_status,1,Android PowerManager status
+optimized,1:75,sample_cpu0_freq,1900,MHz
+optimized,1:75,sample_cpu1_freq,1900,MHz
+optimized,1:75,sample_cpu2_freq,1900,MHz
+optimized,1:75,sample_cpu3_freq,1900,MHz
+optimized,1:75,sample_cpu4_freq,2500,MHz
+optimized,1:75,sample_cpu5_freq,2500,MHz
+optimized,1:75,sample_cpu6_freq,2500,MHz
+optimized,1:75,sample_cpu7_freq,2500,MHz
+optimized,median,pp,133.000,tok/s
+optimized,stddev,pp,0.000,tok/s
+optimized,median,tg,16.100,tok/s
+optimized,stddev,tg,0.000,tok/s
+optimized,median,power,4.305,W
+optimized,stddev,power,0.000,W
+optimized,median,tok_per_w,3.740,tok/W
+optimized,stddev,tok_per_w,0.000,tok/W
+optimized,median,ttft_pp512_derived,3911.736,ms
+optimized,stddev,ttft_pp512_derived,0.000,ms
+optimized,median,start_temp,36.000,C
+optimized,stddev,start_temp,0.000,C
+optimized,median,average_process_cpu,486.956,% one core
+optimized,stddev,average_process_cpu,0.000,% one core
+optimized,median,minimum_free_ram,1.082,GiB
+optimized,stddev,minimum_free_ram,0.000,GiB
+optimized,median,peak_battery_temp,36.000,C
+optimized,stddev,peak_battery_temp,0.000,C
+optimized,median,mean_perf_core_clock,2500.000,MHz
+optimized,stddev,mean_perf_core_clock,0.000,MHz
+optimized,median,mean_little_core_clock,1828.716,MHz
+optimized,stddev,mean_little_core_clock,0.000,MHz

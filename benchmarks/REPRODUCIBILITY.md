@@ -89,18 +89,23 @@ the three `tg` medians; the app also prints it under the results table.
 The CSV is the preferred evidence artifact. A screenshot makes the outcome easy to inspect; the
 CSV makes the individual passes auditable.
 
-## Generate the four evidence graphs
-
-Use the retained CSV to create CPU utilization, memory availability, thermal-throttle, and power
-consumption graphs:
+## Generate the evidence graphs
 
 ```bash
 python3 -m pip install matplotlib
 python3 benchmarks/plot_telemetry.py path/to/entity_bench.csv benchmarks/plots
+python3 benchmarks/plot_energy.py    path/to/entity_bench.csv benchmarks/plots
 ```
 
-The script writes `cpu_utilization.png`, `memory_usage.png`, `thermal_throttle.png`, and
-`power_consumption.png`. CPU is **ENTITY's process CPU percentage** and can exceed 100% when
+`plot_telemetry.py` writes `cpu_utilization.png`, `memory_usage.png`, `cpu_frequency.png` (per-core
+live clock, performance cluster against efficiency cluster), `thermal_analysis.png`,
+`power_consumption.png` and `summary_comparison.png`. `plot_energy.py` writes `energy_per_task.png`:
+the battery energy each arm spent producing the same 128 tokens, integrated from the measured power
+curve.
+
+**Both scripts refuse to plot power from a charging export.** The app hides power on screen while
+charging because USB input invalidates the battery-current reading; the CSV still records the raw
+samples, so a consumer that plots them anyway gets nonsense (one such export reports 18 tok/W). CPU is **ENTITY's process CPU percentage** and can exceed 100% when
 llama.cpp uses multiple cores; it is not a claim about whole-device CPU utilization. The thermal
 plot pairs battery temperature with Android's reported thermal state, so a throttle conclusion is
 grounded in the operating system signal rather than temperature alone.
