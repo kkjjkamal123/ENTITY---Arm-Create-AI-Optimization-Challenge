@@ -134,9 +134,8 @@ developer shortcut that happens to work because `adb` can write to `Android/data
   uses different workloads and CLI-only realtime priority.
 - ⋮ → **Benchmark** on the loaded model — runs three arms: the naïve eight-thread path,
   threads-only (Auto's thread count with affinity off), and ENTITY Auto, which ranks cores by
-  maximum frequency, uses its selected fast core set for decode, and widens prompt processing when
-  the split thread pool is available. This is the fastest way to confirm a native or affinity
-  change has not regressed the shipped path.
+  maximum frequency and runs both inference phases on that fast-core set. This is the fastest way
+  to confirm a native or affinity change has not regressed the shipped path.
 - `adb logcat -s AiChat:* ai-chat:*` while loading a model shows `init_context` logging the chosen
   thread count, context size, and the affinity actually applied — confirms pinning ran (see
   `pin_to_fast_cores()` in `ai_chat.cpp`).
@@ -148,8 +147,14 @@ developer shortcut that happens to work because `adb` can write to `Android/data
 
 ## Device-specific configuration: adapting CPU backend variants
 
-The v2.0.0 build ships **7 Arm CPU backend variants** (armv8.0 to armv9.2, each with KleidiAI kernels)
+The build ships **7 Arm CPU backend variants** (armv8.0 to armv9.2, each compiled with KleidiAI)
 with runtime dispatch for arm64 Android phones. The relevant flag in `lib/build.gradle.kts`:
+
+> **The backend variant is not the whole story.** KleidiAI registers matmul kernels for `Q4_0` and
+> `Q8_0` only. Load a K-quant or IQ model and every matmul falls back to generic ggml no matter
+> which variant was selected — the i8mm/dotprod path simply never runs. Measured on a Dimensity
+> 7300, switching a 1B from Q3_K_L to Q4_0 took prompt throughput from 43 to 121 tok/s. See
+> [OPTIMIZATIONS §4](OPTIMIZATIONS.md#4-quantization-is-what-gates-arms-kleidiai-kernels).
 
 ```kotlin
 arguments += "-DGGML_CPU_ALL_VARIANTS=ON"

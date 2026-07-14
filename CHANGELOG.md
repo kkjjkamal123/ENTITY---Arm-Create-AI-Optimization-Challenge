@@ -9,32 +9,67 @@ From v1.7.0 onward, both a debug-signed and release-signed APK are published per
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
-## [Unreleased]
+## [2.1.0] — 2026-07-14
+
+**ENTITY's own benchmark disproved ENTITY's flagship optimization, and found two that actually
+work.** The v2.0.0 headline credited a +121% decode gain to big-core affinity pinning. The
+three-arm ablation shipped in this release measured it: the pinning earns **~0%**. The gain is the
+thread count. Meanwhile Arm's KleidiAI — the reason seven CPU backend variants ship — was never
+executing at all, because it has kernels only for Q4_0/Q8_0 and every published benchmark used
+Q3_K_L.
 
 ### Added
 
-- **Three-arm benchmark ablation.** The Benchmark screen now runs a third configuration between
-  naïve and Auto: **threads-only** — Auto's derived thread count with core affinity switched off
-  (no `sched_setaffinity`, no pinned thread pool, placement left to the scheduler). It is the
-  in-app equivalent of an upstream llama.cpp `-t N` run.
-- `pinCores` flag through `InferenceEngine.applyConfig` → JNI `configure()` → `g_pin_cores` in
-  `ai_chat.cpp`. Defaults to true, so every shipped path is unchanged; only the ablation arm turns
-  it off. `unpin_all_cores()` clears any affinity mask inherited from the previous arm.
-- Decode attribution under the results table and in the copied text: how much of the naïve → Auto
-  gain the thread count earns, and how much pinning adds on top.
-- CSV export records the per-arm affinity policy (`affinity_naive`, `affinity_threads_only`,
-  `affinity_optimized`) and the three-arm order; `threads_only` joins `naive`/`optimized` as a
-  config key. `device-result-template.csv` gains the matching `threads_only_*` columns.
+- **Three-arm benchmark ablation.** A third configuration between naïve and Auto: **threads-only**,
+  Auto's derived thread count with core affinity switched off (no `sched_setaffinity`, no pinned
+  thread pool). It is the in-app equivalent of an upstream `llama.cpp -t N` run, and it is what lets
+  the result be attributed instead of assumed. The app prints the split under its results table.
+- `pinCores` through `InferenceEngine.applyConfig` → JNI `configure()` → `g_pin_cores`. Defaults to
+  true, so every shipped path is unchanged; only the ablation arm turns it off. `unpin_all_cores()`
+  clears any mask inherited from the previous arm.
+- **Effective-affinity logging.** Each arm logs the CPU mask the kernel actually applied
+  (`effective cpus` in logcat), so a silently failed `sched_setaffinity` cannot masquerade as
+  "pinning earns nothing".
+- **KleidiAI advisor.** `FileType.kleidiAiAccelerated` gates the claim on the loaded quantization.
+  The model-info card used to print "KleidiAI" unconditionally — telling users their model was
+  Arm-accelerated when it was not. It now says so, and quantifies what a non-accelerated quant costs.
+- **Per-core CPU frequency sampling** in the benchmark telemetry and CSV, plus perf/little core-clock
+  rows in the results table.
+- `benchmarks/plot_results.py` and the published charts; `device-result-template.csv` gains
+  `kleidiai_accelerated` and `pinning_decode_delta_pct`.
 
-### Why
+### Changed
 
-Naïve (8 threads, all cores) and Auto (4 threads, pinned) differ in **two** variables at once, so
-the published +121% / +117% decode figures are the gain of the shipped configuration over the
-out-of-the-box default — they do not say whether core pinning or the thread count earned it.
-Dropping to four threads alone already stops the little cores from gating decode. The middle arm
-holds the thread count fixed and removes only the pinning, so the two effects separate. The
-existing two-arm tables are unchanged and relabelled as such; no threads-only number is estimated.
-See [BENCHMARKS.md](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
+- **Prompt processing no longer widens to all cores — it was a regression.** Auto used split thread
+  pools to give prompt eval every online core, assuming a compute-bound phase wants all the hardware.
+  An A55 is about a third of an A78's throughput, so the widened pool finished late and every GEMM
+  waited on the stragglers. Measured on 1B Q4_0: prompt on 4 fast cores **135 tok/s**, spread across
+  all 8 **86 tok/s**. Both phases now run on the fast-core thread count.
+- Benchmark, README, FAQ, ARCHITECTURE, OPTIMIZATIONS and the release notes no longer credit the
+  speed-up to core pinning. The affinity code still ships — it is free, and another SoC may answer
+  differently — but it is not what makes ENTITY fast.
+
+### Fixed
+
+- **CSV export silently wrote 0-byte files.** The system file picker comes to the foreground while a
+  multi-gigabyte model is resident; Android kills the activity behind it; the recreated instance had
+  no result, so `buildCsv(lastResult ?: return)` bailed out — while DocumentsUI had already created
+  the file and the app still toasted "CSV exported". This is why no raw per-pass CSV ever survived to
+  be published. The CSV is now staged to cache **before** the picker opens and carried through
+  `onSaveInstanceState`; a lost result reports an error instead of writing nothing.
+- `buildFeatures.buildConfig` enabled. `BenchmarkActivity` reads `BuildConfig.VERSION_NAME` for CSV
+  provenance, but AGP 8 does not generate `BuildConfig` unless asked, so the app did not compile.
+
+### Measured (CMF Phone 1, Dimensity 7300, unplugged)
+
+| | v2.0.0 (Q3_K_L, widened prompt pool) | v2.1.0 (Q4_0, fast-core prompt) |
+|---|---:|---:|
+| Prompt throughput | 38.3 tok/s | **133 tok/s** |
+| **Time to first token** | **13,440 ms** | **3,918 ms** |
+| Decode throughput | 16.7 tok/s | 14.7 tok/s |
+
+Time-to-first-token improves **3.4×**. Decode gives up ~12%, the bandwidth cost of the larger
+quantization. Full record, graphs and limits: [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
 
 ## [2.0.0] — 2026-07-12
 
@@ -50,6 +85,11 @@ A **power measurement bug** was fixed: many OEM kernels report `BATTERY_PROPERTY
 milliamps instead of the documented microamps, causing 1000× underreporting on affected devices; a
 new `PowerMath` helper uses physical plausibility instead of trusting the unit. This fix is confirmed
 on hardware via cross-device validation.
+
+> **Corrected in v2.1.0:** the numbers below are accurate measurements, but the attribution is not.
+> They compare naïve against Auto, which differ in thread count *and* core placement. The three-arm
+> ablation later showed the thread count earns the gain and the pinning earns ~0%. What reproduces
+> cross-vendor is the *mechanism* (live `cpufreq` ranking), not a pinning benefit.
 
 **Cross-vendor measurement:** the core optimization was independently validated on a second device
 (Qualcomm Snapdragon 6 Gen 4) using the same model and protocol as the reference device. Reference

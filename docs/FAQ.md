@@ -22,14 +22,20 @@ receive a smaller Auto context window.
 ## What does Auto mode change?
 
 Auto mode ranks online CPU cores by their advertised maximum frequency, uses the fastest two to
-four cores for decode, can widen prompt processing to all online cores, and sizes context from
+four cores for both inference phases, and sizes context from
 model size plus available memory. It also enables the thermal guard.
 
-## Why not use every CPU core for generation?
+## Why not use every CPU core?
 
-Decode is often limited by memory bandwidth. On a big.LITTLE phone, waiting for efficiency cores
-can slow the token-by-token path. ENTITY keeps decode on the fast frequency-ranked core set while
-allowing the more parallel prompt phase to use a wider pool.
+Because it is measurably slower — for **both** phases, which was a surprise.
+
+Decode is limited by memory bandwidth, and on a big.LITTLE phone the efficiency cores gate the
+token-by-token path: 8 threads gives 8.8 tok/s, 4 threads gives 16.9.
+
+Prompt eval is compute-bound, so ENTITY used to widen it to all 8 cores. That was a regression: an
+A55 is about a third of an A78's throughput, so every GEMM waited on the stragglers. Prompt on 4
+fast cores measures 135 tok/s; across all 8 it measures 86. Since v2.1.0 both phases run on the
+fast-core set.
 
 ## How does ENTITY avoid running out of memory?
 
@@ -39,9 +45,24 @@ context decision to the user.
 
 ## Is a smaller quantization always faster?
 
-No. Kernel support and memory bandwidth matter as much as file size. Q4_0 is a sensible starting
-point on this hardware class because its dotprod path can be efficient, but the best model depends
-on the phone and the specific GGUF. Use the in-app benchmark to compare candidates on the device.
+No — and on Arm this is the single most expensive thing to get wrong.
+
+**Arm's KleidiAI ships matmul kernels for Q4_0 and Q8_0 only.** Every other quantization, including
+the entire K-quant and IQ family, falls back to generic ggml no matter which CPU backend variant the
+app loaded. A Q3_K_L model is smaller on disk than Q4_0 and still leaves Arm's kernels completely
+idle.
+
+Measured on a Dimensity 7300, same phone and thread config, only the quant differing:
+
+| | Q3_K_L (733 MB) | Q4_0 (773 MB) |
+|---|---:|---:|
+| Prompt throughput | 42.7 tok/s | **121 tok/s** |
+| Time to first token | 12.1 s | **4.3 s** |
+| Decode throughput | 16.9 tok/s | 14.7 tok/s |
+
+Prompt eval is a compute-bound GEMM, which is what KleidiAI accelerates. Decode is bandwidth-bound
+and tracks bytes-per-weight, so the slightly larger Q4_0 is slightly slower there. ENTITY's
+model-info card tells you which case you are in when you load a model.
 
 ## Are power and efficiency numbers trustworthy while charging?
 
@@ -61,12 +82,16 @@ arms change both at once.
 
 ## So how much does the core pinning actually earn?
 
-Not published yet, and deliberately not guessed. The Benchmark screen runs a third arm — threads
-only: Auto's thread count with affinity switched off, which is what an upstream llama.cpp `-t N`
-run does. The decode gap between naïve and threads only is the thread-count decision; the gap
-between threads only and Auto is the pinning. The app prints both under the results table. Run it
-and the numbers are yours: [pending
-attribution](../benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
+**About 0%.** ENTITY's own ablation disproved ENTITY's flagship optimization.
+
+The Benchmark screen runs a third arm — threads-only: Auto's thread count with affinity switched
+off, which is what an upstream `llama.cpp -t 4` run does. Across six runs on two models, dropping
+8 threads to 4 earns +81% to +94% of decode, and pinning those threads to the performance cluster
+adds nothing measurable.
+
+The affinity code still ships, because it is free and another SoC may behave differently. It is
+simply no longer claimed as the reason ENTITY is fast. Run the benchmark on your own phone and the
+numbers are yours: [full record](../benchmarks/BENCHMARKS.md).
 
 ## Does ENTITY use realtime scheduling or root-only controls?
 

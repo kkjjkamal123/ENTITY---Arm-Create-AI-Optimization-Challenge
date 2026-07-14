@@ -45,12 +45,13 @@ so it needs no second toolchain and no Termux. The benchmark runs three arms:
 |---|---|---|---|
 | Naïve | 8 | none | The out-of-the-box default: every core, scheduler-placed. |
 | Threads only | Auto's count (2-4) | none | An upstream llama.cpp `-t N` run: the right thread count, no pinning, no pinned pool. |
-| ENTITY Auto | Auto's count (2-4) | pinned to the frequency-ranked fast cores | The shipped path, plus the widened prompt-processing pool. |
+| ENTITY Auto | Auto's count (2-4) | pinned to the frequency-ranked fast cores | The shipped path: both phases on the fast-core set. |
 
 Naïve versus threads-only isolates the thread-count decision. Threads-only versus Auto isolates
-core pinning. Decode is the clean row: Auto also widens prompt processing to every core, so the
-prompt row mixes both effects and is labelled as such in the app and in
-[BENCHMARKS.md](BENCHMARKS.md).
+core pinning. Both the decode and prompt rows are clean, because every arm runs both phases on the
+same thread count. (Before v2.1.0 Auto widened prompt processing to every core, which made the
+prompt row a confound — and, when finally measured, turned out to be a regression: prompt is 135
+tok/s on 4 fast cores against 86 spread across all 8.) See [BENCHMARKS.md](BENCHMARKS.md).
 
 Threads-only is not a stand-in for the upstream baseline script below — it shares ENTITY's runtime
 build and JNI boundary. It isolates the *policy*; the script isolates the *stack*. Run both.
@@ -60,8 +61,8 @@ Implementation: `pinCores` in
 the pinned thread pool, and clears any mask inherited from the previous arm; the arm order and
 per-pass capture are in
 [`BenchmarkActivity.kt`](../app/entity.android/app/src/main/java/com/example/llama/BenchmarkActivity.kt).
-No three-arm result is published yet — see
-[Pending: the three-arm attribution](BENCHMARKS.md#pending-the-three-arm-attribution).
+The three-arm result is published: across six runs on two models, the thread count earns +81% to
++94% of decode and the core pinning earns ~0%. See [BENCHMARKS.md](BENCHMARKS.md).
 
 ## ExecuTorch and MLC-LLM
 

@@ -38,15 +38,17 @@ $$
 S_{\mathrm{gen}} = \{\pi_0,\pi_1,\ldots,\pi_{T_{\mathrm{gen}}-1}\}
 $$
 
-`S_gen` becomes the `sched_setaffinity` CPU mask. Decode uses that set. Prompt processing uses all
-online cores when the optional split thread-pool API is available:
+`S_gen` becomes the `sched_setaffinity` CPU mask. **Both** phases use that set:
 
 $$
-A_{\mathrm{decode}} = S_{\mathrm{gen}}, \qquad A_{\mathrm{prompt}} = \{0,1,\ldots,N-1\}
+A_{\mathrm{decode}} = A_{\mathrm{prompt}} = S_{\mathrm{gen}}
 $$
 
-If the split pool cannot be loaded at runtime, both phases fall back to `S_gen`. The policy is
-therefore safe on every supported device rather than assuming a hardcoded core number or cluster.
+Until v2.1.0 prompt processing was widened to all `N` online cores, on the assumption that a
+compute-bound phase wants all the hardware. Measured, that was a regression: prompt eval on the 4
+fast cores runs at 135 tok/s and across all 8 at 86 tok/s, because an A55 is roughly a third of an
+A78's throughput and every GEMM waits on the stragglers. The widening was removed. The right width
+is an empirical property of the SoC, not a constant, which is why the in-app benchmark decides it.
 
 ### Memory-aware context admission
 
@@ -167,24 +169,39 @@ comparison directly: **8.0 ± 1.1 → 17.7 ± 0.56 tok/s decode (+121%)** for na
 execution versus four big cores on the CMF Phone 1, and **+117%** on a Qualcomm Snapdragon 6 Gen 4
 device. Historical CLI output is retained separately in `benchmarks/termux_master_results.txt`.
 
-**What that number does not yet say.** Those two arms change *two* things at once: the thread count
-drops from 8 to 4, and the surviving threads get pinned. Dropping to four threads alone already
-stops the A55s from gating every decode step, which is most of what `-t 4` buys an upstream
-llama.cpp user. So +121% is the gain of the shipped configuration over the out-of-the-box default,
-**not** a measurement of affinity's contribution, and this section does not claim otherwise.
+**What that number does not say — and the ablation that settled it.** Those two arms change *two*
+things at once: the thread count drops from 8 to 4, and the surviving threads get pinned. So +121%
+is the gain of the shipped configuration over the out-of-the-box default, not a measurement of what
+affinity contributes.
 
-Separating them needs a third arm holding the thread count at 4 with affinity off. That arm now
-ships: `g_pin_cores` (set from Kotlin through `configure()`) makes `init_context()` skip
+Separating them needs a third arm holding the thread count at 4 with affinity off. That arm ships:
+`g_pin_cores` (set from Kotlin through `configure()`) makes `init_context()` skip
 `build_fast_cpu_set`/`pin_to_fast_cores`, makes `new_threadpool_on_fast_cores()` return null so
 llama.cpp falls back to default thread scheduling, and calls `unpin_all_cores()` to clear any mask
-inherited from the previous arm. The Benchmark screen runs naïve → threads-only → Auto and prints
-the split. Result: [pending a device
-run](../benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution) — nothing is estimated here
-until one exists.
+inherited from the previous arm. Each arm then logs the mask the kernel actually applied, so a
+failed `sched_setaffinity` cannot masquerade as "pinning earns nothing".
 
-The *mechanism* is still SoC-agnostic and is proven so: ranking cores by `cpufreq` rather than
-hardcoding a mask works unchanged across a MediaTek and a Qualcomm big.LITTLE layout. What is
-pending is how much of the measured gain to bill to it.
+**Result, six runs across two models on the reference device: the thread count earns +81% to +94%
+of decode, and the pinning earns approximately 0%.**
+
+| Model | Naïve (8 thr) | Threads-only (4 thr, no pin) | Auto (4 thr, pinned) | Pinning earns |
+|---|---:|---:|---:|---:|
+| 1B Q3_K_L (3 runs) | 8.8 | 16.9 | 16.7 | **−1%** |
+| 1B Q4_0 | 7.9 | 14.7 | 14.7 | **+0%** |
+| 3B Q4_0 | 3.1 | 6.0 | 6.8 | +13% |
+| 3B Q4_0 | 3.5 | 6.3 | 6.3 | **+0%** |
+
+The two 3B runs disagree, a third measured −16% while charging, and single 3B runs swing about ±15%,
+so the +13% is noise rather than a finding.
+
+**This section's optimization does not earn its headline.** Running eight threads on a 4+4 phone
+lets the A55s gate every decode step; simply using four threads removes that, and it is what any
+`llama.cpp -t 4` user already gets. The affinity code still ships — it is free, and another SoC may
+answer differently — but ENTITY no longer credits it with the speed-up.
+
+The *mechanism* remains SoC-agnostic and is proven so: ranking cores by `cpufreq` rather than
+hardcoding a mask finds the performance cluster unchanged across a MediaTek and a Qualcomm layout.
+What is disproven is the attribution, not the portability.
 
 ## 2. Universal Arm Support via Runtime CPU Backend Dispatch
 
@@ -242,18 +259,48 @@ Because llama.cpp memory-maps GGUF weights (paged in on demand, not fully reside
 sized by this adaptive logic — is the actual RAM-pressure lever, not the weights themselves. That's
 what lets a 3B model load and run within ~2 GB free.
 
-## 4. Quantization: Q4_0 on dotprod
+## 4. Quantization is what gates Arm's KleidiAI kernels
 
-**Files:** none in this repo directly implement quantization (it's a property of the GGUF file you
-load) — this is a *model-selection* recommendation grounded in measurement, documented in
-`InfoActivity.kt` ("Why Q4_0 wins on this CPU") and `MainActivity.buildModelInfo()` (surfaces the
-loaded model's quantization via `FileType.fromCode`).
+**Files:** `lib/src/main/java/com/arm/aichat/gguf/FileType.kt` (`kleidiAiAccelerated`),
+`MainActivity.buildModelInfo()` (surfaces it on the model-info card).
 
-Generation is memory-bandwidth bound, so raw byte count matters, but **kernel support can matter
-more**. The in-app model-information screen explains that Q4_0 can be faster than a smaller
-three-bit format when its dotprod kernel path is better supported. This is guidance rather than a
-universal ranking: users should benchmark the actual model and device they plan to use. The current
-cross-device app benchmark fixes the model at Q3_K_L and does not claim a quantization comparison.
+This is the most valuable Arm-specific finding in the project, and ENTITY shipped for two major
+versions without knowing it.
+
+**Arm's KleidiAI registers matmul kernels for exactly two GGML types: `Q4_0` and `Q8_0`.** The
+source is unambiguous — `ggml/src/ggml-cpu/kleidiai/kleidiai.cpp` gates every kernel on
+`GGML_TYPE_Q4_0` / `GGML_TYPE_Q8_0`. Every other type, including the whole K-quant and IQ family,
+falls back to generic ggml kernels **regardless of which of the seven CPU backend variants was
+loaded at startup**. Shipping an armv8.2+dotprod+KleidiAI backend does nothing for a model the
+library has no kernel for.
+
+**Every benchmark ENTITY published before v2.1.0 used `Llama-3.2-1B-Instruct-Q3_K_L`.** KleidiAI
+never executed once. The app's model-info card printed "KleidiAI" unconditionally, which told the
+user their model was Arm-accelerated when it provably was not.
+
+Measured on the CMF Phone 1 — same phone, same 512-token prompt, same four-thread unpinned
+configuration, the *only* difference being the quantization:
+
+| | Q3_K_L (733 MB, generic ggml) | Q4_0 (773 MB, KleidiAI) | Change |
+|---|---:|---:|---:|
+| Prompt throughput | 42.7 tok/s | **121 tok/s** | **+183%** |
+| Derived TTFT (512-token prompt) | 12,050 ms | **4,299 ms** | **−64%** |
+| Decode throughput | 16.9 tok/s | 14.7 tok/s | −13% |
+
+The split between the two phases is exactly what the hardware predicts, which is why it is
+believable rather than a fluke:
+
+- **Prompt evaluation is a compute-bound GEMM.** It is precisely what KleidiAI's i8mm/dotprod
+  kernels exist to accelerate, and it nearly triples.
+- **Decode is a memory-bandwidth-bound GEMV.** It tracks bytes-per-weight, not kernel quality. Q4_0
+  is ~6% more bytes than Q3_K_L, and it lands ~6-13% slower. A better kernel cannot help a workload
+  that is waiting on DRAM.
+
+So the honest guidance is not "Q4_0 is faster" — it is **"Q4_0 is what lets Arm's kernels run at
+all, which buys you time-to-first-token, and costs you a little decode."** Q4_0 is also a quality
+tradeoff against a K-quant of similar size, so ENTITY **recommends rather than switches**:
+`FileType.kleidiAiAccelerated` gates the claim, and the model-info card now says whether the loaded
+model can reach KleidiAI and what it costs when it cannot.
 
 ## 5. Big-core pinning under contention — app vs. CLI (read this one carefully)
 
@@ -423,7 +470,7 @@ A pass over the JNI boundary closed off several longstanding failure/leak modes:
 
 | # | Optimization | Implemented in | Verified via |
 |---|---|---|---|
-| 1 | Big-core affinity | `ai_chat.cpp: build_fast_cpu_set/pin_to_fast_cores`, ablation switch `g_pin_cores` | in-app benchmark on two devices; three-arm attribution pending a device run |
+| 1 | Big-core affinity | `ai_chat.cpp: build_fast_cpu_set/pin_to_fast_cores`, ablation switch `g_pin_cores` | three-arm ablation, 6 runs: **earns ~0%**. The thread count earns the gain. |
 | 2 | Runtime CPU backend dispatch (7 variants) | `lib/build.gradle.kts (ALL_VARIANTS=ON)`, `CMakeLists.txt` | runtime selection; cross-device validation |
 | 3 | Adaptive context | `MainActivity.adaptiveContext`, `ai_chat.cpp: init_context` | manual load test, 3B on 2GB free |
 | 4 | Quantization guidance (Q4_0) | model selection + `InfoActivity` | device-specific guidance |

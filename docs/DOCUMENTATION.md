@@ -30,9 +30,13 @@ Native code reads cpuinfo maximum frequency for every CPU, sorts the cores, and 
 generation set. In Auto mode the generation thread count is online cores minus two clamped to the
 range two through four. The selected set is passed to sched_setaffinity.
 
-Decode stays on the fast core set. Prompt processing can use all online cores through a separate
-ggml thread pool. If that runtime thread pool API is unavailable, the app falls back safely to the
-fast core set for both paths.
+Both inference phases run on that fast core set.
+
+Until v2.1.0 prompt processing was widened to every online core through a separate ggml thread pool,
+on the assumption that a compute bound phase wants all the hardware. Measured, that was a
+regression: an efficiency core is roughly a third of a performance core, so the widened pool
+finished late and every matmul waited on the stragglers. Prompt throughput on a 1B Q4_0 measures 135
+tokens per second on the four fast cores and 86 spread across all eight. The widening was removed.
 
 Implementation: app/entity.android/lib/src/main/cpp/ai_chat.cpp.
 
@@ -90,10 +94,10 @@ The two tables below are a two arm record: the eight thread default against ENTI
 report the end to end gain of the shipped configuration over what the phone does out of the box.
 
 They do not attribute that gain to core pinning. The two arms change two things at once, the thread
-count and the core placement, and dropping to four threads alone already stops the little cores from
-gating decode. The app now runs a third arm, threads only, which holds Auto's thread count and
-switches affinity off. No three arm result is published yet and no value is estimated in the
-meantime: see [the pending attribution](../benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
+count and the core placement. The app now runs a third arm, threads only, which holds Auto's thread
+count and switches affinity off, and the answer is in: across six runs on two models the thread
+count earns +81% to +94% of decode and the pinning earns about 0%. ENTITY's own ablation disproved
+ENTITY's flagship optimization. Full record: [benchmarks](../benchmarks/BENCHMARKS.md).
 
 ### CMF Phone 1
 

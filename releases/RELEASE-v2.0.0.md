@@ -62,7 +62,8 @@ SoC vendors on the same model, under the same protocol, with no vendor-specific 
 > out-of-the-box default*, which is what they honestly measure.
 >
 > A threads-only arm (Auto's thread count, affinity off) now ships in the app to separate the two.
-> Result: [pending a device run](../benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
+> **Result: the thread count earns the gain; the pinning earns ~0%** (six runs, two models — see
+> [BENCHMARKS.md](../benchmarks/BENCHMARKS.md)).
 > What *is* proven cross-vendor is the mechanism: ranking cores by `cpufreq` instead of hardcoding
 > a mask works unchanged on MediaTek and Qualcomm.
 

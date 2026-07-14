@@ -24,26 +24,30 @@ The current release is built for arm64 Android phones running Android 13 or late
 
 | Runtime decision | What ENTITY does |
 |---|---|
-| CPU backend | Ships seven Arm CPU backend variants from Arm v8.0 through Arm v9.2. ggml loads the best supported variant at startup with KleidiAI kernels available in every variant. |
-| Fast core selection | Reads maximum CPU frequency from the device then ranks the cores. Decode runs on the fastest two to four cores rather than waiting for slower efficiency cores. |
-| Separate thread pools | In Auto mode token generation stays on the fast core set while prompt processing can use every online core. |
+| CPU backend | Ships seven Arm CPU backend variants from Arm v8.0 through Arm v9.2. ggml loads the best supported variant at startup. |
+| KleidiAI advisor | Arm's KleidiAI has kernels for Q4_0 and Q8_0 only. Every other quantization silently falls back to generic ggml. ENTITY reads the GGUF header and tells you whether the model you loaded can actually reach Arm's kernels, and what it costs when it cannot. |
+| Fast core selection | Reads maximum CPU frequency from the device then ranks the cores. Both inference phases run on the fastest two to four cores rather than waiting for the slower efficiency cores. |
 | Adaptive context | Selects a 2048 to 8192 token context from model size and free RAM. This lets a 3B class model use a smaller window when memory is tight. |
 | Thermal policy | Checks Android thermal status during generation and adds a small cooperative delay when heat rises. Efficiency mode doubles the delay and caps inference at two threads. |
 | Energy telemetry | Reports tokens, token rate, time to first token, temperature, power, token per watt and free memory. |
+| Three arm ablation | The benchmark does not just report a number, it attributes it: naive, threads only, and Auto, so a reader can see which decision earned the speed up and which did not. |
 
 ENTITY does not claim to beat a tuned command line build on raw token rate. Its purpose is to give a normal phone user the same hardware aware decisions in a responsive foreground app with live energy and thermal information.
 
-    ## Evidence at a glance
+## Evidence at a glance
+
+ENTITY's own ablation disproved ENTITY's flagship optimization. That is recorded here rather than buried.
 
 | Claim | Evidence | Boundary |
 |---|---|---|
-| Auto improves decode throughput on tested phones | The same Android benchmark reports +121% on Dimensity 7300 and +117% on Snapdragon 6 Gen 4, against the eight-thread default. | Two phones, one fixed 1B Q3_K_L workload; not a universal multiplier. |
-| The gain is from a shipped path, not a CLI flag | The app compares eight-core naïve execution with its own frequency-ranked, affinity-pinned Auto path. [Source-level implementation](docs/OPTIMIZATIONS.md#1-big-core-affinity). | The historical Termux experiment also used realtime priority; it is explicitly not part of the app claim. |
-| The gain is *not yet attributed* to core pinning | Naïve and Auto differ in thread count and core placement at once, so the published two-arm tables cannot say which earns the speed-up. The app now ships a threads-only arm (Auto's thread count, affinity off) that separates them. | No three-arm result is published yet: [pending a device run](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution). Nothing is estimated in the meantime. |
-| Efficiency is measured, rather than inferred | Each in-app pass samples battery current and voltage; results include watts and tok/W only while unplugged. | Battery-current reporting is OEM-dependent; values are comparative measurements on the same device, not lab-grade power metering. |
-| A developer can reproduce or challenge the result | The app runs the benchmark and exports every pass to CSV. The exact protocol, export schema, source pointers, and known evidence limits are in [Reproducibility](benchmarks/REPRODUCIBILITY.md). | A matching device and model are required for a direct numerical comparison. |
+| Auto is much faster than the out of the box default | Decode +81% to +94% over an eight thread run, on two models, on an unplugged CMF Phone 1. | One phone, two models. Not a universal multiplier. |
+| **The gain is the thread count, not the core pinning** | The threads only arm runs Auto's thread count with affinity switched off. Across six runs, pinning adds about **0%**: the whole gain is 8 threads to 4. The v2.0.0 claim of "+121% from big core affinity" was wrong, and this is the experiment that showed it. | A different SoC may answer differently. The affinity code still ships; it is simply no longer credited. |
+| **KleidiAI only accelerates Q4_0 and Q8_0** | Verified in Arm's kernel source. Every benchmark published before v2.1.0 used Q3_K_L, so KleidiAI never ran. Switching to Q4_0, same phone and same thread config: prompt 43 to 121 tok/s, TTFT 12.1s to 4.3s. | Decode does not improve. It is bandwidth bound and tracks bytes per weight, not kernel quality. Q4_0 is also a quality tradeoff, so ENTITY recommends rather than switches. |
+| Widening prompt processing to all cores was a regression | Prompt on 4 fast cores measures 135 tok/s; spread across all 8 it measures 86. The efficiency cores gate every GEMM. Removed in v2.1.0. | Empirical to this SoC. A tri cluster chip may prefer a wider pool, which is why the benchmark decides it, not an assumption. |
+| Efficiency is measured, rather than inferred | Each pass samples battery current and voltage; watts and tok/W appear only while unplugged. | Battery current reporting is OEM dependent. Comparative on one device, not lab grade metering. |
+| A developer can reproduce or challenge any of it | The app runs the ablation and exports every pass to CSV. Each arm logs the CPU mask the kernel actually applied, so a failed pin cannot pass as "pinning earns nothing". | A matching device and model are needed for a direct numerical comparison. |
 
-This is the short judge-facing map. The benchmark tables below are the current results; the linked evidence page records exactly how to reproduce and interpret them.
+This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has the full record, the graphs, and the limits.
 
 ## Features
 
@@ -65,33 +69,52 @@ This is the short judge-facing map. The benchmark tables below are the current r
 
 ## Current in app benchmark
 
-The benchmark uses Llama 3.2 1B Instruct Q3 K L with 512 prompt tokens and 128 generated tokens. Each configuration runs three times on an unplugged phone. Values are median plus or minus population standard deviation.
+The benchmark runs a synthetic PP 512 / TG 128 workload on the loaded model, on an unplugged phone, with a thermal cooldown before every pass. It runs three arms, not two, so the result can be attributed rather than assumed: naive (8 threads, all cores), threads only (Auto's thread count with core pinning switched off, which is what an upstream `llama.cpp -t N` run does), and ENTITY Auto.
 
-The two tables below are the two arm record: the eight thread default against ENTITY Auto. That is the end to end gain of the shipped configuration over what a phone does out of the box, and it is what the +121% and +117% describe.
+### Where the speed up actually comes from
 
-It is not an attribution to core pinning. Those two arms differ in thread count and in core placement at the same time, so neither table can say which of the two earns the speed up. The app now runs a third arm, threads only: Auto's thread count with affinity switched off, which is what an upstream llama.cpp `-t N` run does. The decode gap between naive and threads only is the thread count decision; the gap between threads only and Auto is the pinning. [No three arm result is published yet](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution), and no threads only cell is estimated until a device produces one.
+Decode throughput, CMF Phone 1, Dimensity 7300:
 
-### CMF Phone 1: MediaTek Dimensity 7300
+| Model | Naive, 8 threads | Threads only, 4 threads no pin | ENTITY Auto, 4 threads pinned | Thread count earns | Pinning earns |
+|---|---:|---:|---:|---:|---:|
+| Llama 3.2 1B Q3_K_L, 3 runs | 8.8 ± 0.50 | 16.9 ± 0.08 | 16.7 ± 1.3 | **+92%** | **-1%** |
+| Llama 3.2 1B Q4_0, 1 run | 7.9 | 14.7 | 14.7 | **+86%** | **+0%** |
+| Llama 3.2 3B Q4_0, 1 run | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
+| Llama 3.2 3B Q4_0, 1 run | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
 
-| Metric | Naive eight cores | ENTITY Auto four fast cores | Result |
+![Decode attribution](benchmarks/plots/decode_attribution.png)
+
+Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode step. Using four threads removes that. Pinning those four threads to the performance cluster adds nothing measurable: the two 3B runs disagree (+13% and +0%), a third measured -16% while charging, and single 3B runs swing about 15% either way. The v2.0.0 claim that +121% came from big core affinity was wrong, and ENTITY's own ablation is what proved it.
+
+### KleidiAI never ran
+
+Arm's KleidiAI ships matmul kernels for Q4_0 and Q8_0 only. Every other quantization, including the whole K quant family, falls back to generic ggml no matter which backend variant loaded. Every benchmark published before v2.1.0 used Q3_K_L, so Arm's kernels never executed.
+
+Same phone, same 512 token prompt, same four thread unpinned config. Only the quantization differs:
+
+| | Q3_K_L, KleidiAI cannot run | Q4_0, KleidiAI runs | Change |
 |---|---:|---:|---:|
-| Prompt throughput | 42.2 ± 0.34 tok per s | 43.2 ± 1.8 tok per s | +2% |
-| Decode throughput | 8.0 ± 1.1 tok per s | 17.7 ± 0.56 tok per s | +121% |
-| Derived TTFT | 12245 ± 108 ms | 11907 ± 452 ms | 3% lower |
-| Power | 4.7 ± 0.34 W | 4.0 ± 0.22 W | lower |
-| Energy efficiency | 1.7 ± 0.36 tok per W | 4.2 ± 0.23 tok per W | 2.5× |
+| Prompt throughput | 42.7 tok per s | **121 tok per s** | **+183%** |
+| Time to first token | 12050 ms | **4299 ms** | **-64%** |
+| Decode throughput | 16.9 tok per s | 14.7 tok per s | -13% |
 
-### OPPO CPH2729: Qualcomm Snapdragon 6 Gen 4
+![KleidiAI](benchmarks/plots/kleidiai_prompt_ttft.png)
 
-| Metric | Naive eight cores | ENTITY Auto four fast cores | Result |
-|---|---:|---:|---:|
-| Prompt throughput | 39.3 ± 2.2 tok per s | 47.7 ± 0.12 tok per s | +21% |
-| Decode throughput | 6.0 ± 1.1 tok per s | 13.1 ± 0.05 tok per s | +117% |
-| Derived TTFT | 13194 ± 672 ms | 10811 ± 28 ms | 18% lower |
-| Power | 3.4 ± 0.15 W | 3.4 ± 0.29 W | flat |
-| Energy efficiency | 1.8 ± 0.24 tok per W | 3.8 ± 0.31 tok per W | 2.1× |
+Prompt evaluation is a compute bound GEMM, which is what KleidiAI accelerates. Decode is memory bandwidth bound and tracks bytes per weight rather than kernel quality, so it does not improve: Q4_0 is about 6% more bytes and lands slightly slower. Q4_0 is also a quality tradeoff, so ENTITY recommends it rather than switching silently.
 
-TTFT in this benchmark is an estimate from prompt evaluation plus one decode step. It is not a live chat first token measurement. Read the full [benchmark method and caveats](benchmarks/BENCHMARKS.md).
+### What the user actually gets
+
+Llama 3.2 1B, ENTITY Auto, unplugged:
+
+| | v2.0.0, Q3_K_L, prompt widened to all cores | v2.1.0, Q4_0, prompt on the fast cores |
+|---|---:|---:|
+| Prompt throughput | 38.3 tok per s | **133 tok per s** |
+| **Time to first token** | **13440 ms** | **3918 ms** |
+| Decode throughput | 16.7 tok per s | 14.7 tok per s |
+
+Time to first token, the latency a user feels on a long prompt, drops 3.4 times. Decode gives up about 12%, the bandwidth cost of the larger quantization, and the benchmark screen shows both sides of the trade.
+
+TTFT here is derived from prompt evaluation plus one decode step. It is not a live chat first token measurement. Full method, the historical two arm v2.0.0 record, and every limit: [benchmarks](benchmarks/BENCHMARKS.md).
 
 ## Get started
 

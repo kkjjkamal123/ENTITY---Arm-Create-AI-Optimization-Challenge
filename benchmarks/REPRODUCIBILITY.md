@@ -6,19 +6,19 @@ different workload and may use CLI-only realtime priority.
 
 ## The claim being tested
 
-On a loaded `Llama-3.2-1B-Instruct-Q3_K_L.gguf` model, ENTITY compares:
+On the loaded model, ENTITY compares:
 
 | Configuration | Exact behavior |
 |---|---|
 | Naïve | Eight inference threads across all online cores. |
 | Threads only | The same thread count Auto derives, with `pinCores` off: no `sched_setaffinity`, no pinned thread pool, placement left to the Linux scheduler. Equivalent in policy to an upstream llama.cpp `-t N` run. |
-| ENTITY Auto | Native code ranks online CPU cores by `cpuinfo_max_freq`, pins decode to its fastest two to four cores, and uses a wider prompt-processing pool when the runtime API is available. |
+| ENTITY Auto | Native code ranks online CPU cores by `cpuinfo_max_freq` and runs **both** inference phases on its fastest two to four cores. (Before v2.1.0 it widened prompt processing to every core; that measured slower and was removed.) |
 
 The middle arm exists so the result can be attributed rather than assumed. Naïve versus Auto varies
 thread count and core placement together; on its own it cannot say which one produced the gain.
-Naïve versus threads-only isolates the thread count, threads-only versus Auto isolates the pinning.
-**Decode is the isolated row.** Prompt throughput is not: only Auto widens prompt processing to all
-cores, so that row mixes the two effects by construction.
+Naïve versus threads-only isolates the thread count; threads-only versus Auto isolates the pinning.
+Both the decode and prompt rows are clean ablations, because every arm now runs both phases on the
+same thread count.
 
 The workload is a synthetic llama-bench-style test: **PP 512**, **TG 128**, and one decode token
 for the derived TTFT calculation. It measures prompt throughput, decode throughput, battery power,
@@ -28,8 +28,10 @@ test.
 ## Reproduce on a phone
 
 1. Build/install the current app using [BUILD](../docs/BUILD.md), or install the release APK.
-2. Import the stated Q3_K_L model. Record its filename and SHA-256 externally if comparing results
-   across downloads; model weights are not shipped in this repository.
+2. Import a GGUF model. Record its filename and SHA-256 externally if comparing results across
+   downloads; model weights are not shipped in this repository. **Prefer Q4_0 or Q8_0**: Arm's
+   KleidiAI has kernels for those two types only, so any other quantization runs on generic ggml and
+   leaves the i8mm/dotprod path idle. The app's model-info card tells you which case you are in.
 3. Unplug the phone, leave the screen on, close unnecessary background work, and allow it to cool.
    Power and tok/W are intentionally hidden while the phone is charging.
 4. In the app open **⋮ → Benchmark**, choose **3 runs**, and start the test. Do not use the phone
@@ -111,11 +113,12 @@ configuration improved the measured workload over the eight-thread default on th
 phones. They do **not** prove the same multiplier for every SoC, thermal state, model,
 quantization, Android build, or background workload.
 
-They also do **not** attribute that gain to core pinning. The published tables are a two-arm record
-taken before the threads-only arm existed, so the thread-count decision and the affinity policy are
-still confounded in them. The three-arm run separates the two and is
-[pending a device](BENCHMARKS.md#pending-the-three-arm-attribution); its `threads_only` columns in
-the device-result template are marked `not-measured` rather than back-filled.
+They also do **not** attribute that gain to core pinning. The published v2.0.0 tables are a two-arm
+record taken before the threads-only arm existed, so the thread count and the affinity policy are
+confounded in them. The three-arm runs separate the two, and the answer is that
+**the thread count earns the gain and the pinning earns ~0%** — see [BENCHMARKS.md](BENCHMARKS.md).
+The v2.0.0 rows in the device-result template keep `not-measured` in their `threads_only` columns
+rather than being back-filled from the newer runs.
 
 The v2.0.0 reference summaries are available in
 [device-result-template.csv](device-result-template.csv). Their original per-pass Android CSV

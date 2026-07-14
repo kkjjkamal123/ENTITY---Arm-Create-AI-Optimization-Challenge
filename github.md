@@ -14,20 +14,26 @@ Built on **llama.cpp** with a Kotlin UI and C++/JNI inference layer, ENTITY is p
 
 **Why it should win:** ENTITY adds three things competitors don't do.
 
-1. **Universal Arm support via runtime backend dispatch** — ships 7 CPU backend variants (armv8.0 to
-   armv9.2, each with KleidiAI kernels) and automatically selects the best one the phone's CPU
-   supports at startup. No SIGILL crashes on older cores, no missed optimizations on newer ones.
-2. **Device-aware scheduling** — inference is pinned to the performance cluster via `sched_setaffinity`
-   (cores ranked by live `cpufreq`), not scattered across all cores where slow cores become stragglers.
-   This SoC-agnostic approach works on any big.LITTLE topology.
+1. **Universal Arm support, plus the KleidiAI gate nobody talks about** — ships 7 CPU backend
+   variants (armv8.0 to armv9.2, each compiled with KleidiAI) and selects the best one at startup:
+   no SIGILL on older cores, no missed kernels on newer ones. But shipping the variant is not
+   enough, and this is the finding ENTITY is proudest of: **KleidiAI has kernels for Q4_0 and Q8_0
+   only.** Load any other quantization and Arm's kernels never execute, whatever backend was
+   selected. ENTITY reads the GGUF header and tells you. Switching a 1B from Q3_K_L to Q4_0 took
+   prompt throughput from 43 to 121 tok/s on the reference phone.
+2. **Measured runtime tuning, not assumed** — ENTITY keeps both inference phases on the
+   frequency-ranked performance cores, and ships a three-arm ablation that *attributes* the result
+   instead of asserting it. That ablation disproved this project's own flagship optimization: the
+   gain comes from the thread count, not from the `sched_setaffinity` pinning. Shipping the
+   experiment that can falsify your headline is the point.
 3. **Energy efficiency as a first-class metric** — measures battery current × voltage to report power
    in watts and tokens-per-watt, turning on-device AI from a raw-speed story into a sustained-efficiency
    one. A bug fix in v2.0.0 resolved OEM kernel unit confusion (milliamps vs microamps) so power
    reporting is now accurate on all devices.
 
-On the same phone with the current 1B Q3_K_L benchmark model, ENTITY reaches **17.7 tok/s** on
-the optimized decode pass. It also reports power and tokens-per-watt; the full current method and
-its measurement limits are in [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md).
+On the same phone, ENTITY reaches **17.7 tok/s** decode on a 1B model, and — after the KleidiAI
+finding below — **time-to-first-token dropped from 13.4 s to 3.9 s**. It also reports power and
+tokens-per-watt. Full method and limits: [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md).
 
 ---
 
@@ -40,7 +46,7 @@ The app is a professional on-device chat interface with:
 - **Persistent, multiple conversations** — chats are stored on-device (SQLite), the last conversation is restored on launch, and a conversation switcher supports rename/delete; restored chats continue seamlessly (the engine re-primes its context from the saved history).
 - **Settings** with an Auto (optimized) master toggle for automatic tuning, plus manual layers for temperature, top-k, top-p, max tokens, context size, and thread count — and an editable system prompt and an Animations toggle.
 - **Live metrics bar and toggleable multi-series graph** — tokens, tok/s, time-to-first-token, temperature, power draw (W), and free memory.
-- **In-app benchmark with a three-arm ablation** (⋮ → Benchmark) — runs the same PP 512 / TG 128 workload three ways: naïve (8 threads, default scheduler), threads-only (the Auto thread count with affinity off, i.e. what an upstream llama.cpp `-t N` run does), and the shipped Auto path (fast-core decode plus a wider prompt thread pool). The middle arm is what lets the decode gain be *attributed* — thread count versus core pinning — instead of assumed. It has a 1/3/5 run-count selector, per-metric median ± stddev, thermal cooldown between every pass, TTFT, and CSV export.
+- **In-app benchmark with a three-arm ablation** (⋮ → Benchmark) — runs the same PP 512 / TG 128 workload three ways: naïve (8 threads, default scheduler), threads-only (the Auto thread count with affinity off, i.e. what an upstream llama.cpp `-t N` run does), and the shipped Auto path (both phases on the frequency-ranked fast cores). The middle arm is what lets the gain be *attributed* — thread count versus core pinning — instead of assumed. It has a 1/3/5 run-count selector, per-metric median ± stddev, thermal cooldown between every pass, TTFT, and CSV export.
 - **Light / Dark / System themes** and a theme-aware app-icon switcher.
 - **Model info card** that reads the GGUF header to show parameters, quantization, architecture, and computed context window.
 
@@ -78,27 +84,62 @@ The core mechanism — ranking CPU cores by their maximum clock frequency from `
 
 ![Current in-app benchmark](screenshots/Benchmark.png)
 
-### What this number does not say
+### What this number does not say - and what ENTITY's own ablation found
 
-Naïve and Auto differ in **two** variables at once: the thread count drops from 8 to 4, and the
-surviving threads get pinned to the performance cluster. Dropping to four threads alone already
-stops the A55s from gating every decode step — which is most of what `-t 4` buys an upstream
-llama.cpp user. So the honest reading of +121% is "the shipped configuration versus the
-out-of-the-box default," not "core pinning is worth 121%."
+Naive and Auto differ in **two** variables at once: the thread count drops from 8 to 4, and the
+surviving threads get pinned to the performance cluster. So +121% is the gain of the shipped
+configuration over the out-of-the-box default. It is **not** a measurement of what core pinning
+contributes.
 
-Separating the two needs a third arm that holds the thread count at 4 and removes only the
-affinity. **That arm now ships in the app**: `pinCores` skips `sched_setaffinity` and the pinned
-thread pool, clears any mask inherited from the previous arm, and lets the Linux scheduler place
-the threads. The Benchmark screen runs naïve → threads-only → Auto with the same cooldown before
-every pass, and prints the split: how much the thread-count decision earns, and how much pinning
-adds on top.
+ENTITY now ships the arm that separates them: **threads-only**, which runs Auto's thread count with
+affinity switched off - exactly what an upstream `llama.cpp -t 4` run does. Six runs across two
+models, on the reference device:
 
-No three-arm result is published yet, and nothing is estimated in the meantime — the pending table
-is in [`BENCHMARKS.md`](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution). Both outcomes
-are publishable: if threads-only lands close to Auto, the win is that ENTITY derives the right
-thread count per device automatically, which a phone user never does by hand; if Auto stays clearly
-ahead, the frequency-ranked pinning is carrying real weight and is proven by the exact experiment a
-skeptical reader would demand. Shipping the arm that can falsify the claim is the point.
+| Model | Naive, 8 thr | Threads only, 4 thr no pin | Auto, 4 thr pinned | Thread count | Pinning |
+|---|---:|---:|---:|---:|---:|
+| 1B Q3_K_L (3 runs) | 8.8 | 16.9 | 16.7 | **+92%** | **-1%** |
+| 1B Q4_0 | 7.9 | 14.7 | 14.7 | **+86%** | **+0%** |
+| 3B Q4_0 | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
+| 3B Q4_0 | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
+
+**The thread count earns the gain. The big-core pinning earns approximately nothing.** The two 3B
+runs disagree (+13% and +0%), a third measured -16% while charging, and single 3B runs swing about
+15% either way, so the +13% is noise rather than a finding.
+
+This is the project's flagship optimization, and its own benchmark disproved it. The affinity code
+still ships - it costs nothing and another SoC may answer differently - but it is no longer credited
+with the speed-up. What the cross-vendor repeat *does* prove is that the **mechanism** is
+SoC-agnostic: ranking cores by live `cpufreq` instead of hardcoding a mask finds the performance
+cluster unchanged on MediaTek and Qualcomm.
+
+### The two optimizations that do pay on Arm
+
+**1. KleidiAI only accelerates Q4_0 and Q8_0.** Arm's KleidiAI registers matmul kernels for exactly
+two GGML types. Every other type, including the whole K-quant family, falls back to generic ggml no
+matter which of the seven backend variants loaded. **Every benchmark ENTITY published before v2.1.0
+used Q3_K_L, so KleidiAI never executed once.** Same phone, same 512-token prompt, same four-thread
+unpinned config, only the quantization differs:
+
+| | Q3_K_L (KleidiAI cannot run) | Q4_0 (KleidiAI runs) | Change |
+|---|---:|---:|---:|
+| Prompt throughput | 42.7 tok/s | **121 tok/s** | **+183%** |
+| Time to first token | 12,050 ms | **4,299 ms** | **-64%** |
+| Decode throughput | 16.9 tok/s | 14.7 tok/s | -13% |
+
+Prompt eval is a compute-bound GEMM, which is what KleidiAI is built for. Decode is
+memory-bandwidth-bound - it tracks bytes-per-weight, not kernel quality - so it does not improve;
+Q4_0 is ~6% more bytes and lands slightly slower. ENTITY now reads the GGUF header and tells the
+user whether their model can reach Arm's kernels, rather than printing "KleidiAI" regardless.
+
+**2. Widening prompt processing to all cores was a regression.** Auto used to give prompt eval every
+online core, assuming a compute-bound phase wants all the hardware. An A55 is about a third of an
+A78's throughput, so the widened pool finished late and every GEMM waited on the stragglers.
+Measured: prompt on 4 fast cores **135 tok/s**, spread across all 8 **86 tok/s**. Both phases now run
+on the fast-core thread count.
+
+**Combined, for the user:** on Llama-3.2-1B, ENTITY Auto, unplugged, time-to-first-token went from
+**13,440 ms to 3,918 ms - a 3.4x improvement.** Decode gives up ~12%, the bandwidth cost of the
+larger quantization; the benchmark screen shows both sides of that trade.
 
 See [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md) for the complete current record and
 its limits. The raw historical Termux output remains separate because it uses different models,
@@ -110,7 +151,7 @@ flags, workloads, and CLI-only realtime priority.
 
 ### 1. Big-Core Affinity via `sched_setaffinity`
 
-The Dimensity 7300 is asymmetric. By default, the Android scheduler spreads threads across all 8 cores; the slow A55s become stragglers, delaying the whole pipeline. ENTITY pins inference threads to cores 4–7 (the Cortex-A78 cluster) using `sched_setaffinity`, with core indices **auto-detected from live `cpufreq` rankings** in `/sys/devices/system/cpu/` — no hardcoded core mask, which is why the identical path works on Qualcomm. Together with the thread-count decision it produces the current in-app result: **8.0 → 17.7 tok/s decode (+121%)** on the Q3_K_L 1B workload. How that gain splits between the two is measured by the app's threads-only arm and is [pending a device run](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
+The Dimensity 7300 is asymmetric. By default, the Android scheduler spreads threads across all 8 cores; the slow A55s become stragglers, delaying the whole pipeline. ENTITY pins inference threads to cores 4–7 (the Cortex-A78 cluster) using `sched_setaffinity`, with core indices **auto-detected from live `cpufreq` rankings** in `/sys/devices/system/cpu/` — no hardcoded core mask, which is why the identical path works on Qualcomm. Together with the thread-count decision it produces the in-app result of **8.0 → 17.7 tok/s decode (+121%)** on the Q3_K_L 1B workload. The app's threads-only arm has since measured how that splits: **the thread count earns essentially all of it and the pinning earns ~0%.** The pinning is kept because it is free and another SoC may differ, but it is not what makes ENTITY fast.
 
 **Impact:** on generation (memory-bandwidth-bound workload), pinning to big cores recovers the speed lost to the LITTLE cluster.
 
