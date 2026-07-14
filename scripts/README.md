@@ -30,6 +30,7 @@ there. Adjust model paths, prompts, and flags for a different device or llama.cp
 | [`chat3b.sh`](chat3b.sh) | Starts optimized 3B Q4_0 chat. | Four performance cores, context 1024. |
 | [`chat3b-naive.sh`](chat3b-naive.sh) | Starts naïve 3B Q4_0 chat for comparison. | `-t 8`, context 1024. |
 | [`benchmark.sh`](benchmark.sh) | Compares naïve and optimized generation speed for 1B and 3B Q4_0. | Fixed prompt, 80 generated tokens, prints tok/s per model/configuration. |
+| [`benchmark_vanilla_llama_cpp.sh`](benchmark_vanilla_llama_cpp.sh) | Captures a fair upstream llama.cpp CPU baseline for the published Android workload. | PP 512 / TG 128, three individual JSON passes, normal priority and default scheduler placement. |
 | [`quant_bench.sh`](quant_bench.sh) | Compares 1B quantizations. | Emits CSV: `quant,size_MB,gen_tps` for available Q8_0, Q4_0, Q3_K_L, and IQ3_M models. |
 | [`thermal_bench.sh`](thermal_bench.sh) | Runs sustained optimized 1B generation while logging speed and battery temperature. | Writes `~/thermal.csv` with 26 iterations. |
 
@@ -53,3 +54,8 @@ For the current judge-facing result, use the single
 [`../benchmarks/BENCHMARKS.md`](../benchmarks/BENCHMARKS.md) record. It distinguishes the
 screenshot-backed Android-app measurement from the historical CLI experiments, so unlike-for-like
 results are not mixed together.
+
+For a future head-to-head result against upstream llama.cpp or another runtime, follow
+[`../benchmarks/COMPARISONS.md`](../benchmarks/COMPARISONS.md). The new vanilla script is the only
+CLI script intended to be compared with the app's PP 512 / TG 128 benchmark; it does not use the
+realtime-priority flags present in some historical experiments.
