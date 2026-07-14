@@ -47,11 +47,25 @@ workload. The numbers are benchmark values rather than live multi-turn-chat spee
 
 ## Reproduce
 
-1. Install the current ENTITY APK and load the stated Q3_K_L model.
-2. Unplug the phone, let it cool, keep the screen on, and close unnecessary background work.
-3. In ENTITY choose **Benchmark**, select three runs, then start the benchmark.
-4. Retain the copied result or exported CSV with the model, device, app version, and start
-   temperature.
+Follow the exact [reproducibility protocol](REPRODUCIBILITY.md). In short: install the current
+APK, load the stated Q3_K_L model, unplug and cool the phone, select three runs in **Benchmark**,
+then export the CSV. The app performs a discarded warm-up, runs naïve before Auto, records every
+pass, and applies a thermal cooldown before each pass.
+
+### Evidence status
+    
+[`device-result-template.csv`](device-result-template.csv) is the machine-readable summary behind
+the two published tables. It intentionally marks its `raw_csv_path` fields as `not-recorded`:
+the original per-pass Android CSV exports for the v2.0.0 reference runs were not retained, so they
+cannot be reconstructed honestly from a median and standard deviation. The checked-in
+[`proof-logs/entity_results.txt`](proof-logs/entity_results.txt) and
+[`termux_master_results.txt`](termux_master_results.txt) are historical CLI evidence with a
+different workload and, in the optimized CLI case, realtime priority; neither is substituted for
+the app result.
+
+New app exports contain per-pass values plus app/device/ABI/version, benchmark order, warm-up and
+cooldown provenance. Commit those CSVs beside a new device-result row when contributing a result.
+
 
 ## Contribute a device result
 
