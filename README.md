@@ -12,7 +12,7 @@
 
 ## Navigation
 
-[Home](README.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
+[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
 
 ## What ENTITY is
 
@@ -38,6 +38,17 @@ The current release is built for arm64 Android phones running Android 13 or late
 | Energy telemetry | Reports tokens, token rate, time to first token, temperature, power, token per watt and free memory. |
 
 ENTITY does not claim to beat a tuned command line build on raw token rate. Its purpose is to give a normal phone user the same hardware aware decisions in a responsive foreground app with live energy and thermal information.
+
+## Evidence at a glance
+
+| Claim | Evidence | Boundary |
+|---|---|---|
+| Auto improves decode throughput on tested phones | The same Android benchmark reports +121% on Dimensity 7300 and +117% on Snapdragon 6 Gen 4. | Two phones, one fixed 1B Q3_K_L workload; not a universal multiplier. |
+| The gain is from a shipped path, not a CLI flag | The app compares eight-core naïve execution with its own frequency-ranked, affinity-pinned Auto path. [Source-level implementation](docs/OPTIMIZATIONS.md#1-big-core-affinity). | The historical Termux experiment also used realtime priority; it is explicitly not part of the app claim. |
+| Efficiency is measured, rather than inferred | Each in-app pass samples battery current and voltage; results include watts and tok/W only while unplugged. | Battery-current reporting is OEM-dependent; values are comparative measurements on the same device, not lab-grade power metering. |
+| A developer can reproduce or challenge the result | The app runs the benchmark and exports every pass to CSV. The exact protocol, export schema, source pointers, and known evidence limits are in [Reproducibility](benchmarks/REPRODUCIBILITY.md). | A matching device and model are required for a direct numerical comparison. |
+
+This is the short judge-facing map. The benchmark tables below are the current results; the linked evidence page records exactly how to reproduce and interpret them.
 
 ## Features
 
@@ -111,9 +122,12 @@ To build from source use the exact Android SDK, NDK, CMake and JDK setup in [BUI
 1. [Architecture](docs/ARCHITECTURE.md): UI to JNI to llama.cpp design.
 2. [Build](docs/BUILD.md): reproducible toolchain and installation steps.
 3. [Optimizations](docs/OPTIMIZATIONS.md): source level explanation of each runtime decision.
-4. [Benchmark summary](<benchmarks/Benchmark Summary.md>): judge focused benchmark brief.
-5. [In app benchmark](benchmarks/IN_APP_BENCHMARK.md): current method, values and caveats.
-6. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
+4. [Benchmarks](benchmarks/BENCHMARKS.md): current method, cross device values, and caveats.
+5. [Reproducibility](benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
+6. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
+7. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
+8. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
+  
 
 ## License
 
