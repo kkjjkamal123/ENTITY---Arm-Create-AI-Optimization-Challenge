@@ -32,6 +32,7 @@ class MetricsGraphView @JvmOverloads constructor(
         Series("stat_ttft", "TTFT", 0xFFB07AA1.toInt()) { "${it.toInt()}ms" },
         Series("stat_temp", "°C", 0xFFE15759.toInt()) { "%.1f".format(it) },
         Series("stat_power", "W", 0xFFF28E2B.toInt()) { "%.2f".format(it) },
+        Series("stat_cpu", "CPU", 0xFF9C755F.toInt()) { "%.0f%%".format(it) },
         Series("stat_memory", "GB", 0xFF17A2B8.toInt()) { "%.1f".format(it) },
     )
 
@@ -61,12 +62,21 @@ class MetricsGraphView @JvmOverloads constructor(
         }
     }
 
-    fun addSample(tokens: Float, speed: Float, ttft: Float, temp: Float, power: Float, memory: Float) {
+    fun addSample(
+        tokens: Float,
+        speed: Float,
+        ttft: Float,
+        temp: Float,
+        power: Float,
+        cpu: Float,
+        memory: Float,
+    ) {
         push("stat_tokens", tokens)
         push("stat_speed", speed)
         push("stat_ttft", ttft)
         push("stat_temp", temp)
         push("stat_power", power)
+        push("stat_cpu", cpu)
         push("stat_memory", memory)
         invalidate()
     }

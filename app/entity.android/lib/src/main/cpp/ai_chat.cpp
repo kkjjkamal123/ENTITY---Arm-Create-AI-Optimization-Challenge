@@ -335,11 +335,20 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_prepare(JNIEnv * /*env*/, jobje
     }
     g_context = context;
 
-    // Generation stays on the big cores; prompt processing widens to every
-    // online core in auto mode. A manual thread count is honoured for both.
-    const int n_gen    = (int) llama_n_threads(g_context);
-    const int n_online = (int) sysconf(_SC_NPROCESSORS_ONLN);
-    const int n_pp     = g_n_threads > 0 ? n_gen : std::max(n_gen, n_online);
+    // Prompt processing runs on the same thread count as generation.
+    //
+    // This used to widen to every online core, on the assumption that prompt eval is
+    // compute-bound and therefore wants all the hardware. Measured on a Dimensity 7300
+    // (4x A78 + 4x A55), that assumption is wrong: PP 512 on Llama-3.2-1B-Q4_0 runs at
+    // 116 tok/s on 4 threads and only 86 tok/s spread across all 8. The A55s are roughly
+    // a third the throughput of an A78, so the widened pool finishes its share late and
+    // every GEMM waits on the stragglers. Fewer, faster threads win both phases.
+    //
+    // ponytail: n_pp is kept as a separate value rather than deleted, because the right
+    // width is an empirical property of the SoC. A tri-cluster chip may well prefer a
+    // wider prompt pool; the in-app benchmark is what should decide it, not an assumption.
+    const int n_gen = (int) llama_n_threads(g_context);
+    const int n_pp  = n_gen;
     g_tp_gen = new_threadpool_on_fast_cores(n_gen);
     if (g_tp_gen) {
         if (n_pp > n_gen) {
@@ -424,13 +433,11 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_benchModel(JNIEnv *env, jobject
         return env->NewStringUTF(err_msg);
     }
 
-    // Same split pools the chat path attaches in prepare(): generation on the fast
-    // cores, prompt processing widened to every online core when the thread count is
-    // auto. Without this the benchmark would measure a config the app never runs.
+    // Same pools the chat path attaches in prepare(): both phases on the same fast
+    // thread count. Without this the benchmark would measure a config the app never runs.
     // Local handles — g_tp_gen/g_tp_batch belong to the chat context.
-    const int n_gen    = (int) llama_n_threads(context);
-    const int n_online = (int) sysconf(_SC_NPROCESSORS_ONLN);
-    const int n_pp     = g_n_threads > 0 ? n_gen : std::max(n_gen, n_online);
+    const int n_gen = (int) llama_n_threads(context);
+    const int n_pp  = n_gen;
     ggml_threadpool_t tp_gen   = new_threadpool_on_fast_cores(n_gen);
     ggml_threadpool_t tp_batch = (tp_gen && n_pp > n_gen) ? new_threadpool_on_fast_cores(n_pp) : nullptr;
     if (tp_gen && tp_batch) {

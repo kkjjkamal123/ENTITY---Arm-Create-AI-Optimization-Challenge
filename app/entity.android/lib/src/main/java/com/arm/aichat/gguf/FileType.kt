@@ -53,6 +53,23 @@ enum class FileType(val code: Int, val label: String) {
 
     UNKNOWN(-1, "unknown");
 
+    /**
+     * Whether Arm's KleidiAI kernels can accelerate this quantization.
+     *
+     * KleidiAI registers matmul kernels for exactly two GGML types, Q4_0 and Q8_0
+     * (see `ggml/src/ggml-cpu/kleidiai/kleidiai.cpp`). Every other type - including
+     * the whole K-quant and IQ family - falls back to generic ggml kernels, so the
+     * i8mm/dotprod paths the backend variant was built for are never entered.
+     *
+     * This matters most for prompt processing, which is a compute-bound GEMM.
+     * Measured on a Dimensity 7300, Llama-3.2-1B, PP 512 on 4 threads:
+     * Q4_0 (KleidiAI) 116 tok/s vs Q3_K_L (generic) 42.7 tok/s, so time-to-first-token
+     * on a 512-token prompt drops from ~12.0s to ~4.4s. Decode is memory-bandwidth-bound
+     * and is unaffected - it tracks bytes-per-weight, not kernel quality.
+     */
+    val kleidiAiAccelerated: Boolean
+        get() = this == MOSTLY_Q4_0 || this == MOSTLY_Q8_0
+
     companion object {
         private val map = entries.associateBy(FileType::code)
 

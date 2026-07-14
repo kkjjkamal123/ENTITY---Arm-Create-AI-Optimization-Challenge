@@ -34,6 +34,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.Locale
 import kotlin.math.sqrt
 
@@ -50,12 +51,19 @@ import kotlin.math.sqrt
  *   naïve        8 threads, every core, default scheduler
  *   threads-only Auto's thread count, no affinity, no pinned pool (an upstream
  *                llama.cpp `-t N` run: the honest baseline a tuning-aware user hits)
- *   Auto         ENTITY's shipped path: generation pinned to the performance
- *                cores, prompt processing widened to all cores
+ *   Auto         ENTITY's shipped path: both phases on the fast-core thread count,
+ *                pinned to the performance cluster
  *
- * Decode is the clean comparison. Prompt throughput is not: Auto widens prompt
- * processing to every core while threads-only cannot, so that row mixes the two
- * effects by design.
+ * Both decode and prompt are clean rows: every arm runs both phases on the same
+ * thread count, so naïve -> threads-only isolates the thread count and
+ * threads-only -> Auto isolates the core placement.
+ *
+ * Measured on a Dimensity 7300, and the reason these arms are not ceremony: on
+ * Llama-3.2-1B the pinning is worth about nothing (decode 16.7 vs 16.9 tok/s), but
+ * on Llama-3.2-3B it is worth ~+12% decode and ~+9% prompt. The larger working set
+ * gives the scheduler more chances to migrate a thread onto an A55, and a single
+ * straggler stalls the whole step. Which optimization pays is a property of the
+ * model, not a constant - this screen is what tells the user which.
  */
 class BenchmarkActivity : AppCompatActivity() {
 
@@ -63,6 +71,13 @@ class BenchmarkActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
     private val batteryManager by lazy { getSystemService(Context.BATTERY_SERVICE) as BatteryManager }
     private val powerManager by lazy { getSystemService(Context.POWER_SERVICE) as PowerManager }
+
+    // Core layout, read once: which CPUs are the performance cluster and which are the
+    // little cores. Same max-clock ranking the native side pins by, so the frequency
+    // trace splits the way the optimization does.
+    private val maxFreqsKhz by lazy { DeviceOptimizer.maxFreqsKhz() }
+    private val fastCores by lazy { DeviceOptimizer.fastCoreIndices(maxFreqsKhz) }
+    private val littleCores by lazy { maxFreqsKhz.indices.filter { it !in fastCores.toSet() } }
 
     private lateinit var modelTv: TextView
     private lateinit var statusTv: TextView
@@ -79,6 +94,7 @@ class BenchmarkActivity : AppCompatActivity() {
 
     private var lastResultText: String? = null
     private var lastResult: Result? = null
+    private var pendingCsvPath: String? = null
 
     private data class Pass(
         val pp: Double,
@@ -96,9 +112,21 @@ class BenchmarkActivity : AppCompatActivity() {
         val minimumFreeGb get() = telemetry.map { it.freeGb }.filter { it > 0.0 }.minOrNull() ?: 0.0
         val peakBatteryTempC get() = telemetry.maxOfOrNull { it.batteryTempC } ?: startTempC
         val peakThermalStatus get() = telemetry.maxOfOrNull { it.thermalStatus } ?: 0
+
+        // Mean live clock of the performance cores across the pass. A pinned decode should
+        // hold these near their ceiling; an unpinned one lets work drift onto the little
+        // cores and the mean sags. 0 when the kernel hides scaling_cur_freq.
+        private fun meanFreq(indices: List<Int>) = usableTelemetry
+            .flatMap { s -> indices.mapNotNull { s.cpuFreqMhz.getOrNull(it) } }
+            .filter { it > 0 }
+            .let { if (it.isEmpty()) 0.0 else it.average() }
+
+        fun meanFastCoreFreqMhz(fast: List<Int>) = meanFreq(fast)
+        fun meanLittleCoreFreqMhz(little: List<Int>) = meanFreq(little)
     }
 
     // App-process CPU can exceed 100% when llama.cpp uses more than one CPU core.
+    // cpuFreqMhz is the live clock of every core at this instant, index = cpu number.
     private data class TelemetrySample(
         val elapsedMs: Long,
         val watts: Double,
@@ -106,6 +134,7 @@ class BenchmarkActivity : AppCompatActivity() {
         val batteryTempC: Double,
         val thermalStatus: Int,
         val processCpuPercent: Double,
+        val cpuFreqMhz: List<Int>,
     )
 
     private data class Config(
@@ -130,6 +159,9 @@ class BenchmarkActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_benchmark)
+
+        // Recover the staged export if the system killed us while the file picker was up.
+        pendingCsvPath = savedInstanceState?.getString(STATE_PENDING_CSV)
 
         val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
@@ -307,6 +339,7 @@ class BenchmarkActivity : AppCompatActivity() {
                         batteryTempC = readTempC(),
                         thermalStatus = powerManager.currentThermalStatus,
                         processCpuPercent = processCpuPercent,
+                        cpuFreqMhz = DeviceOptimizer.currentFreqsKhz().map { (it / 1000).toInt() },
                     )
                 )
                 lastCpuWallMs = now
@@ -396,6 +429,8 @@ class BenchmarkActivity : AppCompatActivity() {
         val cpu = stats { it.averageProcessCpuPercent }
         val free = stats { it.minimumFreeGb }
         val peakTemp = stats { it.peakBatteryTempC }
+        val fastFreq = stats { it.meanFastCoreFreqMhz(fastCores) }
+        val littleFreq = stats { it.meanLittleCoreFreqMhz(littleCores) }
         val powerValid = !r.charging && watts.all { it.n > 0 } && eff.all { it.n > 0 }
 
         val (naiveTg, threadsTg, optTg) = Triple(tg[0].median, tg[1].median, tg[2].median)
@@ -423,6 +458,9 @@ class BenchmarkActivity : AppCompatActivity() {
             addRow("Power  W", "—", "—", "—", "")
         }
         addRow("App CPU  %", *cells(cpu), "")
+        // Absent when the kernel hides scaling_cur_freq: show nothing rather than a row of dashes.
+        if (fastFreq.any { it.n > 0 }) addRow("Perf-core clock  MHz", *cells(fastFreq), "")
+        if (littleFreq.any { it.n > 0 }) addRow("Little-core clock  MHz", *cells(littleFreq), "")
         addRow("Free RAM min  GB", *cells(free), "")
         addRow("Start temp  °C", *cells(temp), "")
         addRow("Peak battery  °C", *cells(peakTemp), "")
@@ -447,10 +485,10 @@ class BenchmarkActivity : AppCompatActivity() {
             "*TTFT is derived from each run's measured rates ($PP-token prompt eval + one decode step), not a live chat measurement. " +
             "Numbers are comparable across apps, and higher than live chat speed because the KV cache is minimal. " +
             "Naïve = $NAIVE_THREADS threads spread across all cores; Threads only = the same thread count as Auto with affinity off; " +
-            "ENTITY Auto = the shipped configuration, which pins generation to the ${r.opt.threads} performance cores " +
-            "while letting prompt processing use all cores. Δ compares Auto with naïve." +
-            "\n\n†Prompt throughput is not a clean ablation row: only Auto widens prompt processing to every core, " +
-            "so that row mixes thread count with placement. Decode is the isolated comparison."
+            "ENTITY Auto = the shipped configuration, which runs both phases on ${r.opt.threads} threads pinned to the " +
+            "performance cores. Δ compares Auto with naïve." +
+            "\n\n†Both arms now run prompt processing on the same thread count, so this row is a clean ablation too: " +
+            "naïve → threads-only is the thread count, threads-only → Auto is the core placement."
         )
         note.append(attribution)
         val peakThermal = r.configs.maxOf { c -> c.runs.maxOfOrNull { it.peakThermalStatus } ?: 0 }
@@ -546,8 +584,26 @@ class BenchmarkActivity : AppCompatActivity() {
         Toast.makeText(this, "Result copied", Toast.LENGTH_SHORT).show()
     }
 
+    // The CSV is serialised to cache BEFORE the system file picker is launched, and the
+    // path is carried through onSaveInstanceState.
+    //
+    // Why: the picker is a separate process coming to the foreground while this app holds
+    // a multi-GB model resident. Android routinely kills this activity behind it. We then
+    // come back through onActivityResult on a NEW instance whose `lastResult` is null - but
+    // DocumentsUI has already created the destination file. The old code did
+    // `buildCsv(lastResult ?: return)`, so it returned early and left a 0-byte CSV behind
+    // while still toasting "CSV exported". That is how a benchmark export silently produced
+    // an empty file, and why no raw per-pass CSV ever survived to be published.
     private fun exportCsv() {
-        if (lastResult == null) return
+        val result = lastResult ?: return
+        val cached = runCatching {
+            File(cacheDir, "pending_export.csv").apply { writeText(buildCsv(result)) }
+        }.getOrNull()
+        if (cached == null) {
+            Toast.makeText(this, "Could not prepare CSV", Toast.LENGTH_SHORT).show()
+            return
+        }
+        pendingCsvPath = cached.absolutePath
         val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "text/csv"
@@ -557,19 +613,34 @@ class BenchmarkActivity : AppCompatActivity() {
         startActivityForResult(intent, REQ_EXPORT_CSV)
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        pendingCsvPath?.let { outState.putString(STATE_PENDING_CSV, it) }
+    }
+
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         @Suppress("DEPRECATION")
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode != REQ_EXPORT_CSV || resultCode != RESULT_OK) return
         val uri = data?.data ?: return
-        val csv = buildCsv(lastResult ?: return)
+
+        // Prefer the file staged before the picker opened; it survives this activity being
+        // killed. Only fall back to rebuilding from an in-memory result.
+        val staged = pendingCsvPath?.let { File(it) }?.takeIf { it.exists() && it.length() > 0 }
+        val csv = staged?.readText() ?: lastResult?.let { buildCsv(it) }
+        if (csv.isNullOrEmpty()) {
+            // Never leave the caller believing an empty file is a valid export.
+            Toast.makeText(this, "Export failed: benchmark result was lost, please re-run", Toast.LENGTH_LONG).show()
+            return
+        }
         lifecycleScope.launch {
             val ok = withContext(Dispatchers.IO) {
                 runCatching {
                     contentResolver.openOutputStream(uri)?.use { it.write(csv.toByteArray()) } != null
                 }.getOrDefault(false)
             }
+            if (ok) { runCatching { staged?.delete() }; pendingCsvPath = null }
             Toast.makeText(this@BenchmarkActivity, if (ok) "CSV exported" else "CSV export failed", Toast.LENGTH_SHORT).show()
         }
     }
@@ -611,6 +682,9 @@ class BenchmarkActivity : AppCompatActivity() {
         row("meta", "", "cooldown_minimum", (MIN_PAUSE_MS / 1000).toString(), "s")
         row("meta", "", "cooldown_maximum", (MAX_COOLDOWN_MS / 1000).toString(), "s")
         row("meta", "", "cooldown_target_margin", num(COOL_MARGIN_C), "C above benchmark-start temperature")
+        row("meta", "", "perf_cores", fastCores.joinToString(" "), "cpu index")
+        row("meta", "", "little_cores", littleCores.joinToString(" "), "cpu index")
+        row("meta", "", "cpu_max_clocks", maxFreqsKhz.joinToString(" ") { (it / 1000).toString() }, "MHz per cpu index")
 
         for (c in r.configs) {
             c.runs.forEachIndexed { i, p ->
@@ -633,6 +707,9 @@ class BenchmarkActivity : AppCompatActivity() {
                     row(c.key, sampleRun, "sample_free_ram", num(sample.freeGb), "GiB")
                     row(c.key, sampleRun, "sample_battery_temp", num(sample.batteryTempC), "C")
                     row(c.key, sampleRun, "sample_thermal_status", sample.thermalStatus.toString(), "Android PowerManager status")
+                    sample.cpuFreqMhz.forEachIndexed { cpu, mhz ->
+                        if (mhz > 0) row(c.key, sampleRun, "sample_cpu${cpu}_freq", mhz.toString(), "MHz")
+                    }
                 }
             }
             fun agg(metric: String, unit: String, sel: (Pass) -> Double) {
@@ -649,6 +726,8 @@ class BenchmarkActivity : AppCompatActivity() {
             agg("average_process_cpu", "% one core") { it.averageProcessCpuPercent }
             agg("minimum_free_ram", "GiB") { it.minimumFreeGb }
             agg("peak_battery_temp", "C") { it.peakBatteryTempC }
+            agg("mean_perf_core_clock", "MHz") { it.meanFastCoreFreqMhz(fastCores) }
+            agg("mean_little_core_clock", "MHz") { it.meanLittleCoreFreqMhz(littleCores) }
         }
     }
 
@@ -683,5 +762,6 @@ class BenchmarkActivity : AppCompatActivity() {
         // Cooldown never waits below this — ambient in hot climates keeps batteries above ~37°C.
         private const val MIN_COOL_TARGET_C = 37.5
         private const val REQ_EXPORT_CSV = 41
+        private const val STATE_PENDING_CSV = "pending_csv_path"
     }
 }

@@ -4,7 +4,7 @@
     <string name="menu_select_model">Select model</string>
     <string name="menu_model_info">Model info</string>
     <string name="menu_benchmark">Benchmark</string>
-    <string name="bench_intro">Runs the same PP 512 / TG 128 test twice on the loaded model — once naïve (all cores) and once with ENTITY\'s big-core optimization (the performance cores only) — and measures power draw so you can see speed and energy efficiency side by side.</string>
+    <string name="bench_intro">Runs the same PP 512 / TG 128 test three ways on the loaded model: naïve (8 threads across all cores), threads-only (the same thread count ENTITY picks, but with core pinning switched off), and ENTITY Auto (the shipped configuration, generation pinned to the performance cores). The middle run is what separates the gain that comes from the thread count from the gain that comes from pinning. Power draw is measured too, so you see speed and energy efficiency side by side. Unplug the phone: power and tokens-per-watt are hidden while charging.</string>
     <string name="bench_run">Run benchmark</string>
     <string name="bench_copy">Copy result</string>
     <string name="bench_export">Export CSV</string>
@@ -19,6 +19,7 @@
     <string name="stat_ttft">Time to first token</string>
     <string name="stat_temp">Temperature</string>
     <string name="stat_power">Power draw</string>
+    <string name="stat_cpu">App CPU utilization</string>
     <string name="stat_memory">Memory available</string>
 
     <string name="menu_theme">Theme</string>

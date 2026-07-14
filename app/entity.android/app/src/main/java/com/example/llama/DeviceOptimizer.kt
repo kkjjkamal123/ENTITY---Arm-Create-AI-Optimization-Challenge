@@ -122,6 +122,25 @@ object DeviceOptimizer {
             }.getOrDefault(0L)
         }
 
+    // Live clock of every core, for the benchmark's frequency trace. Unlike
+    // cpuinfo_max_freq this changes during a run: it is what shows a pinned decode
+    // holding the performance cores at their ceiling while the little cores idle.
+    // Returns 0 for a core whose scaling_cur_freq the kernel will not expose.
+    fun currentFreqsKhz(): List<Long> =
+        (0 until Runtime.getRuntime().availableProcessors()).map { i ->
+            runCatching {
+                File("/sys/devices/system/cpu/cpu$i/cpufreq/scaling_cur_freq").readText().trim().toLong()
+            }.getOrDefault(0L)
+        }
+
+    // Indices of the performance cores (everything above the slowest max-clock tier),
+    // so a frequency trace can be split into big vs little without hardcoding 4-7.
+    fun fastCoreIndices(maxFreqsKhz: List<Long>): List<Int> {
+        val slowest = maxFreqsKhz.filter { it > 0L }.minOrNull() ?: return maxFreqsKhz.indices.toList()
+        val fast = maxFreqsKhz.indices.filter { maxFreqsKhz[it] > slowest }
+        return if (fast.isEmpty()) maxFreqsKhz.indices.toList() else fast
+    }
+
     private fun gb(bytes: Long) = bytes / (1024.0 * 1024.0 * 1024.0)
 
     private fun plural(n: Int) = if (n == 1) "" else "s"

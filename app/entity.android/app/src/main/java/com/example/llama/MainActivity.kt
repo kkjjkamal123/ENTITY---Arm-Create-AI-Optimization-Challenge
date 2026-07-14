@@ -75,11 +75,14 @@ class MainActivity : AppCompatActivity() {
     // View-only render throttles (safe to reset across config changes).
     private var lastRenderMs = 0L
     private var lastChipMs = 0L
+    private var lastProcessCpuMs = 0L
+    private var lastProcessCpuWallMs = 0L
 
     // Rolling window to smooth the noisy instantaneous battery-current reading.
     private val wattsWindow = ArrayDeque<Double>()
 
-    private data class Snap(val temp: Double, val watts: Double, val gb: Double)
+    // Process CPU can exceed 100% when native worker threads occupy multiple cores.
+    private data class Snap(val temp: Double, val watts: Double, val cpuPercent: Double, val gb: Double)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -289,7 +292,7 @@ class MainActivity : AppCompatActivity() {
         if (graphVisible) {
             graph.addSample(
                 s.tokens.toFloat(), speed(s).toFloat(), ttftMs(s).toFloat(),
-                snap.temp.toFloat(), snap.watts.toFloat(), snap.gb.toFloat()
+                snap.temp.toFloat(), snap.watts.toFloat(), snap.cpuPercent.toFloat(), snap.gb.toFloat()
             )
         }
     }
@@ -624,7 +627,8 @@ class MainActivity : AppCompatActivity() {
             if (bytes >= 1_000_000_000L) String.format("%.2f GB", bytes / 1e9)
             else String.format("%.0f MB", bytes / 1e6)
         val params = meta?.basic?.sizeLabel
-        val quant = meta?.architecture?.fileType?.let { FileType.fromCode(it).label }
+        val fileType = meta?.architecture?.fileType?.let { FileType.fromCode(it) }
+        val quant = fileType?.label
         val arch = meta?.architecture?.architecture ?: meta?.basic?.name
         val trainedCtx = meta?.dimensions?.contextLength
         val layers = meta?.dimensions?.blockCount
@@ -650,7 +654,31 @@ class MainActivity : AppCompatActivity() {
                 .getOrDefault(emptyList())
             append("Compute: CPU · $cores perf core${if (cores == 1) "" else "s"}")
             if (features.isNotEmpty()) append(" · ${features.joinToString(", ")}")
-            append(" · KleidiAI")
+
+            // Only claim KleidiAI when the loaded quantization can actually reach it.
+            // KleidiAI ships kernels for Q4_0 and Q8_0 only; anything else runs on generic
+            // ggml no matter which backend variant was loaded. Saying "KleidiAI" regardless
+            // would be telling the user their model is Arm-accelerated when it is not.
+            when {
+                fileType == null -> Unit
+                fileType.kleidiAiAccelerated -> append(" · KleidiAI active")
+                else -> {
+                    append(" · KleidiAI NOT used")
+                    appendLine()
+                    appendLine()
+                    appendLine(
+                        "Arm's KleidiAI kernels only cover Q4_0 and Q8_0. This model is " +
+                            "${fileType.label}, so matmuls fall back to generic kernels and the " +
+                            "CPU's i8mm/dotprod paths sit idle."
+                    )
+                    append(
+                        "A Q4_0 build of the same model processes prompts far faster on this " +
+                            "phone (measured: 116 vs 43 tok/s on a Dimensity 7300, cutting " +
+                            "time-to-first-token on a 512-token prompt from ~12s to ~4.4s). " +
+                            "Decode speed is bandwidth-bound and stays about the same."
+                    )
+                }
+            }
         }.trim()
     }
 
@@ -701,6 +729,7 @@ class MainActivity : AppCompatActivity() {
         if (prefs.getBoolean(KEY_TTFT, true)) parts.add("TTFT ${ttftMs(s)}ms")
         if (prefs.getBoolean(KEY_TEMP, true)) parts.add("%.1f°C".format(snap.temp))
         if (prefs.getBoolean(KEY_POWER, true)) parts.add("%.2fW".format(snap.watts))
+        if (prefs.getBoolean(KEY_CPU, true)) parts.add("CPU %.0f%%".format(snap.cpuPercent))
         if (prefs.getBoolean(KEY_MEMORY, true)) parts.add("%.1fGB free".format(snap.gb))
         statsBar.text = parts.joinToString("  ·  ")
         statsBar.visibility = if (parts.isEmpty()) View.GONE else View.VISIBLE
@@ -733,7 +762,18 @@ class MainActivity : AppCompatActivity() {
         val info = ActivityManager.MemoryInfo()
         am.getMemoryInfo(info)
         val gb = info.availMem / (1024.0 * 1024.0 * 1024.0)
-        return Snap(temp, watts, gb)
+
+        val now = SystemClock.elapsedRealtime()
+        val cpuMs = android.os.Process.getElapsedCpuTime()
+        val elapsedMs = now - lastProcessCpuWallMs
+        val cpuPercent = if (lastProcessCpuWallMs > 0L && elapsedMs > 0L) {
+            (cpuMs - lastProcessCpuMs).coerceAtLeast(0L) * 100.0 / elapsedMs
+        } else {
+            0.0
+        }
+        lastProcessCpuWallMs = now
+        lastProcessCpuMs = cpuMs
+        return Snap(temp, watts, cpuPercent, gb)
     }
 
     private fun availableGb(): Double {
@@ -781,6 +821,7 @@ class MainActivity : AppCompatActivity() {
         private const val KEY_TTFT = "stat_ttft"
         private const val KEY_TEMP = "stat_temp"
         private const val KEY_POWER = "stat_power"
+        private const val KEY_CPU = "stat_cpu"
         private const val KEY_MEMORY = "stat_memory"
         private const val KEY_THEME = "theme"
         private const val KEY_ACTIVE_MODEL = "active_model"
@@ -792,6 +833,7 @@ class MainActivity : AppCompatActivity() {
             R.id.stat_ttft to KEY_TTFT,
             R.id.stat_temp to KEY_TEMP,
             R.id.stat_power to KEY_POWER,
+            R.id.stat_cpu to KEY_CPU,
             R.id.stat_memory to KEY_MEMORY
         )
 
