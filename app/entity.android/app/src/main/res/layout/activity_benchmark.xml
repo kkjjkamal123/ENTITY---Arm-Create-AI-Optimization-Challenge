@@ -103,6 +103,15 @@
                 android:textColor="@color/white"
                 android:backgroundTint="@color/accent" />
 
+            <Button
+                android:id="@+id/run_sustained_bench"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/bench_sustained"
+                android:textColor="@color/accent"
+                android:backgroundTint="@android:color/transparent" />
+
             <LinearLayout
                 android:id="@+id/bench_running"
                 android:layout_width="match_parent"
