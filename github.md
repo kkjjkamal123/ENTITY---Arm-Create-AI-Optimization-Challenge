@@ -26,9 +26,8 @@ Built on **llama.cpp** with a Kotlin UI and C++/JNI inference layer, ENTITY is p
    reporting is now accurate on all devices.
 
 On the same phone with the current 1B Q3_K_L benchmark model, ENTITY reaches **17.7 tok/s** on
-the optimized decode pass. It also reports power and tokens-per-watt, which Arm AI Chat omits;
-the separate, preliminary app-to-app comparison remains clearly labelled in
-[`benchmarks/entity-vs-arm-ai-chat.md`](benchmarks/entity-vs-arm-ai-chat.md).
+the optimized decode pass. It also reports power and tokens-per-watt; the full current method and
+its measurement limits are in [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md).
 
 ---
 
@@ -41,15 +40,19 @@ The app is a professional on-device chat interface with:
 - **Persistent, multiple conversations** — chats are stored on-device (SQLite), the last conversation is restored on launch, and a conversation switcher supports rename/delete; restored chats continue seamlessly (the engine re-primes its context from the saved history).
 - **Settings** with an Auto (optimized) master toggle for automatic tuning, plus manual layers for temperature, top-k, top-p, max tokens, context size, and thread count — and an editable system prompt and an Animations toggle.
 - **Live metrics bar and toggleable multi-series graph** — tokens, tok/s, time-to-first-token, temperature, power draw (W), and free memory.
-- **In-app benchmark** (⋮ → Benchmark) — runs the same PP 512 / TG 128 workload naïve (8 cores, default scheduler) and optimized (4 big cores, pinned via `sched_setaffinity`), with a 1/3/5 run-count selector, per-metric median ± stddev, thermal cooldown between passes, TTFT, and CSV export — reporting speed + power + efficiency side-by-side.
+- **In-app benchmark with a three-arm ablation** (⋮ → Benchmark) — runs the same PP 512 / TG 128 workload three ways: naïve (8 threads, default scheduler), threads-only (the Auto thread count with affinity off, i.e. what an upstream llama.cpp `-t N` run does), and the shipped Auto path (fast-core decode plus a wider prompt thread pool). The middle arm is what lets the decode gain be *attributed* — thread count versus core pinning — instead of assumed. It has a 1/3/5 run-count selector, per-metric median ± stddev, thermal cooldown between every pass, TTFT, and CSV export.
 - **Light / Dark / System themes** and a theme-aware app-icon switcher.
 - **Model info card** that reads the GGUF header to show parameters, quantization, architecture, and computed context window.
 
 ### Current measured optimization gain
 
 The current screenshot-backed **in-app** run uses `Llama-3.2-1B-Instruct-Q3_K_L`, PP 512 / TG
-128, three runs per configuration, and an unplugged CMF Phone 1. It compares naïve eight-core
-execution with four Cortex-A78 cores pinned by the app's `sched_setaffinity` path.
+128, three runs per configuration, and an unplugged CMF Phone 1. It compares naïve eight-thread
+execution with the shipped Auto path: four Cortex-A78 cores pinned by `sched_setaffinity`.
+
+This is the gain of the shipped configuration over what the phone does out of the box. It is
+**not** an attribution to core pinning, and it is not presented as one — see
+[What this number does not say](#what-this-number-does-not-say) below.
 
 | Metric | Naïve (8 cores) | Optimized (4× A78) | Gain |
 |--------|:---:|:---:|:---:|
@@ -75,9 +78,31 @@ The core mechanism — ranking CPU cores by their maximum clock frequency from `
 
 ![Current in-app benchmark](screenshots/Benchmark.png)
 
-See [`benchmarks/IN_APP_BENCHMARK.md`](benchmarks/IN_APP_BENCHMARK.md) for the full record.
-The older Termux CLI experiments remain useful historical data, but use different models, flags,
-and workloads; they are archived separately in [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md).
+### What this number does not say
+
+Naïve and Auto differ in **two** variables at once: the thread count drops from 8 to 4, and the
+surviving threads get pinned to the performance cluster. Dropping to four threads alone already
+stops the A55s from gating every decode step — which is most of what `-t 4` buys an upstream
+llama.cpp user. So the honest reading of +121% is "the shipped configuration versus the
+out-of-the-box default," not "core pinning is worth 121%."
+
+Separating the two needs a third arm that holds the thread count at 4 and removes only the
+affinity. **That arm now ships in the app**: `pinCores` skips `sched_setaffinity` and the pinned
+thread pool, clears any mask inherited from the previous arm, and lets the Linux scheduler place
+the threads. The Benchmark screen runs naïve → threads-only → Auto with the same cooldown before
+every pass, and prints the split: how much the thread-count decision earns, and how much pinning
+adds on top.
+
+No three-arm result is published yet, and nothing is estimated in the meantime — the pending table
+is in [`BENCHMARKS.md`](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution). Both outcomes
+are publishable: if threads-only lands close to Auto, the win is that ENTITY derives the right
+thread count per device automatically, which a phone user never does by hand; if Auto stays clearly
+ahead, the frequency-ranked pinning is carrying real weight and is proven by the exact experiment a
+skeptical reader would demand. Shipping the arm that can falsify the claim is the point.
+
+See [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md) for the complete current record and
+its limits. The raw historical Termux output remains separate because it uses different models,
+flags, workloads, and CLI-only realtime priority.
 
 ---
 
@@ -85,7 +110,7 @@ and workloads; they are archived separately in [`benchmarks/BENCHMARKS.md`](benc
 
 ### 1. Big-Core Affinity via `sched_setaffinity`
 
-The Dimensity 7300 is asymmetric. By default, the Android scheduler spreads threads across all 8 cores; the slow A55s become stragglers, delaying the whole pipeline. ENTITY pins inference threads to cores 4–7 (the Cortex-A78 cluster) using `sched_setaffinity`, with core indices **auto-detected from live `cpufreq` rankings** in `/sys/devices/system/cpu/`. This is the mechanism behind the current in-app result: **8.0 → 17.7 tok/s decode (+121%)** on the Q3_K_L 1B workload.
+The Dimensity 7300 is asymmetric. By default, the Android scheduler spreads threads across all 8 cores; the slow A55s become stragglers, delaying the whole pipeline. ENTITY pins inference threads to cores 4–7 (the Cortex-A78 cluster) using `sched_setaffinity`, with core indices **auto-detected from live `cpufreq` rankings** in `/sys/devices/system/cpu/` — no hardcoded core mask, which is why the identical path works on Qualcomm. Together with the thread-count decision it produces the current in-app result: **8.0 → 17.7 tok/s decode (+121%)** on the Q3_K_L 1B workload. How that gain splits between the two is measured by the app's threads-only arm and is [pending a device run](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
 
 **Impact:** on generation (memory-bandwidth-bound workload), pinning to big cores recovers the speed lost to the LITTLE cluster.
 
@@ -104,17 +129,22 @@ The phone has 6 GB total RAM, but runtime headroom can be only ~1.5–2 GB after
 **Impact:** the context policy makes larger models more usable on constrained devices without
 promising a single context size for every memory condition.
 
-### 4. Quantization Insight: Q4_0 Beats Smaller Formats on Arm
+### 4. Quantization Insight: Q4_0 Can Beat Smaller Formats on Arm
 
-On this CPU, the 4-bit Q4_0 quantization (with hardware-accelerated dotprod kernels) **beats a smaller 3-bit IQ importance-matrix format by 1.5×** (18.45 vs 12.6 tok/s) — counterintuitive but measurable. Reason: generation is memory-bandwidth bound; the format's kernel efficiency matters more than the raw bit-width. IQ3 formats have no fast Arm kernels.
+On Arm CPU inference, a smaller GGUF is not automatically faster. Q4_0 can beat a smaller
+three-bit IQ format when its dotprod kernel path is better supported. Generation is often
+memory-bandwidth bound, so kernel efficiency can matter more than raw bit width. This remains
+model- and device-dependent; ENTITY exposes the model quantization and includes an in-app
+benchmark so the choice can be tested on the actual phone.
 
-**Impact:** format + kernel alignment beats raw size-shrinking; on Arm, use Q4_0, not aggressive sub-4-bit quants.
+**Impact:** format plus kernel alignment can beat raw size shrinking. Q4_0 is a sensible starting
+point for this hardware class, but it is not presented as a universal winner.
 
 ### 5. Big-Core Pinning Under Contention (CLI-Benchmarked Ceiling)
 
-The app implements affinity pinning only (`sched_setaffinity`, item #1) — it does **not** call `sched_setscheduler`/SCHED_RR or request realtime priority anywhere in `ai_chat.cpp`. To understand how far the same pinning technique goes under adversarial conditions, we additionally benchmarked it from the command line (Termux `llama-cli`/`llama-bench`), there combining `-Cr 4-7 --cpu-strict 1` (the app's affinity pinning) with the CLI-only flag `--prio 3` (realtime scheduler priority) to protect the workload from OS preemption under contention. With a background download contending for CPU, the naive config collapsed to **0.7 tok/s** on the 3B model while the pinned + realtime CLI configuration held **4.4 tok/s** — a **~6.3× gap**.
+The app implements affinity pinning only (`sched_setaffinity`, item #1) — it does **not** call `sched_setscheduler`/SCHED_RR or request realtime priority anywhere in `ai_chat.cpp`. To understand how far the same pinning technique goes under adversarial conditions, I additionally benchmarked it from the command line (Termux `llama-cli`/`llama-bench`), there combining `-Cr 4-7 --cpu-strict 1` (the app's affinity pinning) with the CLI-only flag `--prio 3` (realtime scheduler priority) to protect the workload from OS preemption under contention. With a background download contending for CPU, the naive config collapsed to **0.7 tok/s** on the 3B model while the pinned + realtime CLI configuration held **4.4 tok/s** — a **~6.3× gap**.
 
-This is an honest, CLI-measured ceiling for the technique, not a claim about the shipped app: ENTITY ships the affinity-pinning half of this combination; realtime priority is not something an unprivileged Android app can request the way a Termux CLI process can. See `benchmarks/BENCHMARKS.md` (Experiment 3 / Experiment 6) for the exact commands and raw numbers.
+This is an honest, CLI-measured ceiling for the technique, not a claim about the shipped app: ENTITY ships the affinity-pinning half of this combination; realtime priority is not something an unprivileged Android app can request the way a Termux CLI process can. The raw output is retained in `benchmarks/termux_master_results.txt`.
 
 **Impact:** demonstrates that affinity pinning's value compounds under real-world contention (heat, background load, battery); the app captures the pinning portion of that gain today.
 
@@ -191,15 +221,19 @@ eight-core execution.
    - Open the app.
    - Tap the folder icon to import or load a model from the device.
    - Chat normally.
-   - To validate the optimization: ⋮ → **Benchmark** to run the in-app naïve-vs-optimized comparison on the loaded model.
+   - To validate the optimization: ⋮ → **Benchmark** to run the in-app three-arm ablation (naïve, threads-only, Auto) on the loaded model, then **Export CSV** for the per-pass evidence.
 
-### Device-Specific Configuration
+### CPU Backend Configuration
 
-The app is compiled with `GGML_CPU_ARM_ARCH=armv8.2-a+dotprod` for the CMF Phone 1 / Dimensity 7300. To adapt for a different Arm SoC:
+The current v2.0.0 release uses `GGML_CPU_ALL_VARIANTS=ON`. It ships seven Arm CPU backend
+variants and lets ggml select the best supported one at runtime. The same APK therefore supports
+older arm64 CPUs without dotprod and newer CPUs with i8mm, SVE2, or SME while retaining KleidiAI
+kernels in every variant.
 
-- Modify `lib/build.gradle.kts`:
-  - Change `GGML_CPU_ARM_ARCH` to your target (e.g., `armv9-a+sme` for Cortex-X3, `armv8.2-a+fp16` for Exynos).
-  - Or set `GGML_CPU_ALL_VARIANTS=ON` for a universal build (larger, slower startup, more RAM).
+A distribution that intentionally targets one known SoC can instead set
+`GGML_CPU_ALL_VARIANTS=OFF` and choose `GGML_CPU_ARM_ARCH`. That produces a smaller
+single-backend build but removes the portability of the normal v2 release. See
+[`docs/BUILD.md`](docs/BUILD.md) for exact target examples and safety notes.
 
 ---
 
@@ -214,7 +248,7 @@ ENTITY was **newly created during the hackathon submission period**, built from 
 - **v1.4.0** (2026-07-04): Theme-aware app-icon switcher; header chips for temperature and free RAM; fixed benchmark race condition and CPU-affinity leak.
 - **v1.5.0** (2026-07-04): Branded empty state (ENTITY mark + tagline); stat row redesigned to sans-serif for polish.
 - **v1.6.0** (2026-07-10): Chat persistence (multiple conversations, restore on launch, seamless context re-priming), prompt-processing/generation thread split in the native layer, graceful context-full trimming, Markdown rendering, system-prompt editor, multi-run benchmark with median ± stddev / TTFT / CSV export, UI polish + Animations toggle, and a stripped R8 release build.
-- **v1.7.0** (2026-07-12): Efficiency mode (Settings toggle capping inference at 2 threads, doubling thermal delays), per-token thermal guard via `ThermalGuard` (NONE/LIGHT → 0 ms, MODERATE → 6 ms, SEVERE+ → 12 ms), 5-sample windowed power sampling eliminating jitter, proper release signing with dedicated keystore, and 5 new unit tests covering thermal logic.
+- **v1.7.0** (2026-07-12): Efficiency mode (Settings toggle capping inference at 2 threads, doubling thermal delays), periodic thermal guard via `ThermalGuard` every eight tokens (NONE/LIGHT → 0 ms, MODERATE → 6 ms, SEVERE+ → 12 ms), 5-sample windowed power sampling eliminating jitter, proper release signing with dedicated keystore, and 5 new unit tests covering thermal logic.
 - **v2.0.0** (2026-07-12): Universal Arm support via **7 CPU backend variants with runtime dispatch** (no SIGILL on old cores, no missed optimizations on new ones); first-run device optimization dialog; power measurement bug fix (OEM kernel milliamp/microamp confusion); benchmark corrected to measure shipped Auto config; SoC-neutral UI strings; and 8 additional unit tests for device detection and power math.
 
 **All versions from v1.6.0 onward ship with both prebuilt debug and release-signed APKs in [`apk/`](apk/)** (see `apk/README.md`) and as copy-paste-ready notes in [`releases/`](releases/), installable via `adb install -r`. Versions 1.0–1.5 are available as debug APKs only.
@@ -223,14 +257,8 @@ ENTITY was **newly created during the hackathon submission period**, built from 
 
 ## Repository & License
 
-- **Public repository** at `<your-repo-url>` (structure: `app/entity.android/` = the Gradle project; `apk/` = prebuilt APKs; `releases/` = per-version GitHub Release notes; `benchmarks/` = measured results; `docs/` = architecture/build/optimization docs; `scripts/` = Termux CLI benchmark suite).
+- **Public repository:** [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge). It contains the Gradle project in `app/entity.android/`, prebuilt APKs in `apk/`, versioned release notes in `releases/`, measurements in `benchmarks/`, technical documentation in `docs/`, and Termux helpers in `scripts/`.
 - **Apache License 2.0** — see `LICENSE` file. Built on [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT) and Arm [KleidiAI](https://gitlab.arm.com/kleidi/kleidiai) (Apache-2.0).
-
----
-
-## Demo Video
-
-▶ **Demo video:** (pending — ≤3 min, shows the app running on the CMF Phone 1 with live chat, metrics graph, settings toggle, and in-app benchmark results)
 
 ---
 

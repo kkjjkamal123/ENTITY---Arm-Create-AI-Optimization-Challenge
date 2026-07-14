@@ -53,6 +53,19 @@ second device (Qualcomm Snapdragon 6 Gen 4, 4 perf cores @2.30 GHz + 4 eff cores
 **This is the strongest evidence in the project: the core optimization reproduces across two different
 SoC vendors on the same model, under the same protocol, with no vendor-specific code.**
 
+> **Later correction (kept here rather than rewritten).** The numbers above stand, but the wording
+> "the core big-core affinity optimization was measured" claims more than the experiment showed.
+> The naïve and Optimized arms differ in *two* variables at once — thread count (8 → 4) and core
+> placement (all cores → pinned) — so this pair cannot say which one earned the gain. Dropping to
+> four threads alone already stops the A55/efficiency cores from gating decode, which is most of
+> what an upstream `-t 4` run buys. Read these figures as *the shipped configuration versus the
+> out-of-the-box default*, which is what they honestly measure.
+>
+> A threads-only arm (Auto's thread count, affinity off) now ships in the app to separate the two.
+> Result: [pending a device run](../benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
+> What *is* proven cross-vendor is the mechanism: ranking cores by `cpufreq` instead of hardcoding
+> a mask works unchanged on MediaTek and Qualcomm.
+
 ## Benchmark now measures the shipped configuration
 
 The in-app benchmark's "Optimized" column previously used an explicit 4-thread config and called it

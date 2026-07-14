@@ -164,10 +164,27 @@ pool would otherwise inherit whatever affinity that new thread happened to have.
 **Grounded impact:** the current screenshot-backed in-app run
 ([`BENCHMARKS.md`](../benchmarks/BENCHMARKS.md)) measures the app-equivalent
 comparison directly: **8.0 ± 1.1 → 17.7 ± 0.56 tok/s decode (+121%)** for naïve eight-core
-execution versus four big cores on the CMF Phone 1. The same technique independently validates on
-a Qualcomm Snapdragon 6 Gen 4 device with **+117% decode gain** — cross-vendor proof that the core
-mechanism (ranking cores by `cpufreq`, pinning via `sched_setaffinity`) is SoC-agnostic. Historical
-CLI output is retained separately in `benchmarks/termux_master_results.txt`.
+execution versus four big cores on the CMF Phone 1, and **+117%** on a Qualcomm Snapdragon 6 Gen 4
+device. Historical CLI output is retained separately in `benchmarks/termux_master_results.txt`.
+
+**What that number does not yet say.** Those two arms change *two* things at once: the thread count
+drops from 8 to 4, and the surviving threads get pinned. Dropping to four threads alone already
+stops the A55s from gating every decode step, which is most of what `-t 4` buys an upstream
+llama.cpp user. So +121% is the gain of the shipped configuration over the out-of-the-box default,
+**not** a measurement of affinity's contribution, and this section does not claim otherwise.
+
+Separating them needs a third arm holding the thread count at 4 with affinity off. That arm now
+ships: `g_pin_cores` (set from Kotlin through `configure()`) makes `init_context()` skip
+`build_fast_cpu_set`/`pin_to_fast_cores`, makes `new_threadpool_on_fast_cores()` return null so
+llama.cpp falls back to default thread scheduling, and calls `unpin_all_cores()` to clear any mask
+inherited from the previous arm. The Benchmark screen runs naïve → threads-only → Auto and prints
+the split. Result: [pending a device
+run](../benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution) — nothing is estimated here
+until one exists.
+
+The *mechanism* is still SoC-agnostic and is proven so: ranking cores by `cpufreq` rather than
+hardcoding a mask works unchanged across a MediaTek and a Qualcomm big.LITTLE layout. What is
+pending is how much of the measured gain to bill to it.
 
 ## 2. Universal Arm Support via Runtime CPU Backend Dispatch
 
@@ -406,7 +423,7 @@ A pass over the JNI boundary closed off several longstanding failure/leak modes:
 
 | # | Optimization | Implemented in | Verified via |
 |---|---|---|---|
-| 1 | Big-core affinity | `ai_chat.cpp: build_fast_cpu_set/pin_to_fast_cores` | in-app benchmark on two devices |
+| 1 | Big-core affinity | `ai_chat.cpp: build_fast_cpu_set/pin_to_fast_cores`, ablation switch `g_pin_cores` | in-app benchmark on two devices; three-arm attribution pending a device run |
 | 2 | Runtime CPU backend dispatch (7 variants) | `lib/build.gradle.kts (ALL_VARIANTS=ON)`, `CMakeLists.txt` | runtime selection; cross-device validation |
 | 3 | Adaptive context | `MainActivity.adaptiveContext`, `ai_chat.cpp: init_context` | manual load test, 3B on 2GB free |
 | 4 | Quantization guidance (Q4_0) | model selection + `InfoActivity` | device-specific guidance |

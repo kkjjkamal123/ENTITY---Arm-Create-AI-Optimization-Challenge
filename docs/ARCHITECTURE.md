@@ -120,10 +120,21 @@ top-k, top-p, max tokens, context size steps `1024/2048/4096/8192`, thread count
 `MainActivity`/`BenchmarkActivity` on next use.
 
 ### `BenchmarkActivity`
-Runs `InferenceEngine.bench()` for the selected count of 1, 3, or 5 passes per configuration.
-The naïve pass applies `NAIVE_THREADS = 8`. The optimized pass applies `OPT_THREADS_AUTO = 0`,
-which is the same Auto configuration used for chat: native code selects two to four
-frequency-ranked fast cores for generation while prompt processing can widen to all online cores.
+Runs `InferenceEngine.bench()` for the selected count of 1, 3, or 5 passes per configuration,
+across three arms:
+
+| Arm | `applyConfig` | Behaviour |
+|---|---|---|
+| Naïve | `NAIVE_THREADS = 8`, `pinCores = true` | Eight threads; the fast-core set spans every core, so this is the all-core default. |
+| Threads only | `autoGenThreads()`, `pinCores = false` | Auto's thread count with affinity off: no `sched_setaffinity`, no pinned pool, scheduler-placed. The ablation control. |
+| Optimized | `OPT_THREADS_AUTO = 0`, `pinCores = true` | The same Auto configuration used for chat: native code selects two to four frequency-ranked fast cores for generation while prompt processing can widen to all online cores. |
+
+`autoGenThreads()` mirrors `init_context()` in `ai_chat.cpp` (online cores minus headroom, clamped
+to `DeviceOptimizer.MIN_THREADS`/`MAX_THREADS` = 2..4), so the threads-only arm runs the same thread
+count as Auto and differs from it *only* in placement. That is what makes the decode gap between
+them an attribution rather than a coincidence. The `finally` block restores `pinCores = true` so
+chat decode re-pins after the benchmark.
+
 A coroutine samples `BatteryManager.BATTERY_PROPERTY_CURRENT_NOW` every 150 ms during each pass.
 `PowerMath` resolves the OEM microamp or milliamp ambiguity before the app calculates average
 watts and tokens per watt. Results render as median plus population standard deviation with derived
@@ -137,10 +148,11 @@ intentionally free of native/CLI-only claims (e.g. it never mentions realtime pr
 [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md)).
 
 ### `MetricsGraphView`
-A hand-rolled multi-series line chart (`View.onDraw`, no chart library). Each of the six series
-(`stat_tokens`, `stat_speed`, `stat_ttft`, `stat_temp`, `stat_power`, `stat_memory`) keeps its own
+A hand-rolled multi-series line chart (`View.onDraw`, no chart library). Each of the seven series
+(`stat_tokens`, `stat_speed`, `stat_ttft`, `stat_temp`, `stat_power`, `stat_cpu`, `stat_memory`) keeps its own
 120-sample ring buffer (`ArrayDeque`) and is normalized to its own min/max so tokens, watts, °C and
-GB can share one canvas. `addSample()` is called once per render tick from `MainActivity`.
+GB can share one canvas. `stat_cpu` is app-process CPU percentage and may exceed 100% while native
+workers use multiple cores. `addSample()` is called once per render tick from `MainActivity`.
 
 ### `MessageAdapter` / `Message`
 Plain `RecyclerView.Adapter` with two view types (user/assistant bubbles) and a `PAYLOAD_TEXT`

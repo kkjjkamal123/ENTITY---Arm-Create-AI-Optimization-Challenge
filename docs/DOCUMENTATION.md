@@ -86,6 +86,15 @@ The canonical app result uses Llama 3.2 1B Instruct Q3 K L with PP 512 and TG 12
 configuration runs three times on an unplugged phone. Values are median plus population standard
 deviation.
 
+The two tables below are a two arm record: the eight thread default against ENTITY Auto. They
+report the end to end gain of the shipped configuration over what the phone does out of the box.
+
+They do not attribute that gain to core pinning. The two arms change two things at once, the thread
+count and the core placement, and dropping to four threads alone already stops the little cores from
+gating decode. The app now runs a third arm, threads only, which holds Auto's thread count and
+switches affinity off. No three arm result is published yet and no value is estimated in the
+meantime: see [the pending attribution](../benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
+
 ### CMF Phone 1
 
 | Metric | Naive eight cores | ENTITY Auto | Change |
@@ -112,13 +121,16 @@ live chat first token measurement.
 ## Evidence and reproduction
 
 1. benchmarks/BENCHMARKS.md is the single current method, result, caveat, and reproduction record.
-2. benchmarks/termux_master_results.txt is raw historical CLI output. It is not an app benchmark.
-3. docs/BUILD.md contains the exact build and validation path.
-4. docs/ARCHITECTURE.md maps the Kotlin UI, JNI layer, and native inference flow.
-5. docs/OPTIMIZATIONS.md connects each shipped optimization to its source file.
-6. docs/FAQ.md answers common questions about models, Auto mode, device support, and metrics.
-7. templates/arm64-android-runtime/ is a copyable starter kit for other Arm64 Android projects.
-
+2. benchmarks/COMPARISONS.md defines the three arm in app ablation and the upstream llama.cpp
+   baseline protocol, and states what an ExecuTorch or MLC-LLM claim would require.
+3. benchmarks/REPRODUCIBILITY.md is the protocol, the CSV evidence schema, and the logcat check
+   that confirms the three arms really ran on different cores.
+4. benchmarks/termux_master_results.txt is raw historical CLI output. It is not an app benchmark.
+5. docs/BUILD.md contains the exact build and validation path.
+6. docs/ARCHITECTURE.md maps the Kotlin UI, JNI layer, and native inference flow.
+7. docs/OPTIMIZATIONS.md connects each shipped optimization to its source file.
+8. docs/FAQ.md answers common questions about models, Auto mode, device support, and metrics.
+9. templates/arm64-android-runtime/ is a copyable starter kit for other Arm64 Android projects.
 
 ## Historical work
 

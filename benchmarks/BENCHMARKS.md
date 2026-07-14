@@ -12,7 +12,24 @@ are median plus population standard deviation.
 | Path | Configuration |
 |---|---|
 | Naïve | Eight threads across all online CPU cores. |
+| Threads only | The same thread count Auto derives, with affinity off: no pinning, no pinned thread pool, placement left to the Linux scheduler. This is what an upstream llama.cpp `-t N` run does. |
 | ENTITY Auto | CPU cores are ranked by maximum frequency. Decode uses the fastest two to four cores while prompt processing can use all online cores through the split thread pools. |
+
+### Why three arms
+
+Naïve and Auto differ in two variables at once: thread count and core placement. A two-arm result
+therefore cannot say which one earns the speed-up, and a reader is entitled to assume the honest
+answer is "mostly the thread count" — dropping from eight threads to four stops the little cores
+from gating every decode step, and any user who passes `-t 4` to llama.cpp already has that.
+
+The threads-only arm holds the thread count at Auto's value and removes only the affinity. The
+decode gap between threads-only and Auto is therefore the value of pinning alone, and the gap
+between naïve and threads-only is the value of the thread-count decision alone. The app prints both
+attributions under the results table.
+
+**Decode is the isolated comparison; prompt throughput is not.** Auto widens prompt processing to
+every core through its split pools, and the threads-only arm cannot, so the prompt row mixes thread
+count with placement by design. Read the decode row for the ablation.
 
 The benchmark samples battery current and voltage during every pass. `PowerMath` resolves OEM
 microamp versus milliamp reporting before calculating watts and tokens per watt. It hides power
@@ -20,6 +37,13 @@ and efficiency when the phone is charging. TTFT is a benchmark-derived estimate 
 evaluation plus one decode step, not a live-chat first-token measurement.
 
 ## Results
+
+The tables below are the **two-arm v2.0.0 record**: they were measured before the threads-only arm
+existed, so they report naïve versus Auto only. The change column is Auto over naïve, which is the
+end-to-end gain of the shipped configuration over the out-of-the-box default. It is **not** an
+attribution to core pinning; that requires the three-arm run described above and recorded as
+[pending](#pending-the-three-arm-attribution) below. No threads-only number is estimated or
+back-filled here.
 
 | Device | Metric | Naïve | ENTITY Auto | Change |
 |---|---|---:|---:|---:|
@@ -34,23 +58,46 @@ evaluation plus one decode step, not a live-chat first-token measurement.
 |  | Power | 3.4 ± 0.15 W | 3.4 ± 0.29 W | flat |
 |  | Energy efficiency | 1.8 ± 0.24 tok/W | 3.8 ± 0.31 tok/W | 2.1× |
 
-| Mediatek | Snapdragon |
-|---|---|
-| ![Mediatek](../screenshots/Benchmark.png) | ![Snapdragon](../screenshots/Benchmark2.png) | 
+|![Current in-app benchmark Mediatek](../screenshots/Benchmark.png)| |![Current in-app benchmark Snapdragon](../screenshots/Benchmark2.png)|
+
+## Pending: the three-arm attribution
+
+The app now ships the threads-only arm, but **no three-arm result is published yet.** The table
+below is the shape of the result, not a claim; it is filled in from a device run, and no cell is
+estimated in the meantime.
+
+| Device | Naïve decode | Threads-only decode | Auto decode | Thread count earns | Pinning earns |
+|---|---:|---:|---:|---:|---:|
+| CMF Phone 1, Dimensity 7300 | 8.0 tok/s | pending | 17.7 tok/s | pending | pending |
+| OPPO CPH2729, Snapdragon 6 Gen 4 | 6.0 tok/s | pending | 13.1 tok/s | pending | pending |
+
+Both outcomes are publishable and neither is a failure:
+
+- If threads-only lands close to Auto, the honest headline is that ENTITY's win comes from deriving
+  the right thread count per device automatically, which a normal phone user never does by hand.
+  The affinity policy is then a smaller refinement and is reported as one.
+- If Auto stays clearly ahead of threads-only, the frequency-ranked pinning is carrying real weight
+  and the claim is proven by the exact experiment a skeptical reader would demand.
+
+Publishing a number without this arm would mean claiming affinity for a gain the thread count may
+have earned. The arm exists so that the claim can be attributed rather than assumed.
 
 ## Interpretation and limits
 
-The repeatable result is that frequency-ranked fast-core decode improves both speed and energy
-efficiency on two Arm SoCs with the same app, model, and test protocol. It does not establish a
-universal performance multiplier for every phone, model, quantization, temperature, or background
-workload. The numbers are benchmark values rather than live multi-turn-chat speed.
+The repeatable result is that ENTITY's Auto configuration improves both speed and energy efficiency
+over the eight-thread default on two Arm SoCs with the same app, model, and test protocol. It does
+not establish a universal performance multiplier for every phone, model, quantization, temperature,
+or background workload, and, until the three-arm run above is published, it does not attribute the
+gain to core pinning rather than to the thread count. The numbers are benchmark values rather than
+live multi-turn-chat speed.
 
 ## Reproduce
 
 Follow the exact [reproducibility protocol](REPRODUCIBILITY.md). In short: install the current
 APK, load the stated Q3_K_L model, unplug and cool the phone, select three runs in **Benchmark**,
-then export the CSV. The app performs a discarded warm-up, runs naïve before Auto, records every
-pass, and applies a thermal cooldown before each pass.
+then export the CSV. The app performs a discarded warm-up, then runs naïve, threads-only and Auto
+in that order, records every pass, and applies the same thermal cooldown before each pass so the
+ordering does not favour the last arm.
 
 ### Evidence status
     
@@ -64,8 +111,11 @@ different workload and, in the optimized CLI case, realtime priority; neither is
 the app result.
 
 New app exports contain per-pass values plus app/device/ABI/version, benchmark order, warm-up and
-cooldown provenance. Commit those CSVs beside a new device-result row when contributing a result.
+cooldown provenance, and the per-arm affinity policy. Commit those CSVs beside a new device-result
+row when contributing a result.
 
+A fresh three-arm run therefore closes two gaps at once: it produces the attribution above, and its
+export is the retained per-pass CSV the v2.0.0 reference runs never kept.
 
 ## Contribute a device result
 

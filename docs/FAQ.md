@@ -51,9 +51,22 @@ configuration.
 
 ## What do the published benchmark numbers mean?
 
-They compare a naïve eight-core configuration with the same Auto path used by chat. The current
+They compare a naïve eight-thread configuration with the same Auto path used by chat. The current
 record uses Llama 3.2 1B Instruct Q3 K L with PP 512 and TG 128. Read the full method, results,
 and limits in [BENCHMARKS.md](../benchmarks/BENCHMARKS.md).
+
+They are the gain of the shipped configuration over the out-of-the-box default. They do not say
+how much of it comes from core pinning as opposed to simply using fewer threads, because those two
+arms change both at once.
+
+## So how much does the core pinning actually earn?
+
+Not published yet, and deliberately not guessed. The Benchmark screen runs a third arm — threads
+only: Auto's thread count with affinity switched off, which is what an upstream llama.cpp `-t N`
+run does. The decode gap between naïve and threads only is the thread-count decision; the gap
+between threads only and Auto is the pinning. The app prints both under the results table. Run it
+and the numbers are yours: [pending
+attribution](../benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
 
 ## Does ENTITY use realtime scheduling or root-only controls?
 
@@ -74,4 +87,4 @@ The canonical source is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challe
 
 Yes. The [Arm64 Android starter kit](../templates/arm64-android-runtime/README.md) contains the
 pure Kotlin runtime policy, a portable C++ affinity helper, and a retargeting checklist. It is a
- starting point, not a replacement for testing on the target phone.
+starting point, not a replacement for testing on the target phone.

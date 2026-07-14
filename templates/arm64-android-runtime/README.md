@@ -27,8 +27,18 @@ helper. Copy the files, connect them to your inference runtime, then benchmark o
    than requesting realtime priority.
 6. Sample `BATTERY_PROPERTY_CURRENT_NOW` and battery voltage only when unplugged. Use `watts` and
    `tokensPerWatt` for comparable power data.
-7. Compare a naïve all-core baseline with Auto using the same model, prompt size, generated-token
-   count, thermal starting point, and number of passes.
+7. Benchmark **three** arms, not two, using the same model, prompt size, generated-token count,
+   thermal starting point, and number of passes:
+   - naïve: all cores, default thread count;
+   - threads-only: the Auto thread count with affinity off (skip `pin_current_thread`, do not pin
+     the worker pool);
+   - Auto: the full policy.
+
+   Two arms cannot tell you whether a speed-up came from the affinity or from simply using fewer
+   threads, because they change both at once. Dropping to the big-core count already stops the
+   little cores from gating decode. The middle arm is the one that makes your number an attribution
+   instead of an assumption — and if it shows the pinning earns little on your SoC, that is a result
+   worth having before you ship the complexity.
 8. Record a row using `device-result-template.csv`, together with the raw CSV from your benchmark.
 
 ## Retargeting notes

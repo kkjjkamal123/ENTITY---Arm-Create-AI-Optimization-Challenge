@@ -72,6 +72,13 @@ static float g_temp      = DEFAULT_SAMPLER_TEMP;
 static int   g_top_k     = 40;
 static float g_top_p     = 0.95f;
 
+// Core-affinity policy. True (the shipped path) pins inference to the fastest
+// cores and attaches the pinned split thread pools. False leaves placement to
+// the Linux scheduler with no pinned pool: the ablation arm that isolates how
+// much of the speed-up comes from affinity rather than from the thread count
+// alone. Only the benchmark's threads-only configuration sets this false.
+static bool  g_pin_cores = true;
+
 // CPU indices ranked by max cpufreq, fastest first.
 // On big.LITTLE the leading entries are the performance cluster (e.g. the A78
 // cores), the trailing ones the efficiency cluster.
@@ -110,9 +117,53 @@ static void build_fast_cpu_set(int want) {
     }
 }
 
+// The affinity mask the calling thread is actually running under, as "0,1,2,3".
+// The benchmark's whole result rests on the three arms really running on
+// different cores, and a silently failed sched_setaffinity would look exactly
+// like "pinning earns nothing". So each arm logs the mask the kernel reports
+// back, not the mask we asked for: one logcat line per arm is the on-device
+// check that the ablation is real.
+//
+//   naive        -> every core
+//   threads-only -> every core, but with the Auto thread count
+//   Auto         -> the fast cores only
+//
+// If threads-only and Auto print the same mask, the ablation is broken and the
+// attribution it produces is meaningless. Filter logcat for "effective cpus".
+static std::string effective_cpu_mask() {
+    cpu_set_t mask;
+    CPU_ZERO(&mask);
+    if (sched_getaffinity(0, sizeof(cpu_set_t), &mask) != 0) { return "unreadable"; }
+    std::vector<int> cpus;
+    const int ncpu = (int) sysconf(_SC_NPROCESSORS_CONF);
+    for (int i = 0; i < ncpu && i < CPU_SETSIZE; i++) {
+        if (CPU_ISSET(i, &mask)) { cpus.push_back(i); }
+    }
+    return cpus.empty() ? "none" : join(cpus, ",");
+}
+
+// Clear any inherited affinity mask so the scheduler may place threads on every
+// online core. A mask set by an earlier pinned config survives on the thread, so
+// the unpinned arm has to reset it explicitly or it would silently keep running
+// on the previous config's core set.
+static void unpin_all_cores() {
+    cpu_set_t all;
+    CPU_ZERO(&all);
+    const int ncpu = (int) sysconf(_SC_NPROCESSORS_CONF);
+    for (int i = 0; i < ncpu && i < CPU_SETSIZE; i++) { CPU_SET(i, &all); }
+    if (sched_setaffinity(0, sizeof(cpu_set_t), &all) != 0) {
+        LOGw("%s: sched_setaffinity failed, thread may still carry the previous arm's mask",
+             __func__);
+    }
+    CPU_ZERO(&g_fast_cpus);
+    g_fast_count = 0;
+}
+
 // A ggml thread pool of `want` threads pinned to the `want` fastest cores.
-// Returns null on failure (caller falls back to the auto pool).
+// Returns null on failure or when pinning is off (caller falls back to the auto
+// pool, i.e. llama.cpp's default thread scheduling).
 static ggml_threadpool_t new_threadpool_on_fast_cores(int want) {
+    if (!g_pin_cores) { return nullptr; }
     if (want <= 0 || !g_threadpool_new_fn || !g_threadpool_free_fn) { return nullptr; }
     const std::vector<int> ranked = ranked_fast_cpus();
     ggml_threadpool_params tpp;
@@ -135,6 +186,15 @@ static ggml_threadpool_t new_threadpool_on_fast_cores(int want) {
 static void pin_to_fast_cores() {
     if (g_fast_count > 0) {
         sched_setaffinity(0, sizeof(cpu_set_t), &g_fast_cpus);
+    }
+}
+
+// Same, but reports what the kernel actually applied. Used on the once-per-config
+// path (init_context); the per-token path stays on the silent version.
+static void pin_to_fast_cores_checked() {
+    if (g_fast_count > 0 &&
+        sched_setaffinity(0, sizeof(cpu_set_t), &g_fast_cpus) != 0) {
+        LOGw("%s: sched_setaffinity failed, inference is not pinned", __func__);
     }
 }
 
@@ -228,9 +288,16 @@ static llama_context *init_context(llama_model *model, int n_ctx_override = -1) 
     // Record the context size actually allocated so the completion-loop bounds match.
     g_n_ctx = (int) llama_n_ctx(context);
 
-    build_fast_cpu_set(n_threads);
-    pin_to_fast_cores();
-    LOGi("%s: pinned inference to %d fast cores", __func__, g_fast_count);
+    if (g_pin_cores) {
+        build_fast_cpu_set(n_threads);
+        pin_to_fast_cores_checked();
+        LOGi("%s: pinned inference to %d fast cores, effective cpus [%s]",
+             __func__, g_fast_count, effective_cpu_mask().c_str());
+    } else {
+        unpin_all_cores();
+        LOGi("%s: affinity off, %d threads placed by the scheduler, effective cpus [%s]",
+             __func__, n_threads, effective_cpu_mask().c_str());
+    }
     return context;
 }
 
@@ -295,14 +362,15 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_arm_aichat_internal_InferenceEngineImpl_configure(
         JNIEnv * /*env*/, jobject /*unused*/,
-        jint nCtx, jint nThreads, jfloat temp, jint topK, jfloat topP) {
+        jint nCtx, jint nThreads, jfloat temp, jint topK, jfloat topP, jboolean pinCores) {
     if (nCtx > 0) { g_n_ctx = nCtx; }
     g_n_threads = nThreads < 0 ? 0 : nThreads;
     g_temp  = temp;
     g_top_k = topK;
     g_top_p = topP;
-    LOGi("%s: ctx=%d threads=%d temp=%.2f topK=%d topP=%.2f",
-         __func__, g_n_ctx, g_n_threads, g_temp, g_top_k, g_top_p);
+    g_pin_cores = pinCores != JNI_FALSE;
+    LOGi("%s: ctx=%d threads=%d temp=%.2f topK=%d topP=%.2f pinCores=%d",
+         __func__, g_n_ctx, g_n_threads, g_temp, g_top_k, g_top_p, (int) g_pin_cores);
 }
 
 extern "C"

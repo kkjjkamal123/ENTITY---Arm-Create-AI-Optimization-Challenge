@@ -132,13 +132,19 @@ developer shortcut that happens to work because `adb` can write to `Android/data
   numbers. The current reference in-app measurement is
   [`../benchmarks/BENCHMARKS.md`](../benchmarks/BENCHMARKS.md). The historical Termux raw output
   uses different workloads and CLI-only realtime priority.
-- ⋮ → **Benchmark** on the loaded model — compares the naïve eight-core path with ENTITY Auto.
-  Auto ranks cores by maximum frequency, uses its selected fast core set for decode, and widens
-  prompt processing when the split thread pool is available. This is the fastest way to confirm a
-  native or affinity change has not regressed the shipped path.
+- ⋮ → **Benchmark** on the loaded model — runs three arms: the naïve eight-thread path,
+  threads-only (Auto's thread count with affinity off), and ENTITY Auto, which ranks cores by
+  maximum frequency, uses its selected fast core set for decode, and widens prompt processing when
+  the split thread pool is available. This is the fastest way to confirm a native or affinity
+  change has not regressed the shipped path.
 - `adb logcat -s AiChat:* ai-chat:*` while loading a model shows `init_context` logging the chosen
-  thread count, context size, and `"pinned inference to %d fast cores"` — confirms affinity pinning
-  actually ran (see `pin_to_fast_cores()` in `ai_chat.cpp`).
+  thread count, context size, and the affinity actually applied — confirms pinning ran (see
+  `pin_to_fast_cores()` in `ai_chat.cpp`).
+- `adb logcat -s ai-chat | grep "effective cpus"` during a benchmark prints the CPU mask **the
+  kernel reports back** for each arm. A valid three-arm run shows the Auto arm on the fast cores
+  only and the threads-only arm on every core. If those two print the same mask, the ablation did
+  not happen and its attribution is meaningless — see
+  [REPRODUCIBILITY.md](../benchmarks/REPRODUCIBILITY.md).
 
 ## Device-specific configuration: adapting CPU backend variants
 

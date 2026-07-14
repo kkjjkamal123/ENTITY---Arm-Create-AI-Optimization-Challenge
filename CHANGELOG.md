@@ -5,7 +5,7 @@ MediaTek Dimensity 7300 (4× Cortex-A78 + 4× Cortex-A55, 6 GB) on a CMF Phone 1
 [Keep a Changelog](https://keepachangelog.com); versions follow [Semantic Versioning](https://semver.org).
 
 Each release maps to a shipped APK in `apk/` (see the **Artifacts** table at the bottom).
-Debug builds, arm64-v8a only — install with `adb install -r <file>.apk`. **Positioning:** the app to
+From v1.7.0 onward, both a debug-signed and release-signed APK are published per release, arm64-v8a only — install with `adb install -r <file>.apk`. **Positioning:** the app to
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
@@ -18,113 +18,196 @@ tokens-per-watt efficiency axis AI Chat doesn't measure.
   (no `sched_setaffinity`, no pinned thread pool, placement left to the scheduler). It is the
   in-app equivalent of an upstream llama.cpp `-t N` run.
 - `pinCores` flag through `InferenceEngine.applyConfig` → JNI `configure()` → `g_pin_cores` in
-  `ai_chat.cpp`. Defaults to true, so every shipped path is unchanged. `unpin_all_cores()` clears
-  any affinity mask inherited from the previous arm, and each arm logs the mask the kernel actually
-  applied so a failed pin cannot masquerade as "pinning earns nothing".
-- Decode attribution under the results table: how much of the naïve → Auto gain the thread count
-  earns, and how much pinning adds on top. CSV export records the per-arm affinity policy.
-
-### Fixed
-
-- `app/build.gradle.kts`: enabled `buildFeatures.buildConfig`. `BenchmarkActivity` references
-  `BuildConfig.VERSION_NAME`/`VERSION_CODE` for CSV provenance, but AGP 8 does not generate
-  `BuildConfig` unless asked, so `:app:compileDebugKotlin` failed.
+  `ai_chat.cpp`. Defaults to true, so every shipped path is unchanged; only the ablation arm turns
+  it off. `unpin_all_cores()` clears any affinity mask inherited from the previous arm.
+- Decode attribution under the results table and in the copied text: how much of the naïve → Auto
+  gain the thread count earns, and how much pinning adds on top.
+- CSV export records the per-arm affinity policy (`affinity_naive`, `affinity_threads_only`,
+  `affinity_optimized`) and the three-arm order; `threads_only` joins `naive`/`optimized` as a
+  config key. `device-result-template.csv` gains the matching `threads_only_*` columns.
 
 ### Why
 
 Naïve (8 threads, all cores) and Auto (4 threads, pinned) differ in **two** variables at once, so
 the published +121% / +117% decode figures are the gain of the shipped configuration over the
 out-of-the-box default — they do not say whether core pinning or the thread count earned it.
-The middle arm holds the thread count fixed and removes only the pinning, so the two separate. The
+Dropping to four threads alone already stops the little cores from gating decode. The middle arm
+holds the thread count fixed and removes only the pinning, so the two effects separate. The
 existing two-arm tables are unchanged and relabelled as such; no threads-only number is estimated.
+See [BENCHMARKS.md](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution).
 
 ## [2.0.0] — 2026-07-12
 
 The headline: **universal Arm support via runtime CPU backend dispatch**. ENTITY previously shipped
 a single CPU backend compiled for one known SoC. v2.0.0 ships **7 Arm CPU backend variants** (armv8.0,
 armv8.2×2, armv8.6, armv9.0, armv9.2×2, each with KleidiAI kernels) and dynamically loads the best
-one the phone's CPU supports at startup. A new **first-run "Optimize for your device" dialog**
-detects the loaded backend's ISA features (e.g. i8mm, dotprod, SVE) and suggests Auto mode. 
+one the phone's CPU supports at startup — so the app now runs on essentially any Arm Android phone
+without crashing on older cores or missing faster kernels on new ones. A new **first-run "Optimize
+for your device" dialog** detects the loaded backend's ISA features (e.g. i8mm, dotprod, SVE) and
+suggests Auto mode. The big-core affinity optimization is unchanged and was already SoC-agnostic.
 
 A **power measurement bug** was fixed: many OEM kernels report `BATTERY_PROPERTY_CURRENT_NOW` in
-milliamps instead of microamps, causing 1000× underreporting on affected devices; a new `PowerMath`
-helper uses physical plausibility instead of trusting the unit. This fix is confirmed on hardware
-via cross-device validation.
+milliamps instead of the documented microamps, causing 1000× underreporting on affected devices; a
+new `PowerMath` helper uses physical plausibility instead of trusting the unit. This fix is confirmed
+on hardware via cross-device validation.
 
 **Cross-vendor measurement:** the core optimization was independently validated on a second device
-(Qualcomm Snapdragon 6 Gen 4) using the same model and protocol. Reference: **+121% decode, 2.5×
-efficiency**. Second device: **+117% decode, 2.1× efficiency**. No vendor-specific code required.
+(Qualcomm Snapdragon 6 Gen 4) using the same model and protocol as the reference device. Reference
+device (MediaTek Dimensity 7300): **8.0 → 17.7 tok/s (+121%), 1.7 → 4.2 tok/W (2.5×)**. Second
+device (Snapdragon 6 Gen 4): **6.0 → 13.1 tok/s (+117%), 1.8 → 3.8 tok/W (2.1×)**. The core
+optimization reproduces across vendors without vendor-specific code.
 
 The in-app benchmark now measures ENTITY's **shipped Auto configuration** (split thread pools for
-prompt/decode) instead of an explicit 4-thread test. UI strings are now SoC-neutral and report
-detected core counts and ISA features at runtime.
+prompt/decode) instead of an explicit 4-thread test, so the result accurately reflects what users get.
+UI strings are now SoC-neutral and report detected core counts and ISA features at runtime instead of
+hardcoding Cortex-A78 names. Eight new unit tests cover device detection and power-unit resolution.
 
 ### Added
-- **Runtime CPU backend dispatch** — 7 Arm variants with automatic selection at startup.
-- **First-run "Optimize for your device" dialog** — detects ISA features, suggests Auto mode.
-- **SoC-neutral model-info string** — reports detected core counts and ISA features at runtime.
-- **`PowerMath` helper** — resolves unit confusion on OEM kernels that report milliamps instead of
-  microamps.
-- **Unit tests** — 8 tests for `DeviceOptimizerTest`, 6 tests for `PowerMathTest`.
+- **Runtime CPU backend dispatch** — 7 Arm variants with automatic selection at startup via
+  `ggml_backend_load_all_from_path` + scoring. No UI toggle, no config — just works.
+- **First-run "Optimize for your device" dialog** — detects perf/efficiency-core counts, ISA
+  features (i8mm, dotprod, SVE2, etc.) from the loaded backend, suggests Auto mode. "Not now" to
+  dismiss; can be re-run from Settings.
+- **SoC-neutral model-info string** — reports actually-detected core counts and ISA features, not
+  hardcoded Cortex-A78 names; works on MediaTek, Qualcomm, Samsung, etc.
+- **`PowerMath` helper** — resolves `BATTERY_PROPERTY_CURRENT_NOW` unit (microamps vs milliamps) by
+  physical plausibility instead of trusting the documented unit; fixes 1000× underreporting on
+  affected OEM kernels (Qualcomm especially).
+- **Unit tests** — `app/src/test/java/com/example/llama/DeviceOptimizerTest.kt`: 8 JUnit4 tests
+  covering backend feature detection, core ranking, and device optimization; plus 6 tests for
+  `PowerMathTest.kt` covering unit resolution and boundary cases.
 
 ### Changed
-- **In-app benchmark measures the shipped configuration** — Auto mode with split thread pools.
+- **In-app benchmark measures the shipped configuration** — now runs Auto mode with split thread
+  pools (generation on big cores, prompt processing on all cores) instead of an explicit 4-thread
+  config. The naive control (8 threads, all cores) unchanged; protocol (PP 512 / TG 128) unchanged.
 
 ### Fixed
-- **Power readout was 1000× wrong on some devices** — unit confusion now resolved via plausibility.
-- **Power graph received garbage on unsupported devices** — sentinel value guarded.
+- **Power readout was 1000× wrong on some devices** — OEM milliamp/microamp confusion now resolved
+  via plausibility, not trust-the-unit. Affects only power/efficiency display, not tok/s measurements.
+- **Power graph received garbage on unsupported devices** — `getIntProperty` sentinel value was
+  feeding bad data; now guarded.
 
 ---
 
 ## [1.7.0] — 2026-07-12
 
 A polishing release focused on battery life and reliability. The headline is **Efficiency mode**, a
-toggle in Settings that trades speed for power: when on, inference is capped at 2 threads and
-thermal throttle delays are doubled. A new `ThermalGuard` maps Android's `PowerManager.currentThermalStatus`
-to periodic delays evaluated every eight generated tokens (0/6/12 ms depending on thermal status, doubled in Efficiency mode), cached so
-the token loop never pays a binder call. The live power readout is now a 5-sample moving average,
-eliminating jitter. The release APK is now signed with a real release keystore instead of debug
-signing. Five new unit tests cover the thermal guard's behavior.
+toggle in Settings that trades speed for power: when on, inference is capped at 2 threads (vs. the
+usual 4 pinned to the Cortex-A78s) and thermal throttle delays are doubled. The implementation
+includes a new `ThermalGuard` object that maps Android's `PowerManager.currentThermalStatus` to a
+periodic delay evaluated every eight generated tokens — status NONE/LIGHT → 0 ms, MODERATE → 6 ms, SEVERE+ → 12 ms, doubled under
+Efficiency mode — and the thermal status is cached so the token loop never pays a binder call. The
+live power readout is now a 5-sample moving average instead of a single instantaneous reading, which
+removes the jitter and makes the on-screen figures more meaningful. The release build is now signed
+with a real release keystore (instead of the debug config), so app installers and store tools can
+verify the APK signature. Five new unit tests cover the thermal guard's status-to-delay mapping,
+efficiency-mode doubling, and monotonicity across all statuses.
 
 ### Added
-- **Efficiency mode** (Settings) — caps inference at 2 threads, doubles thermal delays.
-- **Periodic thermal guard** — maps `PowerManager.currentThermalStatus` to a delay evaluated every eight generated tokens.
-- **Windowed power sampling** — live watts readout is a 5-sample moving average.
-- **Proper release signing** — release APK signed with dedicated release keystore.
-- **Unit tests** — 5 JUnit4 tests for `ThermalGuard`.
+- **Efficiency mode** (Settings toggle) — caps inference at 2 threads, doubles thermal throttle delays.
+- **Periodic thermal guard** — `ThermalGuard` maps `PowerManager.currentThermalStatus` to
+  a delay evaluated every eight generated tokens (0/6/12 ms); cached so the token loop incurs no binder calls.
+- **Windowed power sampling** — live watts readout is a 5-sample moving average, eliminating jitter.
+- **Proper release signing** — release APK signed with a dedicated release keystore (separate from
+  debug), with gitignored `keystore.properties` file. Debug signing used as fallback if keystore
+  is absent, so contributors are never blocked.
+- **Unit tests** — `app/src/test/java/com/example/llama/ThermalGuardTest.kt`: 5 JUnit4 tests
+  covering status→delay mapping, efficiency-mode doubling, and monotonicity.
 
 ### Changed
-- **Release build signing** — shifted to release keystore from debug keystore.
+- **Release build signing** — shifted from debug keystore to release keystore (CN=ENTITY, etc.),
+  credentials read from gitignored `keystore.properties`.
 
 ---
 
 ## [1.6.0] — 2026-07-10
 
-The biggest release since 1.0.0. Chats persist in SQLite with conversation switching, renaming,
-and deletion; prompt processing uses all 8 cores via a dedicated thread pool while generation stays
-pinned to the Cortex-A78s; the UI got a full polish pass (softer bubbles, markdown rendering,
-typing indicator, animations with accessibility respect); the benchmark grew median ± stddev
-multi-runs with thermal-gated cooldown; and the release build (R8 + stripped symbols) dropped
-from ~100 MB to ~7 MB.
+The biggest release since 1.0.0, on three fronts at once: the runtime got faster where it was
+weakest, the app became a real daily tool, and the UI got the polish pass it deserved. On the
+inference side, prompt processing now runs on all eight cores through a dedicated thread pool while
+generation stays pinned to the four Cortex-A78s — prompt-heavy turns start noticeably sooner, and
+decode keeps its bandwidth-bound sweet spot. A conversation that outgrows the context window now
+trims its oldest turns (system prompt preserved) and keeps going instead of failing, and two latent
+position-accounting bugs in that path were fixed along the way. On the app side, chats finally
+persist: every conversation is stored in a local SQLite database, survives process death, and can be
+switched, renamed, or deleted from a new Conversations menu — with a new engine API that re-primes
+the KV cache from stored history so a restored chat continues seamlessly. Rotation no longer loses
+state (a proper ViewModel owns the chat now), generation survives backgrounding, the system prompt
+is editable in Settings, and assistant answers render markdown with long-press Copy/Regenerate. The
+UI was refreshed end to end — softer bubbles, a typing indicator, subtle entry animations behind a
+new Animations toggle that also honors Android's Remove-animations accessibility setting. The in-app
+benchmark grew up too: multi-run with median ± stddev, thermal-gated cooldowns between passes, TTFT,
+and CSV export. And the release build finally acts like one: R8-minified with stripped native
+symbols, the APK drops from ~100 MB to ~7 MB.
 
 ### Added
-- **Chat persistence** — SQLite storage, auto-titles, Conversations menu, last chat restored on launch.
-- **`primeHistory` API** — rebuilds KV cache from stored conversation.
-- **System-prompt editor** in Settings.
-- **Markdown rendering** in messages (bold, italic, code, fences, bullets, headings).
-- **Long-press Copy / Regenerate** on messages.
-- **Animations toggle** — disables all app animations; honors system Remove-animations setting.
-- **Multi-run benchmark** — 1/3/5 runs, median ± stddev, thermal-gated cooldown, CSV export.
-- **Release build** — R8-minified, symbols stripped: ~7 MB APK.
+- **Chat persistence + multiple conversations** — chats stored in a local SQLite DB (`chats.db`),
+  auto-titled from the first message; a Conversations menu lists them (tap to switch, long-press to
+  rename/delete); the most recent conversation is restored on launch, and partial answers are saved
+  if you hit Stop.
+- **`primeHistory` engine API** — rebuilds the KV cache from a stored conversation without
+  generating, so a restored or switched chat continues exactly where it left off.
+- **System-prompt editor** (Settings) — multiline editor with reset-to-default; used on every
+  load/new-chat/re-prime.
+- **Markdown rendering** — bold, italic, inline code, fenced code blocks, bullets, and headings in
+  assistant messages; hand-rolled renderer, parsed once per completed message and cached.
+- **Long-press message actions** — Copy any message; Regenerate the last answer.
+- **Animations toggle** (Settings, default on) — one switch disables all app animations instantly,
+  and Android's "Remove animations" accessibility setting is honored automatically.
+- **Multi-run benchmark** — 1/3/5 runs per configuration with median ± stddev, thermal-gated
+  cooldown between passes (live temperature status), derived TTFT, and CSV export via SAF.
+- **Release build** — R8-minified, resource-shrunk, native symbols stripped: **~7 MB APK** vs the
+  ~100 MB debug build; signed for sideloading.
 
 ### Changed
-- **Prompt processing uses all 8 cores** via dedicated thread pool; generation keeps 4-big-core pool.
-- **Rotation/backgrounding preserved** — chat lives in a ViewModel.
-- **UI polish** — refined bubbles, typing dots, entry animations, ripple send button.
+- **Prompt processing uses all 8 cores** — a dedicated ggml thread pool spans the whole SoC during
+  prompt evaluation while generation keeps its own pool pinned to the 4 big cores
+  (`llama_set_n_threads` per phase, thread-pool functions resolved at runtime for the
+  `GGML_BACKEND_DL` build, with a clean fallback). Faster time-to-first-token on long prompts;
+  decode unchanged by design.
+- **UI polish pass** — refined bubbles (softer radii, subtle strokes), typing-dots indicator while
+  generating, message entry fade-rise, ripple + press-scale on the send button, refreshed input bar;
+  both themes, no new libraries, no bitmaps, hardware-accelerated view-property animations only.
+- **Rotation/theme changes keep everything** — chat and in-flight generation now live in a
+  ViewModel; the engine is only torn down when the app actually exits, and generation continues
+  while backgrounded.
 
 ### Fixed
-- Context-full long conversations now trim oldest turns with correct position accounting.
-- JNI teardown hardening — no crashes from error states or double unload.
+- **Context-full no longer breaks a long conversation** — the KV window trims its oldest turns
+  (system prompt preserved) with correct position accounting; previously a mid-generation or
+  mid-prompt shift could desync positions and corrupt the remaining budget.
+- **JNI teardown hardening** — engine error paths free their batch/context, sampler updates are
+  create-then-swap, unload is double-free safe, and destroying the engine from an error state no
+  longer crashes.
+- **Per-token allocation removed** on the partial-UTF-8 streaming path.
+
+### File comparison (1.5.0 → 1.6.0)
+
+**New files**
+
+| File | Purpose |
+|---|---|
+| `app/src/main/java/com/example/llama/ChatDb.kt` | SQLite persistence (conversations + messages) |
+| `app/src/main/java/com/example/llama/ChatViewModel.kt` | Chat/generation state ownership, priming, regenerate |
+| `app/src/main/java/com/example/llama/Anim.kt` | Central animation gate (user toggle + system setting) |
+| `app/src/main/java/com/example/llama/TypingDotsView.kt` | Typing indicator (single reused Paint/animator) |
+| `app/src/main/java/com/example/llama/Markdown.kt` | Lightweight markdown → Spanned renderer |
+| `app/src/main/res/animator/press_scale.xml` | Send-button press feedback |
+
+**Modified files**
+
+| File | Change |
+|---|---|
+| `lib/src/main/cpp/ai_chat.cpp` | PP/TG thread pools, context-trim fixes, `primeHistoryNative`, JNI hardening |
+| `lib/.../InferenceEngine.kt`, `InferenceEngineImpl.kt` | `ChatTurn` + `primeHistory` API |
+| `app/.../MainActivity.kt` | ViewModel observation, Conversations dialog, animation gate, clipboard |
+| `app/.../MessageAdapter.kt` | Markdown cache, typing dots, entry animation, long-press menu |
+| `app/.../BenchmarkActivity.kt` | Multi-run median±stddev, cooldown, TTFT, CSV export |
+| `app/.../Settings.kt`, `SettingsActivity.kt` | System-prompt + Animations settings |
+| `app/build.gradle.kts` | 1.6.0, release signing, symbol stripping, `ndkVersion` |
+| `gradle/libs.versions.toml` | lifecycle-runtime/viewmodel-ktx 2.9.4 |
+| layouts / drawables / colors / strings | Visual refresh (both themes), new rows and strings |
 
 ---
 
@@ -374,8 +457,8 @@ Inference is pinned to the four Cortex-A78 big cores so the memory-bandwidth-bou
 slow A55 efficiency cluster, and the native library is compiled as a single `armv8.2-a + dotprod +
 KleidiAI` backend — arm64 only — instead of compiling unused generic CPU variants, which
 makes the app smaller, quicker to launch, and lighter on RAM. An adaptive-context scheme sizes the KV
-window from the model and available memory. For a 3B-class model, Auto selects 2,048 tokens at or below
-2.2 GB free RAM and 4,096 only above that threshold. On top of that runtime sits a proper chat UI with an in-app model picker, smooth token
+window from the model and available memory, which is what lets a 3B model load and generate within roughly
+2 GB of free RAM. On top of that runtime sits a proper chat UI with an in-app model picker, smooth token
 streaming, a live watts readout, and light/dark/system themes — plus fixes for the early-build problems
 that made larger models fail to load and made the model reply with robotic sound effects.
 

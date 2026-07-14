@@ -95,7 +95,14 @@ internal class InferenceEngineImpl private constructor(
     private external fun benchModel(pp: Int, tg: Int, pl: Int, nr: Int): String
 
     @FastNative
-    private external fun configure(nCtx: Int, nThreads: Int, temp: Float, topK: Int, topP: Float)
+    private external fun configure(
+        nCtx: Int,
+        nThreads: Int,
+        temp: Float,
+        topK: Int,
+        topP: Float,
+        pinCores: Boolean,
+    )
 
     @FastNative
     private external fun setSampler(temp: Float, topK: Int, topP: Float)
@@ -283,10 +290,16 @@ internal class InferenceEngineImpl private constructor(
      * Sets context/thread/sampler config for the next load. Safe to call while
      * Initialized (before a load); just stores values on the native side.
      */
-    override suspend fun applyConfig(nCtx: Int, nThreads: Int, temp: Float, topK: Int, topP: Float) =
-        withContext(llamaDispatcher) {
-            configure(nCtx, nThreads, temp, topK, topP)
-        }
+    override suspend fun applyConfig(
+        nCtx: Int,
+        nThreads: Int,
+        temp: Float,
+        topK: Int,
+        topP: Float,
+        pinCores: Boolean,
+    ) = withContext(llamaDispatcher) {
+        configure(nCtx, nThreads, temp, topK, topP, pinCores)
+    }
 
     /**
      * Rebuilds the sampler live (no reload). No-op unless a model is loaded.

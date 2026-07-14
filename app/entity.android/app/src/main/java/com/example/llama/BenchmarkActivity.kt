@@ -38,11 +38,24 @@ import java.util.Locale
 import kotlin.math.sqrt
 
 /**
- * Runs the same synthetic PP/TG benchmark N times per configuration — naïve
- * (all cores, explicit thread count) vs ENTITY's shipped auto configuration
- * (generation pinned to the performance cores, prompt across all cores) — with a
- * thermal cooldown before every pass, and measures power draw so the result
+ * Runs the same synthetic PP/TG benchmark N times for each of three configurations,
+ * with a thermal cooldown before every pass, measuring power draw so the result
  * shows speed AND energy efficiency, the axis other on-device apps skip.
+ *
+ * The three arms are an ablation: naïve and Auto differ in both thread count and
+ * core placement, so a two-arm result cannot say which one earns the speed-up.
+ * The middle arm holds the thread count at Auto's value and drops only the
+ * affinity, so the decode gap between it and Auto is the value of pinning alone.
+ *
+ *   naïve        8 threads, every core, default scheduler
+ *   threads-only Auto's thread count, no affinity, no pinned pool (an upstream
+ *                llama.cpp `-t N` run: the honest baseline a tuning-aware user hits)
+ *   Auto         ENTITY's shipped path: generation pinned to the performance
+ *                cores, prompt processing widened to all cores
+ *
+ * Decode is the clean comparison. Prompt throughput is not: Auto widens prompt
+ * processing to every core while threads-only cannot, so that row mixes the two
+ * effects by design.
  */
 class BenchmarkActivity : AppCompatActivity() {
 
@@ -74,16 +87,44 @@ class BenchmarkActivity : AppCompatActivity() {
         val tokPerW: Double,
         val ttftMs: Double,
         val startTempC: Double,
+        val telemetry: List<TelemetrySample>,
+    ) {
+        private val usableTelemetry get() = telemetry.drop(1)
+        val averageProcessCpuPercent get() = usableTelemetry.let { samples ->
+            if (samples.isEmpty()) 0.0 else samples.map { it.processCpuPercent }.average()
+        }
+        val minimumFreeGb get() = telemetry.map { it.freeGb }.filter { it > 0.0 }.minOrNull() ?: 0.0
+        val peakBatteryTempC get() = telemetry.maxOfOrNull { it.batteryTempC } ?: startTempC
+        val peakThermalStatus get() = telemetry.maxOfOrNull { it.thermalStatus } ?: 0
+    }
+
+    // App-process CPU can exceed 100% when llama.cpp uses more than one CPU core.
+    private data class TelemetrySample(
+        val elapsedMs: Long,
+        val watts: Double,
+        val freeGb: Double,
+        val batteryTempC: Double,
+        val thermalStatus: Int,
+        val processCpuPercent: Double,
     )
 
-    private data class Config(val label: String, val key: String, val threads: Int, val runs: List<Pass>)
+    private data class Config(
+        val label: String,
+        val key: String,
+        val threads: Int,
+        val pinned: Boolean,
+        val runs: List<Pass>,
+    )
     private data class Result(
         val naive: Config,
+        val threadsOnly: Config,
         val opt: Config,
         val charging: Boolean,
         val benchmarkStartTempC: Double,
         val benchmarkStartThermalStatus: Int,
-    )
+    ) {
+        val configs get() = listOf(naive, threadsOnly, opt)
+    }
     private data class Stat(val median: Double, val sd: Double, val n: Int)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -162,15 +203,23 @@ class BenchmarkActivity : AppCompatActivity() {
             engine.applyConfig(ctx, OPT_THREADS_AUTO, v.temp, v.topK, v.topP)
             engine.bench(64, 16, PL, 1)   // discarded — pages in weights, warms caches
 
-            val naive = runConfig("Naïve", "naive", NAIVE_THREADS, nRuns, ctx, v, coolTargetC)
-            val opt = runConfig("Optimized", "optimized", OPT_THREADS_AUTO, nRuns, ctx, v, coolTargetC)
+            // Ablation order: naïve → threads-only → Auto. Every arm gets the same
+            // cooldown, so the order does not favour the last one.
+            val naive = runConfig("Naïve", "naive", NAIVE_THREADS, true, nRuns, ctx, v, coolTargetC)
+            val threadsOnly =
+                runConfig("Threads only", "threads_only", autoGenThreads(), false, nRuns, ctx, v, coolTargetC)
+            val opt = runConfig("Optimized", "optimized", OPT_THREADS_AUTO, true, nRuns, ctx, v, coolTargetC)
 
-            if (stat(naive.runs.map { it.tg }).n == 0 || stat(opt.runs.map { it.tg }).n == 0) {
+            if (listOf(naive, threadsOnly, opt).any { stat(it.runs.map { p -> p.tg }).n == 0 }) {
                 error("Engine returned no timing — try again.")
             }
-            return Result(naive, opt, charging, baselineC, benchmarkStartThermalStatus)
+            return Result(naive, threadsOnly, opt, charging, baselineC, benchmarkStartThermalStatus)
         } finally {
-            withContext(NonCancellable) { engine.applyConfig(ctx, restoreThreads, v.temp, v.topK, v.topP) }
+            // pinCores back to the shipped default: chat decode must re-pin after the
+            // threads-only arm turned affinity off.
+            withContext(NonCancellable) {
+                engine.applyConfig(ctx, restoreThreads, v.temp, v.topK, v.topP, pinCores = true)
+            }
         }
     }
 
@@ -178,29 +227,33 @@ class BenchmarkActivity : AppCompatActivity() {
         label: String,
         key: String,
         threads: Int,
+        pinCores: Boolean,
         nRuns: Int,
         ctx: Int,
         v: Settings.Values,
         coolTargetC: Double,
     ): Config {
-        engine.applyConfig(ctx, threads, v.temp, v.topK, v.topP)   // 0 = auto, exactly what the app ships
+        // 0 threads = auto, exactly what the app ships. pinCores = false is the
+        // ablation arm: same thread count, scheduler-placed, no pinned pool.
+        engine.applyConfig(ctx, threads, v.temp, v.topK, v.topP, pinCores)
         val genThreads = if (threads <= 0) autoGenThreads() else threads
         val runs = ArrayList<Pass>(nRuns)
         for (i in 1..nRuns) {
-            val prefix = "$label ($genThreads threads) — run $i/$nRuns"
+            val placement = if (pinCores) "pinned" else "no pin"
+            val prefix = "$label ($genThreads threads, $placement) — run $i/$nRuns"
             cooldown(prefix, coolTargetC)
             val startTempC = readTempC()
             Log.i(
                 TAG,
                 String.format(
-                    Locale.US, "%s run %d/%d start: threads=%d battery=%.1fC thermalStatus=%d",
-                    key, i, nRuns, genThreads, startTempC, powerManager.currentThermalStatus
+                    Locale.US, "%s run %d/%d start: threads=%d pinned=%b battery=%.1fC thermalStatus=%d",
+                    key, i, nRuns, genThreads, pinCores, startTempC, powerManager.currentThermalStatus
                 )
             )
             status("$prefix…")
             runs.add(runPass(startTempC))
         }
-        return Config(label, key, genThreads, runs)
+        return Config(label, key, genThreads, pinCores, runs)
     }
 
     // Generation threads the native side derives in auto mode — mirrors init_context()
@@ -228,11 +281,36 @@ class BenchmarkActivity : AppCompatActivity() {
 
     private suspend fun runPass(startTempC: Double): Pass = coroutineScope {
         val samples = ArrayList<Double>()
+        val telemetry = ArrayList<TelemetrySample>()
         val voltage = readVoltageMv()
+        val benchmarkStartMs = SystemClock.elapsedRealtime()
+        var lastCpuWallMs = benchmarkStartMs
+        var lastProcessCpuMs = android.os.Process.getElapsedCpuTime()
         val sampler = launch(Dispatchers.Default) {
             while (isActive) {
+                val now = SystemClock.elapsedRealtime()
                 val ua = readCurrentUa()
-                if (ua != null) samples.add(PowerMath.watts(ua, voltage))
+                val watts = ua?.let { PowerMath.watts(it, voltage) } ?: 0.0
+                if (watts > 0.0) samples.add(watts)
+                val processCpuMs = android.os.Process.getElapsedCpuTime()
+                val elapsedMs = now - lastCpuWallMs
+                val processCpuPercent = if (elapsedMs > 0L) {
+                    (processCpuMs - lastProcessCpuMs).coerceAtLeast(0L) * 100.0 / elapsedMs
+                } else {
+                    0.0
+                }
+                telemetry.add(
+                    TelemetrySample(
+                        elapsedMs = now - benchmarkStartMs,
+                        watts = watts,
+                        freeGb = availableGb(),
+                        batteryTempC = readTempC(),
+                        thermalStatus = powerManager.currentThermalStatus,
+                        processCpuPercent = processCpuPercent,
+                    )
+                )
+                lastCpuWallMs = now
+                lastProcessCpuMs = processCpuMs
                 delay(150)
             }
         }
@@ -242,7 +320,7 @@ class BenchmarkActivity : AppCompatActivity() {
         val pp = parseSpeed(md, "pp")
         val tg = parseSpeed(md, "tg")
         val ttftMs = if (pp > 0.0 && tg > 0.0) PP * 1000.0 / pp + PL * 1000.0 / tg else 0.0
-        Pass(pp, tg, watts, if (watts > 0.0) tg / watts else 0.0, ttftMs, startTempC)
+        Pass(pp, tg, watts, if (watts > 0.0) tg / watts else 0.0, ttftMs, startTempC, telemetry)
     }
 
     private suspend fun status(text: String) = withContext(Dispatchers.Main) { statusTv.text = text }
@@ -285,6 +363,13 @@ class BenchmarkActivity : AppCompatActivity() {
         return if (tenths < 0) 0.0 else tenths / 10.0
     }
 
+    private fun availableGb(): Double {
+        val am = getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
+        val info = android.app.ActivityManager.MemoryInfo()
+        am.getMemoryInfo(info)
+        return info.availMem / (1024.0 * 1024.0 * 1024.0)
+    }
+
     private fun isCharging(): Boolean {
         val i = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val status = i?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
@@ -300,37 +385,60 @@ class BenchmarkActivity : AppCompatActivity() {
         resultsBox.visibility = View.VISIBLE
 
         val n = r.naive.runs.size
-        val nPp = stat(r.naive.runs.map { it.pp })
-        val oPp = stat(r.opt.runs.map { it.pp })
-        val nTg = stat(r.naive.runs.map { it.tg })
-        val oTg = stat(r.opt.runs.map { it.tg })
-        val nW = stat(r.naive.runs.map { it.watts })
-        val oW = stat(r.opt.runs.map { it.watts })
-        val nEff = stat(r.naive.runs.map { it.tokPerW })
-        val oEff = stat(r.opt.runs.map { it.tokPerW })
-        val nTtft = stat(r.naive.runs.map { it.ttftMs })
-        val oTtft = stat(r.opt.runs.map { it.ttftMs })
-        val nTemp = stat(r.naive.runs.map { it.startTempC })
-        val oTemp = stat(r.opt.runs.map { it.startTempC })
-        val powerValid = !r.charging && nW.n > 0 && oW.n > 0 && nEff.n > 0 && oEff.n > 0
+        // Per-metric stats for all three arms, in table order.
+        fun stats(sel: (Pass) -> Double) = r.configs.map { stat(it.runs.map(sel)) }
+        val pp = stats { it.pp }
+        val tg = stats { it.tg }
+        val watts = stats { it.watts }
+        val eff = stats { it.tokPerW }
+        val ttft = stats { it.ttftMs }
+        val temp = stats { it.startTempC }
+        val cpu = stats { it.averageProcessCpuPercent }
+        val free = stats { it.minimumFreeGb }
+        val peakTemp = stats { it.peakBatteryTempC }
+        val powerValid = !r.charging && watts.all { it.n > 0 } && eff.all { it.n > 0 }
 
-        val spd = if (nTg.median > 0) (oTg.median / nTg.median - 1) * 100 else 0.0
+        val (naiveTg, threadsTg, optTg) = Triple(tg[0].median, tg[1].median, tg[2].median)
+        val spd = if (naiveTg > 0) (optTg / naiveTg - 1) * 100 else 0.0
         val headline = StringBuilder("Big-core optimization: decode ${signed(spd)} faster")
-        if (powerValid) headline.append(" · ${"%.1f".format(oEff.median / nEff.median)}× more efficient")
+        if (powerValid) headline.append(" · ${"%.1f".format(eff[2].median / eff[0].median)}× more efficient")
         headlineTv.text = headline.toString()
 
         table.removeAllViews()
-        addRow("", "Naïve\n$NAIVE_THREADS cores", "Optimized\n${r.opt.threads}× perf cores", "Δ", header = true)
-        addRow("Prompt  t/s", cellStat(nPp), cellStat(oPp), pct(nPp.median, oPp.median))
-        addRow("Decode  t/s", cellStat(nTg), cellStat(oTg), pct(nTg.median, oTg.median))
-        addRow("TTFT*  ms", cellStat(nTtft), cellStat(oTtft), pct(nTtft.median, oTtft.median))
+        addRow(
+            "",
+            "Naïve\n$NAIVE_THREADS threads",
+            "Threads only\n${r.threadsOnly.threads}× no pin",
+            "ENTITY Auto\n${r.opt.threads}× perf pinned",
+            "Δ",
+            header = true,
+        )
+        addRow("Prompt†  t/s", *cells(pp), pct(pp[0].median, pp[2].median))
+        addRow("Decode  t/s", *cells(tg), pct(tg[0].median, tg[2].median))
+        addRow("TTFT*  ms", *cells(ttft), pct(ttft[0].median, ttft[2].median))
         if (powerValid) {
-            addRow("Power  W", cellStat(nW), cellStat(oW), "")
-            addRow("Efficiency  tok/W", cellStat(nEff), cellStat(oEff), pct(nEff.median, oEff.median))
+            addRow("Power  W", *cells(watts), "")
+            addRow("Efficiency  tok/W", *cells(eff), pct(eff[0].median, eff[2].median))
         } else {
-            addRow("Power  W", "—", "—", "")
+            addRow("Power  W", "—", "—", "—", "")
         }
-        addRow("Start temp  °C", if (nTemp.n > 0) fmt(nTemp.median) else "—", if (oTemp.n > 0) fmt(oTemp.median) else "—", "")
+        addRow("App CPU  %", *cells(cpu), "")
+        addRow("Free RAM min  GB", *cells(free), "")
+        addRow("Start temp  °C", *cells(temp), "")
+        addRow("Peak battery  °C", *cells(peakTemp), "")
+        addRow("Peak thermal", *r.configs.map { thermalSummary(it) }.toTypedArray(), "")
+
+        // The whole point of the middle arm: split the naïve → Auto decode gain into
+        // the part any `-t N` user already gets and the part core pinning adds on top.
+        val attribution = if (naiveTg > 0 && threadsTg > 0) {
+            "\n\nAttribution — decode: dropping to ${r.threadsOnly.threads} threads alone is " +
+                "${signed((threadsTg / naiveTg - 1) * 100)} over naïve; pinning those threads to the " +
+                "performance cores adds ${signed((optTg / threadsTg - 1) * 100)} on top. " +
+                "The middle arm is what an upstream llama.cpp `-t ${r.threadsOnly.threads}` run does: " +
+                "same thread count, no affinity, no pinned pool."
+        } else {
+            ""
+        }
 
         val note = StringBuilder(
             "Synthetic llama-bench test (PP $PP / TG $TG), $n run${if (n > 1) "s" else ""} per config — " +
@@ -338,27 +446,45 @@ class BenchmarkActivity : AppCompatActivity() {
             "then up to ${MAX_COOLDOWN_MS / 1000}s until the battery returns to within ${"%.1f".format(COOL_MARGIN_C)}°C of its pre-benchmark temperature (never waiting below ${"%.1f".format(MIN_COOL_TARGET_C)}°C). " +
             "*TTFT is derived from each run's measured rates ($PP-token prompt eval + one decode step), not a live chat measurement. " +
             "Numbers are comparable across apps, and higher than live chat speed because the KV cache is minimal. " +
-            "Naïve = $NAIVE_THREADS threads spread across all cores; Optimized = ENTITY's shipped auto configuration, " +
-            "which pins generation to the ${r.opt.threads} performance cores while letting prompt processing use all cores."
+            "Naïve = $NAIVE_THREADS threads spread across all cores; Threads only = the same thread count as Auto with affinity off; " +
+            "ENTITY Auto = the shipped configuration, which pins generation to the ${r.opt.threads} performance cores " +
+            "while letting prompt processing use all cores. Δ compares Auto with naïve." +
+            "\n\n†Prompt throughput is not a clean ablation row: only Auto widens prompt processing to every core, " +
+            "so that row mixes thread count with placement. Decode is the isolated comparison."
         )
+        note.append(attribution)
+        val peakThermal = r.configs.maxOf { c -> c.runs.maxOfOrNull { it.peakThermalStatus } ?: 0 }
+        if (peakThermal >= PowerManager.THERMAL_STATUS_MODERATE) {
+            note.append("\n\nThermal analysis: Android reached ${thermalLabel(peakThermal)}. ENTITY's streaming Auto guard cooperatively backs off at MODERATE or higher; this raw synthetic benchmark records the condition but does not apply chat delays.")
+        }
         if (!powerValid) note.append("\n\n⚠ Phone is charging — power/efficiency need it UNPLUGGED to be valid, so they're hidden. Speed numbers above are still valid.")
         noteTv.text = note.toString()
 
+        fun line(name: String, s: List<Stat>) =
+            "$name: naive ${statText(s[0])}  threads-only ${statText(s[1])}  auto ${statText(s[2])}"
         lastResultText = buildString {
             appendLine("ENTITY benchmark — ${modelTv.text}")
             appendLine(headlineTv.text)
             appendLine("Runs/config : $n (median${if (n > 1) " ±σ" else ""})")
-            appendLine("Prompt  t/s : naive ${statText(nPp)}  opt ${statText(oPp)}")
-            appendLine("Decode  t/s : naive ${statText(nTg)}  opt ${statText(oTg)}")
-            appendLine("TTFT*   ms  : naive ${statText(nTtft)}  opt ${statText(oTtft)}")
+            appendLine("Arms: naive=$NAIVE_THREADS threads all cores · threads-only=${r.threadsOnly.threads} threads no pin · auto=${r.opt.threads} perf cores pinned")
+            appendLine(line("Prompt† t/s", pp))
+            appendLine(line("Decode  t/s", tg))
+            appendLine(line("TTFT*   ms ", ttft))
             if (powerValid) {
-                appendLine("Power   W   : naive ${statText(nW)}  opt ${statText(oW)}")
-                appendLine("tok/W       : naive ${statText(nEff)}  opt ${statText(oEff)}")
+                appendLine(line("Power   W  ", watts))
+                appendLine(line("tok/W      ", eff))
             }
-            appendLine("Start   °C  : naive ${statText(nTemp)}  opt ${statText(oTemp)}")
+            appendLine(line("Start   °C ", temp))
+            appendLine(line("App CPU %  ", cpu))
+            appendLine(line("Free RAM min GB", free))
+            appendLine("Peak thermal: " + r.configs.joinToString("  ") { "${it.key} ${thermalSummary(it)}" })
+            if (attribution.isNotEmpty()) appendLine(attribution.trim())
             appendLine("*derived: PP$PP prompt eval + one decode step")
+            appendLine("†prompt row is not an isolated ablation: only auto widens PP to all cores")
         }.trim()
     }
+
+    private fun cells(s: List<Stat>) = s.map { cellStat(it) }.toTypedArray()
 
     private fun cellStat(s: Stat) = when {
         s.n <= 0 -> "—"
@@ -372,7 +498,22 @@ class BenchmarkActivity : AppCompatActivity() {
         else -> "${fmt(s.median)} ±${fmtSd(s.sd)}"
     }
 
-    private fun addRow(metric: String, naive: String, opt: String, delta: String, header: Boolean = false) {
+    private fun thermalSummary(c: Config): String = thermalLabel(c.runs.maxOfOrNull { it.peakThermalStatus } ?: 0)
+
+    private fun thermalLabel(status: Int) = when (status) {
+        PowerManager.THERMAL_STATUS_NONE -> "NONE"
+        PowerManager.THERMAL_STATUS_LIGHT -> "LIGHT"
+        PowerManager.THERMAL_STATUS_MODERATE -> "MODERATE"
+        PowerManager.THERMAL_STATUS_SEVERE -> "SEVERE"
+        PowerManager.THERMAL_STATUS_CRITICAL -> "CRITICAL"
+        PowerManager.THERMAL_STATUS_EMERGENCY -> "EMERGENCY"
+        PowerManager.THERMAL_STATUS_SHUTDOWN -> "SHUTDOWN"
+        else -> "UNKNOWN($status)"
+    }
+
+    // cells = naïve, threads-only, Auto, Δ. Auto and Δ are accented: the shipped path
+    // and its gain over naïve.
+    private fun addRow(metric: String, vararg cells: String, header: Boolean = false) {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(dp(12), dp(10), dp(12), dp(10))
@@ -384,16 +525,17 @@ class BenchmarkActivity : AppCompatActivity() {
             row.addView(TextView(this).apply {
                 this.text = text
                 setTextColor(color)
-                textSize = 13.5f
+                textSize = 12f
                 this.gravity = gravity
                 if (bold) setTypeface(typeface, android.graphics.Typeface.BOLD)
                 layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
             })
         }
-        cell(metric, 2.2f, if (header) onSurface else muted, header, Gravity.START)
-        cell(naive, 1.6f, onSurface, header, Gravity.END)
-        cell(opt, 1.7f, if (header) onSurface else accent, true, Gravity.END)
-        cell(delta, 1.1f, accent, true, Gravity.END)
+        cell(metric, 2.0f, if (header) onSurface else muted, header, Gravity.START)
+        cell(cells.getOrElse(0) { "" }, 1.5f, onSurface, header, Gravity.END)
+        cell(cells.getOrElse(1) { "" }, 1.6f, onSurface, header, Gravity.END)
+        cell(cells.getOrElse(2) { "" }, 1.7f, if (header) onSurface else accent, true, Gravity.END)
+        cell(cells.getOrElse(3) { "" }, 1.1f, accent, true, Gravity.END)
         table.addView(row)
     }
 
@@ -459,14 +601,18 @@ class BenchmarkActivity : AppCompatActivity() {
         row("meta", "", "tg", TG.toString(), "tokens")
         row("meta", "", "runs_per_config", r.naive.runs.size.toString(), "")
         row("meta", "", "warmup", "PP 64 / TG 16 / discarded", "")
-        row("meta", "", "configuration_order", "naive_then_optimized", "")
+        row("meta", "", "configuration_order", "naive_then_threads_only_then_optimized", "")
         row("meta", "", "threads_naive", r.naive.threads.toString(), "")
+        row("meta", "", "threads_threads_only", r.threadsOnly.threads.toString(), "")
         row("meta", "", "threads_optimized", r.opt.threads.toString(), "")
+        for (c in r.configs) {
+            row("meta", "", "affinity_${c.key}", if (c.pinned) "pinned_fast_cores" else "none_scheduler_placed", "")
+        }
         row("meta", "", "cooldown_minimum", (MIN_PAUSE_MS / 1000).toString(), "s")
         row("meta", "", "cooldown_maximum", (MAX_COOLDOWN_MS / 1000).toString(), "s")
         row("meta", "", "cooldown_target_margin", num(COOL_MARGIN_C), "C above benchmark-start temperature")
 
-        for (c in listOf(r.naive, r.opt)) {
+        for (c in r.configs) {
             c.runs.forEachIndexed { i, p ->
                 val idx = (i + 1).toString()
                 row(c.key, idx, "pp", num(p.pp), "tok/s")
@@ -475,6 +621,19 @@ class BenchmarkActivity : AppCompatActivity() {
                 row(c.key, idx, "tok_per_w", num(p.tokPerW), "tok/W")
                 row(c.key, idx, "ttft_pp${PP}_derived", num(p.ttftMs), "ms")
                 row(c.key, idx, "start_temp", num(p.startTempC), "C")
+                row(c.key, idx, "average_process_cpu", num(p.averageProcessCpuPercent), "% one core")
+                row(c.key, idx, "minimum_free_ram", num(p.minimumFreeGb), "GiB")
+                row(c.key, idx, "peak_battery_temp", num(p.peakBatteryTempC), "C")
+                row(c.key, idx, "peak_thermal_status", p.peakThermalStatus.toString(), "Android PowerManager status")
+                p.telemetry.forEachIndexed { sampleIndex, sample ->
+                    val sampleRun = "$idx:${sampleIndex + 1}"
+                    row(c.key, sampleRun, "sample_elapsed", sample.elapsedMs.toString(), "ms")
+                    row(c.key, sampleRun, "sample_power", num(sample.watts), "W")
+                    row(c.key, sampleRun, "sample_process_cpu", num(sample.processCpuPercent), "% one core")
+                    row(c.key, sampleRun, "sample_free_ram", num(sample.freeGb), "GiB")
+                    row(c.key, sampleRun, "sample_battery_temp", num(sample.batteryTempC), "C")
+                    row(c.key, sampleRun, "sample_thermal_status", sample.thermalStatus.toString(), "Android PowerManager status")
+                }
             }
             fun agg(metric: String, unit: String, sel: (Pass) -> Double) {
                 val st = stat(c.runs.map(sel))
@@ -487,6 +646,9 @@ class BenchmarkActivity : AppCompatActivity() {
             agg("tok_per_w", "tok/W") { it.tokPerW }
             agg("ttft_pp${PP}_derived", "ms") { it.ttftMs }
             agg("start_temp", "C") { it.startTempC }
+            agg("average_process_cpu", "% one core") { it.averageProcessCpuPercent }
+            agg("minimum_free_ram", "GiB") { it.minimumFreeGb }
+            agg("peak_battery_temp", "C") { it.peakBatteryTempC }
         }
     }
 

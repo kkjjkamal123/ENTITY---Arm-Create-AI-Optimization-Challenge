@@ -6,25 +6,19 @@
 
 **Fully offline Android chat that tunes llama.cpp to the Arm CPU in the phone.**
 
-[Read the complete Arm Create submission](github.md)
+[View the source on GitHub](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge) · [Read the complete Arm Create submission](github.md)
 
 </div>
 
 ## Navigation
 
-[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
+[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
 
 ## What ENTITY is
 
 ENTITY is a private Android assistant that runs runnable GGUF language models entirely on the phone. It is built as an inference optimization layer around llama.cpp with a Kotlin interface and a C++ JNI inference path.
 
 The current release is built for arm64 Android phones running Android 13 or later. It has been measured on a CMF Phone 1 with MediaTek Dimensity 7300 and independently validated on a Qualcomm Snapdragon 6 Gen 4 phone.
-
-<div align="center">
-
-**[Get the latest release](https://github.com/kkjjkamal123/Daily-Track/releases/latest)**
-
-</div>
 
 ## What makes it different
 
@@ -39,12 +33,13 @@ The current release is built for arm64 Android phones running Android 13 or late
 
 ENTITY does not claim to beat a tuned command line build on raw token rate. Its purpose is to give a normal phone user the same hardware aware decisions in a responsive foreground app with live energy and thermal information.
 
-## Evidence at a glance
+    ## Evidence at a glance
 
 | Claim | Evidence | Boundary |
 |---|---|---|
-| Auto improves decode throughput on tested phones | The same Android benchmark reports +121% on Dimensity 7300 and +117% on Snapdragon 6 Gen 4. | Two phones, one fixed 1B Q3_K_L workload; not a universal multiplier. |
+| Auto improves decode throughput on tested phones | The same Android benchmark reports +121% on Dimensity 7300 and +117% on Snapdragon 6 Gen 4, against the eight-thread default. | Two phones, one fixed 1B Q3_K_L workload; not a universal multiplier. |
 | The gain is from a shipped path, not a CLI flag | The app compares eight-core naïve execution with its own frequency-ranked, affinity-pinned Auto path. [Source-level implementation](docs/OPTIMIZATIONS.md#1-big-core-affinity). | The historical Termux experiment also used realtime priority; it is explicitly not part of the app claim. |
+| The gain is *not yet attributed* to core pinning | Naïve and Auto differ in thread count and core placement at once, so the published two-arm tables cannot say which earns the speed-up. The app now ships a threads-only arm (Auto's thread count, affinity off) that separates them. | No three-arm result is published yet: [pending a device run](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution). Nothing is estimated in the meantime. |
 | Efficiency is measured, rather than inferred | Each in-app pass samples battery current and voltage; results include watts and tok/W only while unplugged. | Battery-current reporting is OEM-dependent; values are comparative measurements on the same device, not lab-grade power metering. |
 | A developer can reproduce or challenge the result | The app runs the benchmark and exports every pass to CSV. The exact protocol, export schema, source pointers, and known evidence limits are in [Reproducibility](benchmarks/REPRODUCIBILITY.md). | A matching device and model are required for a direct numerical comparison. |
 
@@ -57,8 +52,8 @@ This is the short judge-facing map. The benchmark tables below are the current r
 3. Streaming replies with Stop, New chat, Markdown rendering, Copy and Regenerate.
 4. Persistent local conversations with restore, rename, switch and delete actions.
 5. Auto mode plus manual controls for temperature, top k, top p, completion length, context and threads.
-6. Live statistics and a selectable graph for token count, token rate, TTFT, temperature, power and memory.
-7. In app benchmark with three run median, population standard deviation, thermal cooldown and CSV export.
+6. Live statistics and a selectable graph for token count, token rate, TTFT, temperature, power, app CPU utilization and free memory.
+7. In app benchmark with a three arm ablation (naive, threads only, Auto), three run median, population standard deviation, thermal cooldown, decode attribution and CSV export.
 8. Light, dark and system themes plus a theme aware app icon.
 9. GGUF model information including parameters, quantization, architecture and running context.
 
@@ -71,6 +66,10 @@ This is the short judge-facing map. The benchmark tables below are the current r
 ## Current in app benchmark
 
 The benchmark uses Llama 3.2 1B Instruct Q3 K L with 512 prompt tokens and 128 generated tokens. Each configuration runs three times on an unplugged phone. Values are median plus or minus population standard deviation.
+
+The two tables below are the two arm record: the eight thread default against ENTITY Auto. That is the end to end gain of the shipped configuration over what a phone does out of the box, and it is what the +121% and +117% describe.
+
+It is not an attribution to core pinning. Those two arms differ in thread count and in core placement at the same time, so neither table can say which of the two earns the speed up. The app now runs a third arm, threads only: Auto's thread count with affinity switched off, which is what an upstream llama.cpp `-t N` run does. The decode gap between naive and threads only is the thread count decision; the gap between threads only and Auto is the pinning. [No three arm result is published yet](benchmarks/BENCHMARKS.md#pending-the-three-arm-attribution), and no threads only cell is estimated until a device produces one.
 
 ### CMF Phone 1: MediaTek Dimensity 7300
 
@@ -92,19 +91,21 @@ The benchmark uses Llama 3.2 1B Instruct Q3 K L with 512 prompt tokens and 128 g
 | Power | 3.4 ± 0.15 W | 3.4 ± 0.29 W | flat |
 | Energy efficiency | 1.8 ± 0.24 tok per W | 3.8 ± 0.31 tok per W | 2.1× |
 
-TTFT in this benchmark is an estimate from prompt evaluation plus one decode step. It is not a live chat first token measurement. Read the full [benchmark method and caveats](benchmarks/IN_APP_BENCHMARK.md).
+TTFT in this benchmark is an estimate from prompt evaluation plus one decode step. It is not a live chat first token measurement. Read the full [benchmark method and caveats](benchmarks/BENCHMARKS.md).
 
 ## Get started
 
-1. Install the current release signed APK from [apk](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge/releases/latest).
+1. Install the current release signed APK from [apk](apk).
 2. Open ENTITY and choose Import from device.
 3. Select a runnable GGUF model.
 4. Leave Auto mode enabled for device aware CPU and context decisions.
-5. Open Benchmark from the app menu to compare the naive path with the optimized path on the loaded model.
+5. Open Benchmark from the app menu to run the three arm ablation on the loaded model: the naive default, threads only, and the optimized path.
 
 To build from source use the exact Android SDK, NDK, CMake and JDK setup in [BUILD](docs/BUILD.md). The release build is arm64 only and includes all seven CPU backend variants.
 
 ## Repository guide
+
+The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge).
 
 | Location | Purpose |
 |---|---|
@@ -115,6 +116,7 @@ To build from source use the exact Android SDK, NDK, CMake and JDK setup in [BUI
 | releases | Release notes for every version |
 | scripts | Termux benchmark and chat helpers |
 | screenshots | Images used in this README |
+| templates | Copyable Arm64 Android runtime starter and device benchmark schema |
 | github.md | Full Arm Create submission |
 
 ## Documentation
@@ -124,10 +126,10 @@ To build from source use the exact Android SDK, NDK, CMake and JDK setup in [BUI
 3. [Optimizations](docs/OPTIMIZATIONS.md): source level explanation of each runtime decision.
 4. [Benchmarks](benchmarks/BENCHMARKS.md): current method, cross device values, and caveats.
 5. [Reproducibility](benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
-6. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
-7. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
-8. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
-  
+6. [Runtime comparisons](benchmarks/COMPARISONS.md): a fair upstream llama.cpp baseline and the requirements for any ExecuTorch or MLC-LLM claim.
+7. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
+8. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
+9. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
 
 ## License
 

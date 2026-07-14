@@ -43,8 +43,19 @@ interface InferenceEngine {
     /**
      * Sets context size, thread count and sampler params used on the next load.
      * nThreads == 0 means auto. Call before [loadModel].
+     *
+     * [pinCores] false runs inference with no core affinity and no pinned thread
+     * pool, leaving placement to the scheduler. Only the benchmark's threads-only
+     * ablation arm uses it; every shipped path keeps the default.
      */
-    suspend fun applyConfig(nCtx: Int, nThreads: Int, temp: Float, topK: Int, topP: Float)
+    suspend fun applyConfig(
+        nCtx: Int,
+        nThreads: Int,
+        temp: Float,
+        topK: Int,
+        topP: Float,
+        pinCores: Boolean = true,
+    )
 
     /**
      * Updates the live sampler (temperature / top-k / top-p) without reloading.

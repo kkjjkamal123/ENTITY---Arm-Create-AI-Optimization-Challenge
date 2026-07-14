@@ -17,6 +17,13 @@ android {
 
     ndkVersion = "27.1.12297006"
 
+    // BenchmarkActivity stamps BuildConfig.VERSION_NAME/VERSION_CODE into every exported
+    // CSV, so a result can always be traced back to the app that produced it. AGP 8
+    // does not generate BuildConfig unless asked.
+    buildFeatures {
+        buildConfig = true
+    }
+
     defaultConfig {
         applicationId = "com.entity.chat"
 
