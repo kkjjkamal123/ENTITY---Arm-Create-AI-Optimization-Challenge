@@ -103,6 +103,56 @@
                 android:textColor="@color/white"
                 android:backgroundTint="@color/accent" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/muted"
+                    android:textSize="14sp"
+                    android:text="@string/bench_duration_label" />
+
+                <RadioGroup
+                    android:id="@+id/bench_duration"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginStart="12dp">
+
+                    <RadioButton
+                        android:id="@+id/bench_duration_2"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/on_surface"
+                        android:buttonTint="@color/accent"
+                        android:text="@string/bench_duration_2" />
+
+                    <RadioButton
+                        android:id="@+id/bench_duration_5"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:textColor="@color/on_surface"
+                        android:buttonTint="@color/accent"
+                        android:checked="true"
+                        android:text="@string/bench_duration_5" />
+
+                    <RadioButton
+                        android:id="@+id/bench_duration_10"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:textColor="@color/on_surface"
+                        android:buttonTint="@color/accent"
+                        android:text="@string/bench_duration_10" />
+                </RadioGroup>
+            </LinearLayout>
+
             <Button
                 android:id="@+id/run_sustained_bench"
                 android:layout_width="match_parent"

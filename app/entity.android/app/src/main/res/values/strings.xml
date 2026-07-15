@@ -13,6 +13,10 @@
     <string name="bench_runs_3">3</string>
     <string name="bench_runs_5">5</string>
     <string name="bench_sustained">Sustained thermal test (no cooldown)</string>
+    <string name="bench_duration_label">Sustained duration</string>
+    <string name="bench_duration_2">2 min</string>
+    <string name="bench_duration_5">5 min</string>
+    <string name="bench_duration_10">10 min</string>
     <string name="menu_show_stats">Show stats</string>
     <string name="menu_stats">Stats</string>
     <string name="stat_tokens">Tokens generated</string>

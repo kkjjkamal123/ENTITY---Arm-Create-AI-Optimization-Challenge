@@ -91,6 +91,7 @@ class BenchmarkActivity : AppCompatActivity() {
     private lateinit var copyBtn: Button
     private lateinit var exportBtn: Button
     private lateinit var runsGroup: RadioGroup
+    private lateinit var durationGroup: RadioGroup
     private lateinit var runningBox: View
     private lateinit var resultsBox: View
     private lateinit var table: LinearLayout
@@ -160,7 +161,7 @@ class BenchmarkActivity : AppCompatActivity() {
     }
     // No cooldown between passes within a block: heat is meant to accumulate. Only
     // threads-only vs Auto — naïve isn't part of the pinning question this isolates.
-    private data class SustainedResult(val threadsOnly: Config, val opt: Config)
+    private data class SustainedResult(val threadsOnly: Config, val opt: Config, val durationMin: Int)
     private data class Stat(val median: Double, val sd: Double, val n: Int)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -184,6 +185,7 @@ class BenchmarkActivity : AppCompatActivity() {
         copyBtn = findViewById(R.id.bench_copy)
         exportBtn = findViewById(R.id.bench_export)
         runsGroup = findViewById(R.id.bench_runs)
+        durationGroup = findViewById(R.id.bench_duration)
         runningBox = findViewById(R.id.bench_running)
         resultsBox = findViewById(R.id.bench_results)
         table = findViewById(R.id.bench_table)
@@ -206,8 +208,15 @@ class BenchmarkActivity : AppCompatActivity() {
         else -> 3
     }
 
+    private fun selectedDurationMs() = when (durationGroup.checkedRadioButtonId) {
+        R.id.bench_duration_2 -> 2 * 60_000L
+        R.id.bench_duration_10 -> 10 * 60_000L
+        else -> 5 * 60_000L
+    }
+
     private fun setRunsEnabled(enabled: Boolean) {
         for (i in 0 until runsGroup.childCount) runsGroup.getChildAt(i).isEnabled = enabled
+        for (i in 0 until durationGroup.childCount) durationGroup.getChildAt(i).isEnabled = enabled
     }
 
     private fun runBenchmark() {
@@ -236,18 +245,19 @@ class BenchmarkActivity : AppCompatActivity() {
     // Isolates whether affinity pinning pays off under sustained heat, which the
     // controlled benchmark above cannot see: it cools back to baseline before every
     // single pass by design. Here only threads-only and Auto run (naive is not part of
-    // the pinning question), each as SUSTAINED_PASSES back-to-back passes with just a
-    // fixed gap - no wait for the battery to cool - so heat accumulates within a block.
-    // Both blocks start from the same cooled baseline, so pass 1 is comparable across
-    // arms even though later passes are not blind to how long the phone has been busy.
+    // the pinning question), each as back-to-back passes for the selected duration with
+    // just a fixed gap - no wait for the battery to cool - so heat accumulates within a
+    // block. Both blocks start from the same cooled baseline, so pass 1 is comparable
+    // across arms even though later passes are not blind to how long the phone has been busy.
     private fun runSustainedBenchmark() {
+        val durationMs = selectedDurationMs()
         runBtn.isEnabled = false
         sustainedBtn.isEnabled = false
         setRunsEnabled(false)
         resultsBox.visibility = View.GONE
         runningBox.visibility = View.VISIBLE
         lifecycleScope.launch {
-            val outcome = runCatching { withContext(Dispatchers.IO) { doSustainedBenchmark() } }
+            val outcome = runCatching { withContext(Dispatchers.IO) { doSustainedBenchmark(durationMs) } }
             runningBox.visibility = View.GONE
             runBtn.isEnabled = true
             sustainedBtn.isEnabled = true
@@ -328,7 +338,7 @@ class BenchmarkActivity : AppCompatActivity() {
         return Config(label, key, genThreads, pinCores, runs)
     }
 
-    private suspend fun doSustainedBenchmark(): SustainedResult {
+    private suspend fun doSustainedBenchmark(durationMs: Long): SustainedResult {
         val v = Settings.load(prefs)
         val ctx = prefs.getInt(Settings.KEY_ACTIVE_CTX, if (v.ctx > 0) v.ctx else Settings.DEF_CTX)
         val restoreThreads = if (v.auto) 0 else v.threads
@@ -340,12 +350,12 @@ class BenchmarkActivity : AppCompatActivity() {
             engine.bench(64, 16, PL, 1)   // discarded — pages in weights, warms caches
 
             val threadsOnly =
-                runSustainedConfig("Threads only", "threads_only", autoGenThreads(), false, ctx, v, coolTargetC)
-            val opt = runSustainedConfig("Optimized", "optimized", OPT_THREADS_AUTO, true, ctx, v, coolTargetC)
+                runSustainedConfig("Threads only", "threads_only", autoGenThreads(), false, ctx, v, coolTargetC, durationMs)
+            val opt = runSustainedConfig("Optimized", "optimized", OPT_THREADS_AUTO, true, ctx, v, coolTargetC, durationMs)
             if (threadsOnly.runs.isEmpty() || opt.runs.isEmpty()) {
                 error("Engine returned no timing — try again.")
             }
-            return SustainedResult(threadsOnly, opt)
+            return SustainedResult(threadsOnly, opt, (durationMs / 60_000L).toInt())
         } finally {
             withContext(NonCancellable) {
                 engine.applyConfig(ctx, restoreThreads, v.temp, v.topK, v.topP, pinCores = true)
@@ -361,26 +371,34 @@ class BenchmarkActivity : AppCompatActivity() {
         ctx: Int,
         v: Settings.Values,
         coolTargetC: Double,
+        durationMs: Long,
     ): Config {
         engine.applyConfig(ctx, threads, v.temp, v.topK, v.topP, pinCores)
         val genThreads = if (threads <= 0) autoGenThreads() else threads
         // Same cooled starting point for both blocks; no cooldown between the passes
-        // that follow, so this pass loop is where heat is allowed to build.
+        // that follow, so this pass loop is where heat is allowed to build. Run
+        // back-to-back passes until the selected duration elapses (always at least one).
         cooldown("$label — cooling to baseline before sustained run", coolTargetC)
-        val runs = ArrayList<Pass>(SUSTAINED_PASSES)
-        for (i in 1..SUSTAINED_PASSES) {
+        val runs = ArrayList<Pass>()
+        val blockStart = SystemClock.elapsedRealtime()
+        val totalMin = (durationMs / 60_000L).toInt()
+        var i = 0
+        while (true) {
+            i++
             val placement = if (pinCores) "pinned" else "no pin"
-            status("$label ($genThreads threads, $placement) — sustained pass $i/$SUSTAINED_PASSES…")
+            val mmss = ((SystemClock.elapsedRealtime() - blockStart) / 1000).let { "%d:%02d".format(it / 60, it % 60) }
+            status("$label ($genThreads threads, $placement) — sustained pass $i ($mmss / ${totalMin}min)…")
             val startTempC = readTempC()
             Log.i(
                 TAG,
                 String.format(
-                    Locale.US, "sustained %s pass %d/%d start: threads=%d pinned=%b battery=%.1fC thermalStatus=%d",
-                    key, i, SUSTAINED_PASSES, genThreads, pinCores, startTempC, powerManager.currentThermalStatus
+                    Locale.US, "sustained %s pass %d start: threads=%d pinned=%b battery=%.1fC thermalStatus=%d",
+                    key, i, genThreads, pinCores, startTempC, powerManager.currentThermalStatus
                 )
             )
             runs.add(runPass(startTempC))
-            if (i < SUSTAINED_PASSES) delay(SUSTAINED_GAP_MS)
+            if (SystemClock.elapsedRealtime() - blockStart >= durationMs) break
+            delay(SUSTAINED_GAP_MS)
         }
         return Config(label, key, genThreads, pinCores, runs)
     }
@@ -637,12 +655,13 @@ class BenchmarkActivity : AppCompatActivity() {
         val optTg = decodeSeries(r.opt)
         val toDrop = dropPct(toTg)
         val optDrop = dropPct(optTg)
-        headlineTv.text = "Sustained, no cooldown: threads-only decode ${signed(toDrop)} from pass 1 to " +
-            "$SUSTAINED_PASSES · Auto ${signed(optDrop)}"
+        val passCount = maxOf(r.threadsOnly.runs.size, r.opt.runs.size)
+        headlineTv.text = "Sustained ${r.durationMin} min, no cooldown: threads-only decode ${signed(toDrop)} " +
+            "pass 1 to ${r.threadsOnly.runs.size} · Auto ${signed(optDrop)} pass 1 to ${r.opt.runs.size}"
 
         table.removeAllViews()
         addRow("Pass", "Threads-only\ntg/s · thermal", "ENTITY Auto\ntg/s · thermal", "", header = true)
-        for (i in 0 until SUSTAINED_PASSES) {
+        for (i in 0 until passCount) {
             val to = r.threadsOnly.runs.getOrNull(i)
             val op = r.opt.runs.getOrNull(i)
             addRow(
@@ -652,7 +671,7 @@ class BenchmarkActivity : AppCompatActivity() {
             )
         }
 
-        noteTv.text = "$SUSTAINED_PASSES back-to-back PP $PP / TG $TG passes per arm, only a fixed " +
+        noteTv.text = "${r.durationMin} min of back-to-back PP $PP / TG $TG passes per arm, only a fixed " +
             "${SUSTAINED_GAP_MS / 1000}s gap between passes instead of the cooldown-to-baseline the controlled " +
             "benchmark above uses — heat is meant to accumulate within a block. Both arms start their block " +
             "from the same cooled baseline, so pass 1 is comparable across arms, but this is a single session: " +
@@ -892,7 +911,7 @@ class BenchmarkActivity : AppCompatActivity() {
         row("meta", "", "model", modelTv.text.toString(), "")
         row("meta", "", "device", "${Build.MANUFACTURER} ${Build.MODEL}", "")
         row("meta", "", "device_fingerprint", Build.FINGERPRINT, "")
-        row("meta", "", "passes_per_config", SUSTAINED_PASSES.toString(), "")
+        row("meta", "", "duration", r.durationMin.toString(), "min")
         row("meta", "", "inter_pass_gap", (SUSTAINED_GAP_MS / 1000).toString(), "s")
         row("meta", "", "pp", PP.toString(), "tokens")
         row("meta", "", "tg", TG.toString(), "tokens")
@@ -901,9 +920,11 @@ class BenchmarkActivity : AppCompatActivity() {
         for (c in listOf(r.threadsOnly, r.opt)) {
             row("meta", "", "threads_${c.key}", c.threads.toString(), "")
             row("meta", "", "affinity_${c.key}", if (c.pinned) "pinned_fast_cores" else "none_scheduler_placed", "")
+            row("meta", "", "passes_${c.key}", c.runs.size.toString(), "")
             c.runs.forEachIndexed { i, p ->
                 val idx = (i + 1).toString()
                 row(c.key, idx, "tg", num(p.tg), "tok/s")
+                row(c.key, idx, "power", num(p.watts), "W")
                 row(c.key, idx, "start_temp", num(p.startTempC), "C")
                 row(c.key, idx, "peak_battery_temp", num(p.peakBatteryTempC), "C")
                 row(c.key, idx, "peak_thermal_status", p.peakThermalStatus.toString(), "Android PowerManager status")
@@ -940,9 +961,8 @@ class BenchmarkActivity : AppCompatActivity() {
         private const val THREAD_HEADROOM = 2
         private const val MIN_PAUSE_MS = 15_000L
         private const val MAX_COOLDOWN_MS = 90_000L
-        // Sustained thermal test: enough back-to-back passes to build a visible trend,
-        // with only a short gap - not a cooldown - between them.
-        private const val SUSTAINED_PASSES = 6
+        // Sustained thermal test: back-to-back passes for the selected duration, with
+        // only a short gap - not a cooldown - between them, so heat accumulates.
         private const val SUSTAINED_GAP_MS = 2_000L
         private const val COOL_MARGIN_C = 0.5
         // Cooldown never waits below this — ambient in hot climates keeps batteries above ~37°C.
