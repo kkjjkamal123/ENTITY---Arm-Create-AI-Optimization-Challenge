@@ -163,12 +163,13 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 1. [Architecture](docs/ARCHITECTURE.md): UI to JNI to llama.cpp design.
 2. [Build](docs/BUILD.md): reproducible toolchain and installation steps.
 3. [Optimizations](docs/OPTIMIZATIONS.md): source level explanation of each runtime decision.
-4. [Benchmarks](benchmarks/BENCHMARKS.md): current method, cross device values, and caveats.
-5. [Reproducibility](benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
-6. [Runtime comparisons](benchmarks/COMPARISONS.md): a fair upstream llama.cpp baseline and the requirements for any ExecuTorch or MLC-LLM claim.
-7. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
-8. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
-9. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
+4. [Which GGUF quant actually reaches KleidiAI](docs/KLEIDIAI-QUANTS.md): the two types Arm's kernels accelerate, and what the rest cost.
+5. [Benchmarks](benchmarks/BENCHMARKS.md): current method, cross device values, and caveats.
+6. [Reproducibility](benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
+7. [Runtime comparisons](benchmarks/COMPARISONS.md): a fair upstream llama.cpp baseline and the requirements for any ExecuTorch or MLC-LLM claim.
+8. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
+9. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
+10. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
 
 ## License
 

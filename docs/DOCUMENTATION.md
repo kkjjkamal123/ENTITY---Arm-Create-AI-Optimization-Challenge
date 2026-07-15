@@ -133,8 +133,9 @@ live chat first token measurement.
 5. docs/BUILD.md contains the exact build and validation path.
 6. docs/ARCHITECTURE.md maps the Kotlin UI, JNI layer, and native inference flow.
 7. docs/OPTIMIZATIONS.md connects each shipped optimization to its source file.
-8. docs/FAQ.md answers common questions about models, Auto mode, device support, and metrics.
-9. templates/arm64-android-runtime/ is a copyable starter kit for other Arm64 Android projects.
+8. docs/KLEIDIAI-QUANTS.md is a standalone guide to which GGUF quantizations reach Arm's KleidiAI kernels and what the rest cost.
+9. docs/FAQ.md answers common questions about models, Auto mode, device support, and metrics.
+10. templates/arm64-android-runtime/ is a copyable starter kit for other Arm64 Android projects.
 
 ## Historical work
 
