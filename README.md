@@ -88,7 +88,7 @@ Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode st
 
 ### KleidiAI never ran
 
-Arm's KleidiAI ships matmul kernels for Q4_0 and Q8_0 only. Every other quantization, including the whole K quant family, falls back to generic ggml no matter which backend variant loaded. Every benchmark published before v2.1.0 used Q3_K_L, so Arm's kernels never executed.
+Arm's KleidiAI ships matmul kernels for Q4_0 and Q8_0 only. Every other quantization, including the whole K quant family, falls back to generic ggml no matter which backend variant loaded. Every benchmark published before v2.1.0 used Q3_K_L, so Arm's kernels never executed. The fallback is silent; a one-time upstream warning is proposed in [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701), and the full write-up is in [Which GGUF quant actually reaches KleidiAI](docs/KLEIDIAI-QUANTS.md).
 
 Same phone, same 512 token prompt, same four thread unpinned config. Only the quantization differs:
 

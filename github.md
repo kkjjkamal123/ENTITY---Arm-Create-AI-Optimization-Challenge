@@ -129,7 +129,10 @@ unpinned config, only the quantization differs:
 Prompt eval is a compute-bound GEMM, which is what KleidiAI is built for. Decode is
 memory-bandwidth-bound - it tracks bytes-per-weight, not kernel quality - so it does not improve;
 Q4_0 is ~6% more bytes and lands slightly slower. ENTITY now reads the GGUF header and tells the
-user whether their model can reach Arm's kernels, rather than printing "KleidiAI" regardless.
+user whether their model can reach Arm's kernels, rather than printing "KleidiAI" regardless. The
+silent fallback itself is proposed for a one-time upstream warning in
+[llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701), and the finding is written
+up as a standalone guide in [`docs/KLEIDIAI-QUANTS.md`](docs/KLEIDIAI-QUANTS.md).
 
 **2. Widening prompt processing to all cores was a regression.** Auto used to give prompt eval every
 online core, assuming a compute-bound phase wants all the hardware. An A55 is about a third of an
