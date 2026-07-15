@@ -19,7 +19,7 @@ The app has been measured on:
 
 | Device | SoC | Memory | Android |
 |---|---|---:|---:|
-| CMF Phone 1 | MediaTek Dimensity 7300 | 6 GB | 16 |
+| CMF Phone 1 | MediaTek Dimensity 7300 | 5.6 GB | 16 |
 | OPPO CPH2729 | Qualcomm Snapdragon 6 Gen 4 | 7.4 GB | 16 |
 
 ## Runtime decisions
