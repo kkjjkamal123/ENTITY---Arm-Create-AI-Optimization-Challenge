@@ -9,6 +9,28 @@ Debug builds, arm64-v8a only — install with `adb install -r <file>.apk`. **Pos
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [2.2.0] — 2026-07-15
+
+**Sustained thermal benchmark.** The regular benchmark answers "how fast is a cool phone for one
+pass". This release adds the question a phone actually poses: does the rate hold once the SoC is
+hot? The sustained mode runs back-to-back PP 512 / TG 128 passes for a selectable 2, 5 or 10
+minutes per arm, with no cooldown between passes, and records how each arm degrades.
+
+### Added
+
+- **Sustained benchmark mode** on the benchmark screen: threads-only and Auto run back-to-back
+  passes for the selected duration (2 / 5 / 10 minutes per arm, 5 default), deliberately without
+  the inter-pass thermal cooldown the regular benchmark uses. Heat is the variable under test.
+- **Per-pass sustained telemetry**: decode tok/s, Android thermal status, battery temperature and
+  power for every pass, in the results table and the exported CSV.
+- Sustained CSV gains a per-pass **power (W)** row; headline and notes report the actual pass
+  count each arm completed in the window.
+
+### Changed
+
+- The fixed six-pass sustained loop became time-bounded: passes repeat until the selected duration
+  elapses (always at least one), keeping the existing 2 s inter-pass gap.
+
 ## [2.1.0] — 2026-07-14
 
 **ENTITY's own benchmark disproved ENTITY's flagship optimization, and found two that actually
@@ -436,6 +458,8 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 2.2.0 | `ENTITY-v10-sustained-thermal-20260715-release.apk` (release-signed, ~10.3 MB) |
+| 2.1.0 | `ENTITY-v9-kleidiai-quant-20260714-release.apk` (release-signed) · `ENTITY-v9-kleidiai-quant-20260714-debug.apk` (debug) |
 | 2.0.0 | `ENTITY-v8-universal-arm-20260712-1240-debug.apk` (debug, ~49 MB) · `ENTITY-v8-universal-arm-20260712-1240-release.apk` (release-signed, ~9.8 MB) |
 | 1.7.0 | `ENTITY-v7-efficiency-thermal-20260712-0120-debug.apk` (debug, ~40 MB) · `ENTITY-v7-efficiency-thermal-20260712-0120-release.apk` (release-signed, ~7 MB) |
 | 1.6.0 | `ENTITY-v6-chats-uipolish-20260710-2213.apk` (debug) |
