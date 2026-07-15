@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Base.Theme.AiChatSample" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Base.Theme.AiChatSample" parent="Theme.Entity.Shared">
         <item name="colorPrimary">@color/accent</item>
         <item name="colorOnPrimary">@color/white</item>
         <item name="android:colorBackground">@color/app_bg</item>

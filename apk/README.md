@@ -4,7 +4,8 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-v10-sustained-thermal-20260715-release.apk` | **2.2.0** (current) | release-signed | 10.3 MB |
+| `ENTITY-v11-ui-polish-20260715-release.apk` | **2.3.0** (current) | release-signed | 10.3 MB |
+| `ENTITY-v10-sustained-thermal-20260715-release.apk` | 2.2.0 | release-signed | 10.3 MB |
 | `ENTITY-v9-kleidiai-quant-20260714-release.apk` | 2.1.0 | release-signed | |
 | `ENTITY-v9-kleidiai-quant-20260714-debug.apk` | 2.1.0 | debug | |
 | `ENTITY-v8-universal-arm-20260712-1240-release.apk` | 2.0.0 | release-signed | 9.8 MB |

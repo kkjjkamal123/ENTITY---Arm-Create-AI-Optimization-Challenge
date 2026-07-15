@@ -20,6 +20,11 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_share_chat"
+        android:title="@string/menu_share_chat"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_model_info"
         android:title="@string/menu_model_info"
         android:visible="false"
@@ -41,6 +46,18 @@
         android:checkable="true"
         android:title="@string/menu_show_stats"
         app:showAsAction="never" />
+
+    <item
+        android:id="@+id/action_graph_style"
+        android:title="@string/menu_graph_style"
+        app:showAsAction="never">
+        <menu>
+            <group android:checkableBehavior="all">
+                <item android:id="@+id/graph_fill" android:title="@string/graph_fill" />
+                <item android:id="@+id/graph_smooth" android:title="@string/graph_smooth" />
+            </group>
+        </menu>
+    </item>
 
     <item
         android:id="@+id/action_stats_group"

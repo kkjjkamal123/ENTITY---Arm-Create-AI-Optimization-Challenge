@@ -102,6 +102,7 @@ class MainActivity : AppCompatActivity() {
         statsBar = findViewById(R.id.stats_bar)
         graph = findViewById(R.id.graph)
         for ((_, key) in statItems) graph.setSeriesEnabled(key, prefs.getBoolean(key, true))
+        graph.setStyle(prefs.getBoolean(KEY_GRAPH_FILL, false), prefs.getBoolean(KEY_GRAPH_SMOOTH, false))
         graph.visibility = if (prefs.getBoolean(KEY_SHOW_GRAPH, false)) View.VISIBLE else View.GONE
 
         messageAdapter = MessageAdapter(
@@ -172,6 +173,8 @@ class MainActivity : AppCompatActivity() {
         menu.findItem(R.id.action_model_info).isVisible = modelInfoText != null
         menu.findItem(R.id.action_show_stats).isChecked = prefs.getBoolean(KEY_SHOW_STATS, false)
         menu.findItem(R.id.action_show_graph).isChecked = prefs.getBoolean(KEY_SHOW_GRAPH, false)
+        menu.findItem(R.id.graph_fill).isChecked = prefs.getBoolean(KEY_GRAPH_FILL, false)
+        menu.findItem(R.id.graph_smooth).isChecked = prefs.getBoolean(KEY_GRAPH_SMOOTH, false)
         for ((id, key) in statItems) {
             menu.findItem(id).isChecked = prefs.getBoolean(key, true)
         }
@@ -183,11 +186,14 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             R.id.action_new_chat -> newChat()
             R.id.action_conversations -> showConversations()
+            R.id.action_share_chat -> shareChat()
             R.id.action_select_model -> showModelPicker()
             R.id.action_model_info -> showModelInfo()
             R.id.action_benchmark -> openBenchmark()
             R.id.action_show_stats -> toggle(item, KEY_SHOW_STATS)
             R.id.action_show_graph -> toggleGraph(item)
+            R.id.graph_fill -> toggleGraphStyle(item, KEY_GRAPH_FILL)
+            R.id.graph_smooth -> toggleGraphStyle(item, KEY_GRAPH_SMOOTH)
             in statItems.keys -> statItems[item.itemId]?.let { toggleStat(item, it) }
             in themeItems -> applyTheme(themeItems.indexOf(item.itemId))
             R.id.action_settings -> startActivity(Intent(this, SettingsActivity::class.java))
@@ -210,6 +216,29 @@ class MainActivity : AppCompatActivity() {
         item.isChecked = value
         graph.setSeriesEnabled(key, value)
         refreshStatsBar()
+    }
+
+    private fun toggleGraphStyle(item: MenuItem, key: String) {
+        val value = !prefs.getBoolean(key, false)
+        prefs.edit().putBoolean(key, value).apply()
+        item.isChecked = value
+        graph.setStyle(prefs.getBoolean(KEY_GRAPH_FILL, false), prefs.getBoolean(KEY_GRAPH_SMOOTH, false))
+    }
+
+    private fun shareChat() {
+        if (vm.messages.isEmpty()) {
+            Toast.makeText(this, "Nothing to share yet.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        val text = buildString {
+            for (m in vm.messages) {
+                append(if (m.isUser) "You: " else "ENTITY: ")
+                append(m.content.trim())
+                append("\n\n")
+            }
+        }.trim()
+        val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
+        startActivity(Intent.createChooser(send, getString(R.string.menu_share_chat)))
     }
 
     private fun toggleGraph(item: MenuItem) {
@@ -316,7 +345,12 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val labels = models.map { it.name } + "Import from device…"
+        val labels = models.map {
+            val b = it.length()
+            val size = if (b >= 1_000_000_000L) String.format("%.2f GB", b / 1e9)
+                       else String.format("%.0f MB", b / 1e6)
+            "${it.name}\n$size"
+        } + "Import from device…"
         AlertDialog.Builder(this)
             .setTitle("Select a model")
             .setItems(labels.toTypedArray()) { _, which ->
@@ -343,6 +377,7 @@ class MainActivity : AppCompatActivity() {
                 .setTitle(R.string.menu_conversations)
                 .setAdapter(adapter) { _, which -> vm.switchTo(convs[which].id) }
                 .setPositiveButton("New chat") { _, _ -> newChat() }
+                .setNeutralButton("Select…") { _, _ -> showSelectConversations(convs) }
                 .setNegativeButton("Close", null)
                 .create()
             dialog.show()
@@ -352,6 +387,30 @@ class MainActivity : AppCompatActivity() {
                 true
             }
         }
+    }
+
+    private fun showSelectConversations(convs: List<ConversationRow>) {
+        val labels = convs.map { it.title.ifBlank { "Untitled" } }.toTypedArray()
+        val checked = BooleanArray(convs.size)
+        AlertDialog.Builder(this)
+            .setTitle("Select conversations")
+            .setMultiChoiceItems(labels, checked) { _, i, v -> checked[i] = v }
+            .setPositiveButton("Delete") { _, _ ->
+                val picked = convs.filterIndexed { i, _ -> checked[i] }
+                if (picked.isNotEmpty()) confirmDeleteMultiple(picked)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun confirmDeleteMultiple(convs: List<ConversationRow>) {
+        val what = if (convs.size == 1) convs[0].title.ifBlank { "Untitled" }
+                   else "${convs.size} conversations"
+        AlertDialog.Builder(this)
+            .setTitle("Delete $what?")
+            .setPositiveButton("Delete") { _, _ -> convs.forEach { vm.deleteConversation(it.id) } }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun showConversationActions(conv: ConversationRow) {
@@ -613,9 +672,28 @@ class MainActivity : AppCompatActivity() {
 
     private fun showModelInfo() {
         val info = modelInfoText ?: return
+        val view = layoutInflater.inflate(R.layout.dialog_model_info, null)
+        // The advisor verdict is embedded in the info string by buildModelInfo;
+        // surface it as a status pill instead of burying it in the text.
+        view.findViewById<TextView>(R.id.model_info_pill).apply {
+            when {
+                info.contains("KleidiAI active") -> {
+                    setText(R.string.kleidiai_active)
+                    setBackgroundResource(R.drawable.bg_status_ready)
+                    setTextColor(getColor(R.color.ready_text))
+                }
+                info.contains("KleidiAI NOT used") -> {
+                    setText(R.string.kleidiai_not_used)
+                    setBackgroundResource(R.drawable.bg_status_warn)
+                    setTextColor(getColor(R.color.warn_text))
+                }
+                else -> visibility = View.GONE
+            }
+        }
+        view.findViewById<TextView>(R.id.model_info_text).text = info
         AlertDialog.Builder(this)
             .setTitle(supportActionBar?.subtitle ?: "Model info")
-            .setMessage(info)
+            .setView(view)
             .setPositiveButton("Close", null)
             .show()
     }
@@ -816,6 +894,8 @@ class MainActivity : AppCompatActivity() {
 
         private const val KEY_SHOW_STATS = "show_stats"
         private const val KEY_SHOW_GRAPH = "show_graph"
+        private const val KEY_GRAPH_FILL = "graph_fill"
+        private const val KEY_GRAPH_SMOOTH = "graph_smooth"
         private const val KEY_TOKENS = "stat_tokens"
         private const val KEY_SPEED = "stat_speed"
         private const val KEY_TTFT = "stat_ttft"

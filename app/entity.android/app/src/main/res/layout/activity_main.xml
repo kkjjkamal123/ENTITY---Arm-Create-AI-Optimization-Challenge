@@ -134,30 +134,31 @@
             android:paddingBottom="40dp">
 
             <ImageView
-                android:layout_width="64dp"
-                android:layout_height="64dp"
+                android:layout_width="68dp"
+                android:layout_height="68dp"
                 android:src="@drawable/entity_mark"
-                android:alpha="0.35"
+                android:alpha="0.32"
                 app:tint="@color/on_surface"
                 android:contentDescription="@string/app_name" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="18dp"
                 android:text="@string/app_name"
                 android:textColor="@color/on_surface"
-                android:textSize="22sp"
+                android:textSize="24sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.08" />
+                android:letterSpacing="0.1" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="8dp"
                 android:text="@string/empty_tagline"
                 android:textColor="@color/muted"
-                android:textSize="13sp" />
+                android:textSize="14sp"
+                android:letterSpacing="0.01" />
         </LinearLayout>
     </FrameLayout>
 
@@ -172,9 +173,9 @@
         android:orientation="horizontal"
         android:gravity="bottom"
         android:background="@color/app_bg"
-        android:paddingHorizontal="12dp"
+        android:paddingHorizontal="14dp"
         android:paddingTop="10dp"
-        android:paddingBottom="10dp">
+        android:paddingBottom="12dp">
 
         <EditText
             android:id="@+id/user_input"
@@ -184,7 +185,7 @@
             android:enabled="false"
             android:background="@drawable/bg_input"
             android:paddingHorizontal="18dp"
-            android:paddingVertical="12dp"
+            android:paddingVertical="13dp"
             android:maxLines="5"
             android:inputType="textCapSentences|textMultiLine"
             android:textColor="@color/on_surface"

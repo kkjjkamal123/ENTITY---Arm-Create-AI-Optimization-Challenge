@@ -3,6 +3,7 @@ package com.example.llama
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Path
 import android.util.AttributeSet
 import android.view.View
 import java.util.ArrayDeque
@@ -52,6 +53,22 @@ class MetricsGraphView @JvmOverloads constructor(
         color = 0xFF9A9AA6.toInt()
     }
     private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val path = Path()
+    private val fillPath = Path()
+
+    // Optional eye candy, gated behind the user's Animations setting like every
+    // other decorative effect (Anim.enabled), so a minimal UI stays minimal.
+    private var fillEnabled = false
+    private var smoothEnabled = false
+
+    fun setStyle(fill: Boolean, smooth: Boolean) {
+        if (fillEnabled != fill || smoothEnabled != smooth) {
+            fillEnabled = fill
+            smoothEnabled = smooth
+            invalidate()
+        }
+    }
 
     fun setSeriesEnabled(key: String, enabled: Boolean) {
         series.firstOrNull { it.key == key }?.let {
@@ -128,6 +145,9 @@ class MetricsGraphView @JvmOverloads constructor(
         }
 
         val stepX = (w - 2 * padX) / (cap - 1).toFloat()
+        val fancy = Anim.enabled(context)
+        val useFill = fillEnabled && fancy
+        val useSmooth = smoothEnabled && fancy
         for (s in active) {
             val n = s.values.size
             if (n < 2) continue
@@ -138,20 +158,36 @@ class MetricsGraphView @JvmOverloads constructor(
                 if (v > mx) mx = v
             }
             val range = if (mx - mn < 1e-6f) 1f else mx - mn
-            linePaint.color = s.color
+            path.reset()
             var idx = cap - n
             var first = true
+            var firstX = 0f
             var px = 0f
             var py = 0f
             for (v in s.values) {
                 val x = padX + idx * stepX
                 val y = bottom - (v - mn) / range * (bottom - top)
-                if (!first) canvas.drawLine(px, py, x, y, linePaint)
+                when {
+                    first -> { path.moveTo(x, y); firstX = x }
+                    useSmooth -> path.quadTo(px, py, (px + x) / 2f, (py + y) / 2f)
+                    else -> path.lineTo(x, y)
+                }
                 first = false
                 px = x
                 py = y
                 idx++
             }
+            if (useSmooth) path.lineTo(px, py)
+            if (useFill) {
+                fillPath.set(path)
+                fillPath.lineTo(px, bottom)
+                fillPath.lineTo(firstX, bottom)
+                fillPath.close()
+                fillPaint.color = (s.color and 0x00FFFFFF) or 0x2E000000
+                canvas.drawPath(fillPath, fillPaint)
+            }
+            linePaint.color = s.color
+            canvas.drawPath(path, linePaint)
         }
     }
 }

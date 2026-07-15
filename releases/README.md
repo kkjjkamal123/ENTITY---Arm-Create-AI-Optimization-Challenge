@@ -5,6 +5,7 @@ the matching APK filename, an intro paragraph, and Added/Changed/Fixed bullets f
 
 | File | Version | APK |
 |---|---|---|
+| [`RELEASE-v2.3.0.md`](RELEASE-v2.3.0.md) | 2.3.0 | `ENTITY-v11-ui-polish-20260715-release.apk` (release) |
 | [`RELEASE-v2.2.0.md`](RELEASE-v2.2.0.md) | 2.2.0 | `ENTITY-v10-sustained-thermal-20260715-release.apk` (release) |
 | [`RELEASE-v2.1.0.md`](RELEASE-v2.1.0.md) | 2.1.0 | `ENTITY-v9-kleidiai-quant-20260714-debug.apk` (debug) + `ENTITY-v9-kleidiai-quant-20260714-release.apk` (release) |
 | [`RELEASE-v2.0.0.md`](RELEASE-v2.0.0.md) | 2.0.0 | `ENTITY-v8-universal-arm-20260712-1240-debug.apk` (debug) + `ENTITY-v8-universal-arm-20260712-1240-release.apk` (release) |

@@ -5,9 +5,63 @@ MediaTek Dimensity 7300 (4× Cortex-A78 + 4× Cortex-A55, 6 GB) on a CMF Phone 1
 [Keep a Changelog](https://keepachangelog.com); versions follow [Semantic Versioning](https://semver.org).
 
 Each release maps to a shipped APK in `apk/` (see the **Artifacts** table at the bottom).
-From v1.7.0 onward, both a debug-signed and release-signed APK are published per release, arm64-v8a only — install with `adb install -r <file>.apk`. **Positioning:** the app to
+From v1.7.0 onward a release-signed APK is published per release (debug builds through v2.1.0), arm64-v8a only — install with `adb install -r <file>.apk`. **Positioning:** the app to
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
+
+## [2.3.0] — 2026-07-15
+
+**UI polish and quality-of-life.** A visual pass over the whole app plus the small features a
+daily driver needs. No inference-path changes, so every published benchmark number carries over.
+
+### Added
+
+- **Multi-select conversation delete**: the Conversations dialog gains a Select mode with
+  checkboxes and a single confirmed bulk delete.
+- **Share chat**: exports the current conversation as plain text through the system share sheet.
+- **Graph style options** (menu): Fill area and Smooth lines for the live metrics graph. Both are
+  decorative, so they obey the Animations setting like every other effect; Animations off keeps
+  the plain minimal graph.
+
+### Changed
+
+- **Refined visual system**: hairline borders instead of heavy strokes, neutral assistant bubbles
+  with asymmetric corners, pill-shaped input bar, card-grouped Settings and Benchmark screens,
+  soft status pills (green/amber) for the KleidiAI advisor on the model info card, consistent
+  16 dp spacing rhythm and a tightened type scale. Light and dark themes both reworked; the
+  ENTITY teal accent and the metrics identity are unchanged.
+- The toolbar reset action now uses a reset glyph instead of a pencil, which read as "edit".
+- The sustained-benchmark duration selector spreads its 2/5/10 min options evenly across the row
+  instead of overflowing on narrow screens.
+- Settings card dividers use consistent 12 dp spacing.
+
+### Fixed
+
+- Benchmark CSV meta: `affinity_naive` now reports `mask_all_cores_effectively_unpinned` instead
+  of the misleading `pinned_fast_cores` (the naive arm's mask is the N fastest of N cores, i.e.
+  all of them; the behavior was always correct, the label was not).
+
+## [2.2.0] — 2026-07-15
+
+**Sustained thermal benchmark.** The regular benchmark answers "how fast is a cool phone for one
+pass". This release adds the question a phone actually poses: does the rate hold once the SoC is
+hot? The sustained mode runs back-to-back PP 512 / TG 128 passes for a selectable 2, 5 or 10
+minutes per arm, with no cooldown between passes, and records how each arm degrades.
+
+### Added
+
+- **Sustained benchmark mode** on the benchmark screen: threads-only and Auto run back-to-back
+  passes for the selected duration (2 / 5 / 10 minutes per arm, 5 default), deliberately without
+  the inter-pass thermal cooldown the regular benchmark uses. Heat is the variable under test.
+- **Per-pass sustained telemetry**: decode tok/s, Android thermal status, battery temperature and
+  power for every pass, in the results table and the exported CSV.
+- Sustained CSV gains a per-pass **power (W)** row; headline and notes report the actual pass
+  count each arm completed in the window.
+
+### Changed
+
+- The fixed six-pass sustained loop became time-bounded: passes repeat until the selected duration
+  elapses (always at least one), keeping the existing 2 s inter-pass gap.
 
 ## [2.1.0] — 2026-07-14
 
@@ -521,6 +575,9 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 2.3.0 | `ENTITY-v11-ui-polish-20260715-release.apk` (release-signed, ~10.3 MB) |
+| 2.2.0 | `ENTITY-v10-sustained-thermal-20260715-release.apk` (release-signed, ~10.3 MB) |
+| 2.1.0 | `ENTITY-v9-kleidiai-quant-20260714-release.apk` (release-signed) · `ENTITY-v9-kleidiai-quant-20260714-debug.apk` (debug) |
 | 2.0.0 | `ENTITY-v8-universal-arm-20260712-1240-debug.apk` (debug, ~49 MB) · `ENTITY-v8-universal-arm-20260712-1240-release.apk` (release-signed, ~9.8 MB) |
 | 1.7.0 | `ENTITY-v7-efficiency-thermal-20260712-0120-debug.apk` (debug, ~40 MB) · `ENTITY-v7-efficiency-thermal-20260712-0120-release.apk` (release-signed, ~7 MB) |
 | 1.6.0 | `ENTITY-v6-chats-uipolish-20260710-2213.apk` (debug) |
