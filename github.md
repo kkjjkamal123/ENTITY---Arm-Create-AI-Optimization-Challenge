@@ -92,13 +92,14 @@ configuration over the out-of-the-box default. It is **not** a measurement of wh
 contributes.
 
 ENTITY now ships the arm that separates them: **threads-only**, which runs Auto's thread count with
-affinity switched off - exactly what an upstream `llama.cpp -t 4` run does. Six runs across two
+affinity switched off - exactly what an upstream `llama.cpp -t 4` run does. Nine runs across two
 models, on the reference device:
 
 | Model | Naive, 8 thr | Threads only, 4 thr no pin | Auto, 4 thr pinned | Thread count | Pinning |
 |---|---:|---:|---:|---:|---:|
 | 1B Q3_K_L (3 runs) | 8.8 | 16.9 | 16.7 | **+92%** | **-1%** |
 | 1B Q4_0 | 7.9 | 14.7 | 14.7 | **+86%** | **+0%** |
+| 1B Q4_0 (3 runs) | 7.7 | 15.9 | 16.0 | **+106%** | +1% |
 | 3B Q4_0 | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
 | 3B Q4_0 | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
 

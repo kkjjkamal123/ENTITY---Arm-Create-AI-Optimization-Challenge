@@ -46,6 +46,7 @@ Decode throughput, tokens/s:
 |---|---:|---:|---:|---:|---:|
 | Llama-3.2-1B Q3_K_L (3 runs) | 8.8 ± 0.50 | 16.9 ± 0.08 | 16.7 ± 1.3 | **+92%** | **−1%** |
 | Llama-3.2-1B Q4_0 (1 run) | 7.9 | 14.7 | 14.7 | **+86%** | **+0%** |
+| Llama-3.2-1B Q4_0 (3 runs, 2026-07-15) | 7.7 ± 0.78 | 15.9 ± 0.22 | 16.0 ± 2.1 | **+106%** | +1% |
 | Llama-3.2-3B Q4_0 (1 run) | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
 | Llama-3.2-3B Q4_0 (1 run) | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
 
@@ -229,6 +230,7 @@ to cache before the picker opens.
 |---|---|---|
 | `entity_1b-q4_0_unplugged_1run_20260714.csv` | 1B Q4_0, unplugged, 1 run | 4,046 telemetry samples, 2,312 CPU-frequency samples. Power is valid; every graph on this page comes from it. |
 | `entity_1b-q4_0_charging_3run_20260714.csv` | 1B Q4_0, charging, 3 runs | 12,012 telemetry samples. Speed is valid and this is the tightest three-run evidence in the project. **Its power columns are not** — the phone was charging, so they measure the charger. Both plot scripts refuse to draw power from it. |
+| `entity_1b-q4_0_unplugged_3run_20260715.csv` | 1B Q4_0, unplugged, 3 runs | 13,007 telemetry samples, app v2.2.0. The first unplugged three-run set: speed AND power both valid. Thread count +106% decode, pinning +1%. Caveat: its `affinity_naive` meta row says `pinned_fast_cores`; the naive mask is the 8 fastest of 8 cores, i.e. all of them, so the label was misleading and the CSV writer was corrected after this export. |
 
 Exports carry per-pass values, per-core CPU frequency samples, battery temperature, thermal state,
 power, and the per-arm affinity policy.

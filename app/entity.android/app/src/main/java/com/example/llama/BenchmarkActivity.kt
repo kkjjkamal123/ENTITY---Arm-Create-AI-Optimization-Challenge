@@ -149,6 +149,14 @@ class BenchmarkActivity : AppCompatActivity() {
         val pinned: Boolean,
         val runs: List<Pass>,
     )
+    // The native side pins to the N fastest cores where N = thread count, so a
+    // pinned arm whose thread count covers every online core runs on all of them.
+    private fun affinityLabel(c: Config): String = when {
+        !c.pinned -> "none_scheduler_placed"
+        c.threads >= Runtime.getRuntime().availableProcessors() -> "mask_all_cores_effectively_unpinned"
+        else -> "pinned_fast_cores"
+    }
+
     private data class Result(
         val naive: Config,
         val threadsOnly: Config,
@@ -843,7 +851,7 @@ class BenchmarkActivity : AppCompatActivity() {
         row("meta", "", "threads_threads_only", r.threadsOnly.threads.toString(), "")
         row("meta", "", "threads_optimized", r.opt.threads.toString(), "")
         for (c in r.configs) {
-            row("meta", "", "affinity_${c.key}", if (c.pinned) "pinned_fast_cores" else "none_scheduler_placed", "")
+            row("meta", "", "affinity_${c.key}", affinityLabel(c), "")
         }
         row("meta", "", "cooldown_minimum", (MIN_PAUSE_MS / 1000).toString(), "s")
         row("meta", "", "cooldown_maximum", (MAX_COOLDOWN_MS / 1000).toString(), "s")
@@ -919,7 +927,7 @@ class BenchmarkActivity : AppCompatActivity() {
         row("meta", "", "little_cores", littleCores.joinToString(" "), "cpu index")
         for (c in listOf(r.threadsOnly, r.opt)) {
             row("meta", "", "threads_${c.key}", c.threads.toString(), "")
-            row("meta", "", "affinity_${c.key}", if (c.pinned) "pinned_fast_cores" else "none_scheduler_placed", "")
+            row("meta", "", "affinity_${c.key}", affinityLabel(c), "")
             row("meta", "", "passes_${c.key}", c.runs.size.toString(), "")
             c.runs.forEachIndexed { i, p ->
                 val idx = (i + 1).toString()

@@ -41,7 +41,7 @@ ENTITY's own ablation disproved ENTITY's flagship optimization. That is recorded
 | Claim | Evidence | Boundary |
 |---|---|---|
 | Auto is much faster than the out of the box default | Decode +81% to +94% over an eight thread run, on two models, on an unplugged CMF Phone 1. | One phone, two models. Not a universal multiplier. |
-| **The gain is the thread count, not the core pinning** | The threads only arm runs Auto's thread count with affinity switched off. Across six runs, pinning adds about **0%**: the whole gain is 8 threads to 4. The v2.0.0 claim of "+121% from big core affinity" was wrong, and this is the experiment that showed it. | A different SoC may answer differently. The affinity code still ships; it is simply no longer credited. |
+| **The gain is the thread count, not the core pinning** | The threads only arm runs Auto's thread count with affinity switched off. Across nine runs, pinning adds about **0%**: the whole gain is 8 threads to 4. The v2.0.0 claim of "+121% from big core affinity" was wrong, and this is the experiment that showed it. | A different SoC may answer differently. The affinity code still ships; it is simply no longer credited. |
 | **KleidiAI only accelerates Q4_0 and Q8_0** | Verified in Arm's kernel source. Every benchmark published before v2.1.0 used Q3_K_L, so KleidiAI never ran. Switching to Q4_0, same phone and same thread config: prompt 43 to 121 tok/s, TTFT 12.1s to 4.3s. | Decode does not improve. It is bandwidth bound and tracks bytes per weight, not kernel quality. Q4_0 is also a quality tradeoff, so ENTITY recommends rather than switches. |
 | Widening prompt processing to all cores was a regression | Prompt on 4 fast cores measures 135 tok/s; spread across all 8 it measures 86. The efficiency cores gate every GEMM. Removed in v2.1.0. | Empirical to this SoC. A tri cluster chip may prefer a wider pool, which is why the benchmark decides it, not an assumption. |
 | Efficiency is measured, rather than inferred | Each pass samples battery current and voltage; watts and tok/W appear only while unplugged. | Battery current reporting is OEM dependent. Comparative on one device, not lab grade metering. |
@@ -79,6 +79,7 @@ Decode throughput, CMF Phone 1, Dimensity 7300:
 |---|---:|---:|---:|---:|---:|
 | Llama 3.2 1B Q3_K_L, 3 runs | 8.8 ± 0.50 | 16.9 ± 0.08 | 16.7 ± 1.3 | **+92%** | **-1%** |
 | Llama 3.2 1B Q4_0, 1 run | 7.9 | 14.7 | 14.7 | **+86%** | **+0%** |
+| Llama 3.2 1B Q4_0, 3 runs | 7.7 ± 0.78 | 15.9 ± 0.22 | 16.0 ± 2.1 | **+106%** | +1% |
 | Llama 3.2 3B Q4_0, 1 run | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
 | Llama 3.2 3B Q4_0, 1 run | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
 
