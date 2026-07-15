@@ -2,7 +2,7 @@
 
 > A fully offline, adaptive LLM chat app for Android that profiles the device Arm CPU and automatically tunes itself to run any runnable GGUF model as fast as the hardware allows.
 
-**Track 1 — Optimization**
+**Track: Mobile AI**
 
 ---
 
@@ -31,7 +31,7 @@ Built on **llama.cpp** with a Kotlin UI and C++/JNI inference layer, ENTITY is p
    one. A bug fix in v2.0.0 resolved OEM kernel unit confusion (milliamps vs microamps) so power
    reporting is now accurate on all devices.
 
-On the same phone, ENTITY reaches **17.7 tok/s** decode on a 1B model, and — after the KleidiAI
+On the same phone, ENTITY reaches **16.7 tok/s** decode on a 1B model (Q3_K_L, shipped Auto config), and — after the KleidiAI
 finding below — **time-to-first-token dropped from 13.4 s to 3.9 s**. It also reports power and
 tokens-per-watt. Full method and limits: [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md).
 
@@ -305,6 +305,6 @@ ENTITY was **newly created during the hackathon submission period**, built from 
 
 ## Summary
 
-ENTITY proves that **optimization for real Arm hardware is the leverage point** for on-device AI on phones. By treating the phone as an asymmetric big.LITTLE SoC with thermal and power constraints — instead of a small desktop — the current in-app Q3_K_L run achieves **+121% faster decode and 2.5× better energy efficiency**, while the adaptive runtime still fits a 3B model into 2 GB of free RAM on a $200 phone.
+ENTITY proves that **optimization for real Arm hardware is the leverage point** for on-device AI on phones. By treating the phone as an asymmetric big.LITTLE SoC with thermal and power constraints - instead of a small desktop - the shipped Auto path decodes **+81% to +94% faster than the out-of-the-box eight-thread default**, a gain its own three-arm ablation attributes to the thread count rather than core pinning. The KleidiAI Q4_0 finding cut **time-to-first-token from 13.4 s to 3.9 s**, and on the same phone and model ENTITY beats **Arm's own AI Chat app by 11% on prompt and 21% on token generation** - while the adaptive runtime still fits a 3B model into 2 GB of free RAM on a $200 phone.
 
 The submission is reproducible, measured, and honest about trade-offs. The code is open-source. The results are on-device.
