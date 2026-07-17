@@ -27,12 +27,18 @@ $$
 f_{\pi_0} \ge f_{\pi_1} \ge \cdots \ge f_{\pi_{N-1}}
 $$
 
-The Auto decode width reserves two cores when possible, then clamps the result to the supported
-fast-core range:
+The Auto decode width is the size of the top frequency cluster - the cores whose
+`cpuinfo_max_freq` is within 10% of the fastest core - clamped to the supported range:
 
 $$
-T_{\mathrm{gen}} = \min\left(4,\max\left(2,N-2\right)\right)
+T_{\mathrm{gen}} = \min\left(6,\max\left(2,\left|\{\,i : f_i \ge 0.9\, f_{\pi_0}\,\}\right|\right)\right)
 $$
+
+On the reference 4+4 device the four 2.0 GHz A55s fall below the 2.25 GHz threshold, so the
+derivation yields exactly 4 - the same value the earlier hardcoded default used. The upper
+clamp is 6 rather than 4 so that a flagship with more than four performance cores threads
+wider; the lower clamp keeps a misreported topology from collapsing to a single thread. When
+cpufreq is unreadable the fallback is half the online cores.
 
 $$
 S_{\mathrm{gen}} = \{\pi_0,\pi_1,\ldots,\pi_{T_{\mathrm{gen}}-1}\}
@@ -227,6 +233,16 @@ variants when the hardware supports them.
 **Trade-off:** APK size increases (~9.8 MB release, up from ~7 MB at v1.7.0) because 7 kernels ship
 instead of 1. A custom build could set `GGML_CPU_ALL_VARIANTS=OFF` and target a specific
 `GGML_CPU_ARM_ARCH` to go back to a single backend (see [`BUILD.md`](BUILD.md#device-specific-configuration-adapting-ggml_cpu_arm_arch)).
+
+**Expected behavior on Armv9 flagships (expected, not measured).** On flagships with more than
+four performance cores (a Galaxy S26 Ultra-class Snapdragon is the kind of device meant), the
+same two mechanisms should compose without code changes: variant scoring selects an armv9
+backend with i8mm/SVE2 KleidiAI kernels instead of the armv8.2 one, and the thread derivation
+counts the larger top frequency cluster, yielding 5 or 6 generation threads instead of 4 (capped
+at 6). Whether the wider pool helps or whether mid cores within 10% of the prime core should
+count is exactly the question the in-app three-arm ablation answers per device. No such device
+has been measured; this project only publishes measured numbers, so these two sentences are the
+entire claim.
 
 ## 3. Adaptive context window
 

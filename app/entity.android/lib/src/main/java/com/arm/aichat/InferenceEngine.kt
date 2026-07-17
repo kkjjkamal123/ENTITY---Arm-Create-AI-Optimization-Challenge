@@ -78,6 +78,21 @@ interface InferenceEngine {
     suspend fun primeHistory(history: List<ChatTurn>)
 
     /**
+     * Persists the active conversation's KV state to [path] so a later
+     * [restoreState] can continue it without re-decoding the whole history.
+     * Returns false (no-op) unless a model is loaded. Never throws.
+     */
+    suspend fun saveState(path: String, systemPrompt: String): Boolean
+
+    /**
+     * Restores KV state from [path] in place of re-decoding [history]. Returns true
+     * only when the saved state matches the current model and system prompt and fits
+     * the context; otherwise returns false and the caller should fall back to
+     * [newConversation] + [primeHistory]. Never throws.
+     */
+    suspend fun restoreState(path: String, systemPrompt: String, history: List<ChatTurn>): Boolean
+
+    /**
      * llama's system-info string: the CPU features / backend variant actually in
      * use on this device. Empty until the native library has finished loading.
      */

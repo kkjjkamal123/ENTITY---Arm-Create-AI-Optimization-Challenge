@@ -9,6 +9,28 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [2.4.0] — 2026-07-17
+
+**KV-cache session reuse and topology-adaptive threads.** Two inference-path changes: multi-turn
+TTFT no longer pays for re-decoding the whole history, and the thread count is derived from the
+CPU topology instead of hardcoded. On the reference 4+4 phone the derived count is still exactly
+4, so every published benchmark number carries over.
+
+### Added
+
+- **KV-cache session reuse**: the active conversation's KV state is saved (llama.cpp
+  `llama_state_seq_*` API) to a per-conversation file in app-private storage and restored on
+  conversation switch and app restart, instead of re-decoding the full history. The state file
+  header records model, context size and system prompt; any mismatch, corruption or size overflow
+  falls back silently to the existing re-prime path. State files are deleted with their
+  conversation. A TTFT log line per path (restored vs re-primed) makes the gain measurable
+  on-device.
+- **Topology-adaptive thread count**: Auto's generation thread count is now the size of the top
+  frequency cluster (cores with `cpuinfo_max_freq` within 10% of the fastest), clamped to [2, 6],
+  instead of a hardcoded 4. A 4+4 big.LITTLE phone still derives 4; a flagship with more than four
+  performance cores threads wider. Manual thread settings still override. See
+  `docs/OPTIMIZATIONS.md` section 0 for the rule and the expected-untested flagship note.
+
 ## [2.3.0] — 2026-07-15
 
 **UI polish and quality-of-life.** A visual pass over the whole app plus the small features a
@@ -575,6 +597,7 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 2.4.0 | `ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk` (release-signed, ~10.3 MB) |
 | 2.3.0 | `ENTITY-v11-ui-polish-20260715-release.apk` (release-signed, ~10.3 MB) |
 | 2.2.0 | `ENTITY-v10-sustained-thermal-20260715-release.apk` (release-signed, ~10.3 MB) |
 | 2.1.0 | `ENTITY-v9-kleidiai-quant-20260714-release.apk` (release-signed) · `ENTITY-v9-kleidiai-quant-20260714-debug.apk` (debug) |

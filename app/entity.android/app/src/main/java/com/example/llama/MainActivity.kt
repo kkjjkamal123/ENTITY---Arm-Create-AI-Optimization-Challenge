@@ -164,6 +164,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        // Persist the active conversation's KV so the next launch continues it without
+        // re-decoding the history. Best-effort: a hard kill just falls back to re-priming.
+        if (isModelReady) vm.saveActiveState()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
         return true

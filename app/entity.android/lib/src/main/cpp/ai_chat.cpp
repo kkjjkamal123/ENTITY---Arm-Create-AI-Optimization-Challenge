@@ -6,6 +6,8 @@
 #include <vector>
 #include <algorithm>
 #include <cstdio>
+#include <cstdint>
+#include <functional>
 #include <unistd.h>
 #include <sched.h>
 #include <sampling.h>
@@ -30,8 +32,11 @@ static std::string join(const std::vector<T> &values, const std::string &delim) 
  * LLama resources: context, model, batch and sampler
  */
 constexpr int   N_THREADS_MIN           = 2;
-constexpr int   N_THREADS_MAX           = 4;
-constexpr int   N_THREADS_HEADROOM      = 2;
+// Upper clamp for the topology-derived generation thread count. 6, not 4: a 4+4
+// big.LITTLE phone still derives 4 (only four cores sit in its top frequency
+// cluster), but a flagship with more than four performance cores is allowed to
+// use up to six of them. See top_cluster_core_count().
+constexpr int   N_THREADS_MAX           = 6;
 
 constexpr int   DEFAULT_CONTEXT_SIZE    = 4096;
 constexpr int   OVERFLOW_HEADROOM       = 4;
@@ -103,6 +108,37 @@ static std::vector<int> ranked_fast_cpus() {
     ranked.reserve(cores.size());
     for (const auto &c : cores) { ranked.push_back(c.second); }
     return ranked;
+}
+
+// Number of cores in the top frequency cluster: cpuinfo_max_freq within 10% of the
+// fastest core. This is the default generation thread count (before the
+// N_THREADS_MIN/MAX clamp), derived from topology rather than hardcoded, so a phone
+// with more than four performance cores threads wider than a 4+4 device. On the
+// reference Dimensity 7300 (4x 2.5 GHz + 4x 2.0 GHz) the 2.0 GHz cores fall below the
+// 2.25 GHz threshold, so exactly the four A78s count. Falls back to half the cores
+// when cpufreq is unreadable.
+static int top_cluster_core_count() {
+    const int ncpu = (int) sysconf(_SC_NPROCESSORS_CONF);
+    std::vector<long> khz;
+    khz.reserve(ncpu);
+    for (int i = 0; i < ncpu; i++) {
+        char path[128];
+        snprintf(path, sizeof(path),
+                 "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", i);
+        long v = 0;
+        if (FILE *f = fopen(path, "r")) {
+            if (fscanf(f, "%ld", &v) != 1) { v = 0; }
+            fclose(f);
+        }
+        khz.push_back(v);
+    }
+    long top = 0;
+    for (long v : khz) { top = std::max(top, v); }
+    if (top <= 0) { return std::max(1, ncpu / 2); }
+    const long threshold = top - top / 10;   // within 10% of the fastest core
+    int count = 0;
+    for (long v : khz) { if (v >= threshold) { count++; } }
+    return count;
 }
 
 // Build a CPU set of the n fastest cores; pinning to it keeps inference off the
@@ -260,7 +296,7 @@ static llama_context *init_context(llama_model *model, int n_ctx_override = -1) 
     const int n_online = (int) sysconf(_SC_NPROCESSORS_ONLN);
     const int n_threads = g_n_threads > 0
             ? std::max(1, std::min(n_online, g_n_threads))
-            : std::max(N_THREADS_MIN, std::min(N_THREADS_MAX, n_online - N_THREADS_HEADROOM));
+            : std::max(N_THREADS_MIN, std::min(N_THREADS_MAX, top_cluster_core_count()));
 
     // Context size: explicit override (benchmark) wins, else the app's value.
     int n_ctx = n_ctx_override > 0 ? n_ctx_override
@@ -777,6 +813,11 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_primeHistoryNative(
     const int n_turns = jroles ? env->GetArrayLength(jroles) : 0;
     if (n_turns == 0) { return 0; }
 
+    // TTFT measurement hook: this is the re-prime path (full history decode). Its
+    // elapsed time is the baseline the restored-session path (restoreState) is
+    // measured against. Filter logcat for "ttft-hook".
+    const auto reprime_t0 = ggml_time_us();
+
     // Rebuild KV state on top of the already-decoded system prompt. Drop any
     // stale post-system tokens and chat history so a re-prime starts clean.
     llama_memory_seq_rm(llama_get_memory(g_context), 0, system_prompt_position, -1);
@@ -837,6 +878,168 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_primeHistoryNative(
             return 2;
         }
     }
+    LOGi("ttft-hook: reprime path decoded %d of %d turns to position %d in %.1f ms",
+         n_turns - start, n_turns, current_position,
+         double(ggml_time_us() - reprime_t0) / 1000.0);
+    return 0;
+}
+
+// ---- Conversation KV state persistence (session reuse) ----
+//
+// Within a session the KV cache already stays live across turns: current_position
+// advances and is never reset between turns of the same conversation (the ChatViewModel
+// re-primes only when primedConversationId no longer matches). These two calls extend
+// that across conversation switches and app restarts for the ACTIVE conversation, by
+// persisting seq 0's KV blob to the app's private files dir and restoring it instead of
+// re-decoding the whole history.
+//
+// The file is [StateHeader][seq blob]. Restore is gated on model identity, system-prompt
+// identity, and the saved token count fitting the live context. n_ctx is stored but not
+// required to match exactly: the seq blob is sized by token count, not by n_ctx, so a
+// conversation saved under an 8192 context restores fine into a 4096 one as long as it
+// fits. Any mismatch, short read, or corrupt file returns non-zero and the caller falls
+// back to the re-prime path. Never crashes on a bad file.
+namespace {
+constexpr uint32_t STATE_MAGIC   = 0x45535431u; // 'EST1'
+constexpr uint32_t STATE_VERSION = 1u;
+
+struct StateHeader {
+    uint32_t magic;
+    uint32_t version;
+    uint64_t model_hash;
+    uint64_t sys_hash;
+    int32_t  n_ctx;
+    int32_t  system_prompt_position;
+    int32_t  current_position;
+    uint64_t data_size;
+};
+
+uint64_t hash_str(const std::string &s) { return (uint64_t) std::hash<std::string>{}(s); }
+
+uint64_t current_model_hash() {
+    if (!g_model) { return 0; }
+    char desc[256];
+    llama_model_desc(g_model, desc, sizeof(desc));
+    return hash_str(std::string(desc) + ":" + std::to_string(llama_model_n_params(g_model)));
+}
+} // namespace
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_arm_aichat_internal_InferenceEngineImpl_saveStateNative(
+        JNIEnv *env, jobject /*unused*/, jstring jpath, jstring jsystem_prompt) {
+    if (!g_context || !g_model) { return 1; }
+    if (current_position <= system_prompt_position) { return 4; }  // nothing beyond system prompt
+
+    const auto *path = env->GetStringUTFChars(jpath, nullptr);
+    const auto *sys  = env->GetStringUTFChars(jsystem_prompt, nullptr);
+
+    StateHeader h{};
+    h.magic       = STATE_MAGIC;
+    h.version     = STATE_VERSION;
+    h.model_hash  = current_model_hash();
+    h.sys_hash    = hash_str(sys ? sys : "");
+    h.n_ctx       = g_n_ctx;
+    h.system_prompt_position = system_prompt_position;
+    h.current_position       = current_position;
+
+    const size_t sz = llama_state_seq_get_size(g_context, 0);
+    std::vector<uint8_t> buf(sz);
+    const size_t written = llama_state_seq_get_data(g_context, buf.data(), sz, 0);
+
+    jint rc = 0;
+    if (written == 0) {
+        rc = 2;
+    } else {
+        h.data_size = written;
+        std::string tmp = std::string(path) + ".tmp";
+        if (FILE *f = fopen(tmp.c_str(), "wb")) {
+            bool ok = fwrite(&h, sizeof(h), 1, f) == 1 &&
+                      fwrite(buf.data(), 1, written, f) == written;
+            ok = (fclose(f) == 0) && ok;
+            if (ok && rename(tmp.c_str(), path) == 0) {
+                LOGi("%s: saved %zu bytes, position %d, ctx %d", __func__, written, current_position, g_n_ctx);
+            } else {
+                remove(tmp.c_str());
+                rc = 3;
+            }
+        } else {
+            rc = 3;
+        }
+    }
+
+    if (path) { env->ReleaseStringUTFChars(jpath, path); }
+    if (sys)  { env->ReleaseStringUTFChars(jsystem_prompt, sys); }
+    return rc;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_arm_aichat_internal_InferenceEngineImpl_restoreStateNative(
+        JNIEnv *env, jobject /*unused*/, jstring jpath, jstring jsystem_prompt,
+        jobjectArray jroles, jobjectArray jtexts) {
+    if (!g_context || !g_model) { return 1; }
+    const auto restore_t0 = ggml_time_us();
+
+    const auto *path = env->GetStringUTFChars(jpath, nullptr);
+    const auto *sys  = env->GetStringUTFChars(jsystem_prompt, nullptr);
+    const std::string sys_str = sys ? sys : "";
+    const std::string path_str = path ? path : "";
+    if (path) { env->ReleaseStringUTFChars(jpath, path); }
+    if (sys)  { env->ReleaseStringUTFChars(jsystem_prompt, sys); }
+
+    FILE *f = fopen(path_str.c_str(), "rb");
+    if (!f) { return 2; }
+
+    StateHeader h{};
+    if (fread(&h, sizeof(h), 1, f) != 1) { fclose(f); return 2; }
+    if (h.magic != STATE_MAGIC || h.version != STATE_VERSION) { fclose(f); return 2; }
+    if (h.model_hash != current_model_hash()) { fclose(f); return 3; }        // model changed
+    if (h.sys_hash != hash_str(sys_str)) { fclose(f); return 4; }             // system prompt changed
+    if (h.current_position > g_n_ctx - OVERFLOW_HEADROOM) { fclose(f); return 5; } // won't fit live ctx
+    if (h.data_size == 0 || h.data_size > (uint64_t) (256u * 1024u * 1024u)) { fclose(f); return 6; }
+
+    std::vector<uint8_t> buf(h.data_size);
+    const size_t got = fread(buf.data(), 1, h.data_size, f);
+    fclose(f);
+    if (got != h.data_size) { return 6; }
+
+    // Replace seq 0's KV with the saved blob. A failed set_data leaves the KV in an
+    // unknown state, but the caller's fallback re-primes (which clears and re-decodes),
+    // so this is recoverable.
+    llama_memory_seq_rm(llama_get_memory(g_context), 0, -1, -1);
+    if (llama_state_seq_set_data(g_context, buf.data(), h.data_size, 0) == 0) { return 7; }
+
+    // Rebuild the C++ chat/template state WITHOUT decoding: the KV already holds the
+    // history, we only need chat_msgs to match so the next live turn's template diff is
+    // correct, and the positions to continue from. reset_long_term_states(false) clears
+    // chat_msgs and positions but preserves the KV we just restored.
+    reset_long_term_states(/*clear_kv_cache=*/false);
+    reset_short_term_states();
+
+    const bool has_chat_template = common_chat_templates_was_explicit(g_chat_templates.get());
+    if (has_chat_template) { chat_add_and_format(ROLE_SYSTEM, sys_str, false); }
+
+    const int n_turns = jroles ? env->GetArrayLength(jroles) : 0;
+    for (int t = 0; t < n_turns; t++) {
+        auto *jrole = (jstring) env->GetObjectArrayElement(jroles, t);
+        auto *jtext = (jstring) env->GetObjectArrayElement(jtexts, t);
+        const auto *role = jrole ? env->GetStringUTFChars(jrole, nullptr) : nullptr;
+        const auto *text = jtext ? env->GetStringUTFChars(jtext, nullptr) : nullptr;
+        if (role && text && has_chat_template) {
+            chat_add_and_format(role, text, false);
+        }
+        if (role) { env->ReleaseStringUTFChars(jrole, role); }
+        if (text) { env->ReleaseStringUTFChars(jtext, text); }
+        if (jrole) { env->DeleteLocalRef(jrole); }
+        if (jtext) { env->DeleteLocalRef(jtext); }
+    }
+
+    system_prompt_position = h.system_prompt_position;
+    current_position       = h.current_position;
+
+    LOGi("ttft-hook: restore path loaded KV to position %d (skipped decode of %d turns) in %.1f ms",
+         current_position, n_turns, double(ggml_time_us() - restore_t0) / 1000.0);
     return 0;
 }
 

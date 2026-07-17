@@ -12,9 +12,9 @@ class DeviceOptimizerTest {
     }
 
     @Test
-    fun `threads clamped to max four`() {
-        assertEquals(4, DeviceOptimizer.suggest(6).threads)
-        assertEquals(4, DeviceOptimizer.suggest(8).threads)
+    fun `threads clamped to max six`() {
+        assertEquals(6, DeviceOptimizer.suggest(6).threads)
+        assertEquals(6, DeviceOptimizer.suggest(8).threads)
     }
 
     @Test
@@ -24,11 +24,39 @@ class DeviceOptimizerTest {
     }
 
     @Test
-    fun `threads always inside the native 2 to 4 clamp`() {
+    fun `threads always inside the native 2 to 6 clamp`() {
         for (cores in 0..16) {
             val t = DeviceOptimizer.suggest(cores).threads
-            assertTrue("cores $cores -> $t", t in 2..4)
+            assertTrue("cores $cores -> $t", t in 2..6)
         }
+    }
+
+    @Test
+    fun `top cluster is the reference phone's four performance cores`() {
+        // Dimensity 7300: 4x 2.5 GHz A78 + 4x 2.0 GHz A55. 2.0 GHz is below the 2.25 GHz
+        // (10%-of-max) threshold, so exactly the four A78s count. The 4+4 invariant.
+        assertEquals(
+            4,
+            DeviceOptimizer.topClusterCoreCount(
+                listOf(2000000L, 2000000L, 2000000L, 2000000L, 2500000L, 2500000L, 2500000L, 2500000L)
+            )
+        )
+    }
+
+    @Test
+    fun `top cluster counts only cores within ten percent of the fastest`() {
+        // 1 prime @3.0 + 3 perf @2.4 (below 2.7 threshold) -> only the prime counts, clamped up to MIN.
+        assertEquals(2, DeviceOptimizer.topClusterCoreCount(listOf(3000000L, 2400000L, 2400000L, 2400000L)))
+        // 6 perf @3.2 within 10% + 2 little @2.0 -> six, at the MAX clamp.
+        assertEquals(6, DeviceOptimizer.topClusterCoreCount(listOf(3200000L, 3200000L, 3200000L, 3200000L, 3200000L, 3200000L, 2000000L, 2000000L)))
+        // Uniform cores: all within 10%, clamped to MAX.
+        assertEquals(6, DeviceOptimizer.topClusterCoreCount(List(8) { 2000000L }))
+    }
+
+    @Test
+    fun `top cluster falls back to half the cores when cpufreq is unreadable`() {
+        assertEquals(4, DeviceOptimizer.topClusterCoreCount(List(8) { 0L }))
+        assertEquals(2, DeviceOptimizer.topClusterCoreCount(List(2) { 0L }))
     }
 
     @Test

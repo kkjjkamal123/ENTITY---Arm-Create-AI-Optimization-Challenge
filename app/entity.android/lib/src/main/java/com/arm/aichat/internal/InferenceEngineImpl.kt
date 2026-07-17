@@ -113,6 +113,15 @@ internal class InferenceEngineImpl private constructor(
 
     private external fun primeHistoryNative(roles: Array<String>, texts: Array<String>): Int
 
+    private external fun saveStateNative(path: String, systemPrompt: String): Int
+
+    private external fun restoreStateNative(
+        path: String,
+        systemPrompt: String,
+        roles: Array<String>,
+        texts: Array<String>,
+    ): Int
+
     @FastNative
     private external fun generateNextToken(): String?
 
@@ -358,6 +367,37 @@ internal class InferenceEngineImpl private constructor(
             Log.i(TAG, "History primed! Awaiting user prompt...")
             _state.value = InferenceEngine.State.ModelReady
         }
+
+    /**
+     * Persists the active conversation's KV state to [path]. No-op (returns false)
+     * unless a model is loaded. Never throws.
+     */
+    override suspend fun saveState(path: String, systemPrompt: String): Boolean =
+        withContext(llamaDispatcher) {
+            if (_state.value !is InferenceEngine.State.ModelReady) return@withContext false
+            runCatching { saveStateNative(path, systemPrompt) == 0 }.getOrDefault(false)
+        }
+
+    /**
+     * Restores KV state from [path] instead of re-decoding [history]. Returns true only
+     * when the saved state matches the current model and system prompt and fits the
+     * context; on any mismatch or corrupt file returns false and the caller re-primes.
+     */
+    override suspend fun restoreState(
+        path: String,
+        systemPrompt: String,
+        history: List<ChatTurn>,
+    ): Boolean = withContext(llamaDispatcher) {
+        if (_state.value !is InferenceEngine.State.ModelReady) return@withContext false
+        _readyForSystemPrompt = false
+        _state.value = InferenceEngine.State.ProcessingUserPrompt
+        val roles = Array(history.size) { history[it].role }
+        val texts = Array(history.size) { history[it].text }
+        val ok = runCatching { restoreStateNative(path, systemPrompt, roles, texts) == 0 }
+            .getOrDefault(false)
+        _state.value = InferenceEngine.State.ModelReady
+        ok
+    }
 
     /**
      * The native system-info string, or empty if the native library is not up yet.

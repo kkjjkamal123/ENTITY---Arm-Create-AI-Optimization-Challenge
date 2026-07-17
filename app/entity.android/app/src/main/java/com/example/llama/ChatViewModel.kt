@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.UUID
 
 // Per-token thermal throttle. Pure int->delay mapping so it stays JVM-testable
@@ -80,6 +81,28 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         _listVersion.value++
     }
 
+    // KV state files, one per conversation, in the app's private files dir. The file
+    // lets the ACTIVE conversation's KV survive a switch or an app restart, so the next
+    // turn continues without re-decoding the whole history. Stale/mismatched files are
+    // rejected by the native header check (model / system prompt / context fit) and the
+    // caller silently falls back to re-priming.
+    private fun stateDir() = File(getApplication<Application>().filesDir, "kvstate").apply { mkdirs() }
+    private fun stateFile(id: Long) = File(stateDir(), "state_$id.bin")
+
+    // Persist the live engine KV for the active conversation, if the engine currently
+    // reflects it. Called before switching away and on app stop; best-effort, never throws.
+    private suspend fun persistActiveState() {
+        val id = conversationId
+        if (id == 0L || primedConversationId != id || _messages.isEmpty()) return
+        runCatching { engine.saveState(stateFile(id).path, Settings.systemPrompt(prefs)) }
+    }
+
+    // Best-effort save for lifecycle stop; the coroutine may not finish before a kill,
+    // in which case restore falls back to re-priming.
+    fun saveActiveState() {
+        viewModelScope.launch { persistActiveState() }
+    }
+
     fun restoreLatest() {
         if (initialized) return
         initialized = true
@@ -95,6 +118,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         if (id == conversationId) return
         viewModelScope.launch {
             generationJob?.cancelAndJoin()
+            persistActiveState()
             loadInto(id)
         }
     }
@@ -113,6 +137,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     fun newConversation() {
         viewModelScope.launch {
             generationJob?.cancelAndJoin()
+            persistActiveState()
             val id = withContext(Dispatchers.IO) { db.createConversation(System.currentTimeMillis()) }
             conversationId = id
             _messages.clear()
@@ -189,7 +214,10 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     fun deleteConversation(id: Long) {
         viewModelScope.launch {
             if (id == conversationId) generationJob?.cancelAndJoin()
-            withContext(Dispatchers.IO) { db.deleteConversation(id) }
+            withContext(Dispatchers.IO) {
+                db.deleteConversation(id)
+                runCatching { stateFile(id).delete() }
+            }
             if (id == conversationId) {
                 val next = withContext(Dispatchers.IO) { db.latestConversationId() }
                 if (next != null) loadInto(next) else newConversation()
@@ -209,8 +237,15 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             try {
                 if (primedConversationId != convId) {
                     _genState.value = GenPhase.PRIMING
-                    engine.newConversation(systemPrompt)
-                    if (priorTurns.isNotEmpty()) engine.primeHistory(priorTurns)
+                    // Try restoring the saved KV state first (skips decoding the whole
+                    // history); fall back to a full re-prime if there is no valid state.
+                    val restored = priorTurns.isNotEmpty() &&
+                        stateFile(convId).exists() &&
+                        engine.restoreState(stateFile(convId).path, systemPrompt, priorTurns)
+                    if (!restored) {
+                        engine.newConversation(systemPrompt)
+                        if (priorTurns.isNotEmpty()) engine.primeHistory(priorTurns)
+                    }
                     primedConversationId = convId
                 }
                 _genState.value = GenPhase.GENERATING

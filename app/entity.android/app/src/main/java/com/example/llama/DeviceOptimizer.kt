@@ -16,8 +16,10 @@ object DeviceOptimizer {
     data class Suggestion(val threads: Int, val contextSummary: String, val reason: String)
 
     // Mirrors the native clamp in ai_chat.cpp (N_THREADS_MIN / N_THREADS_MAX).
+    // MAX is 6, not 4: a 4+4 phone still derives 4 (only four cores in its top
+    // frequency cluster), but a flagship with more performance cores may thread wider.
     const val MIN_THREADS = 2
-    const val MAX_THREADS = 4
+    const val MAX_THREADS = 6
 
     // Auto tuning is the optimized path: the native side ranks cores by clock and pins
     // generation to the fast cluster, and MainActivity.adaptiveContext() sizes the window
@@ -33,10 +35,26 @@ object DeviceOptimizer {
         )
     }
 
+    // Default generation thread count derived from CPU topology: the cores in the top
+    // frequency cluster (cpuinfo_max_freq within ~10% of the fastest core), clamped to
+    // [MIN_THREADS, MAX_THREADS]. Mirrors top_cluster_core_count() in ai_chat.cpp. On a
+    // 4+4 big.LITTLE phone the little cores fall below the 10% threshold, so exactly the
+    // four performance cores count; a flagship with more performance cores scales up to
+    // the clamp. Distinct from fastCoreCount(): that keeps "everything above the slowest
+    // tier" for affinity and the telemetry split; this is the narrower top-cluster rule
+    // for how many threads to run. Falls back to half the cores when cpufreq is unreadable.
+    fun topClusterCoreCount(maxFreqsKhz: List<Long>): Int {
+        val top = maxFreqsKhz.maxOrNull() ?: 0L
+        if (top <= 0L) return (maxFreqsKhz.size / 2).coerceAtLeast(1).coerceIn(MIN_THREADS, MAX_THREADS)
+        val threshold = top - top / 10
+        return maxFreqsKhz.count { it >= threshold }.coerceIn(MIN_THREADS, MAX_THREADS)
+    }
+
     // How many cores are NOT in the slowest frequency tier. Same idea as
     // ranked_fast_cpus() in ai_chat.cpp: rank by max clock, take the fast cluster.
     // ponytail: everything above the little cores counts as fast, so on a tri-cluster
-    // chip the mid cores are included too — harmless, the count is clamped to 4 anyway.
+    // chip the mid cores are included too. Drives affinity and the telemetry split, not
+    // the thread count (that is topClusterCoreCount).
     fun fastCoreCount(maxFreqsKhz: List<Long>): Int {
         val top = maxFreqsKhz.maxOrNull() ?: 0L
         // Nothing readable: fall back to half the cores.
@@ -74,7 +92,9 @@ object DeviceOptimizer {
 
         val am = activity.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         val mem = ActivityManager.MemoryInfo().also { am.getMemoryInfo(it) }
-        val s = suggest(fast)
+        // Thread count is the derived top-cluster value, not the whole fast tier: on a
+        // tri-cluster chip those differ, and the derived value is what native threads with.
+        val s = suggest(topClusterCoreCount(freqs))
 
         val body = StringBuilder()
         body.append("Found $fast performance core${plural(fast)}")

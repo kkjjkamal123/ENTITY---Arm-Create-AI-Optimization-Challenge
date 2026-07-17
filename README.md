@@ -10,7 +10,7 @@
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
-![Release](https://img.shields.io/badge/release-v2.3.0-orange)
+![Release](https://img.shields.io/badge/release-v2.4.0-orange)
 ![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
 
 </div>
@@ -31,7 +31,7 @@ The current release is built for arm64 Android phones running Android 13 or late
 |---|---|
 | CPU backend | Ships seven Arm CPU backend variants from Arm v8.0 through Arm v9.2. ggml loads the best supported variant at startup. |
 | KleidiAI advisor | Arm's KleidiAI has kernels for Q4_0 and Q8_0 only. Every other quantization silently falls back to generic ggml. ENTITY reads the GGUF header and tells you whether the model you loaded can actually reach Arm's kernels, and what it costs when it cannot. |
-| Fast core selection | Reads maximum CPU frequency from the device then ranks the cores. Both inference phases run on the fastest two to four cores rather than waiting for the slower efficiency cores. |
+| Fast core selection | Reads maximum CPU frequency from the device then ranks the cores. Auto derives its thread count from the size of the top frequency cluster (two to six cores; four on the reference 4+4 phone) and runs both inference phases there rather than waiting for the slower efficiency cores. |
 | Adaptive context | Selects a 2048 to 8192 token context from model size and free RAM. This lets a 3B class model use a smaller window when memory is tight. |
 | Thermal policy | Checks Android thermal status during generation and adds a small cooperative delay when heat rises. Efficiency mode doubles the delay and caps inference at two threads. |
 | Energy telemetry | Reports tokens, token rate, time to first token, temperature, power, token per watt and free memory. |
@@ -148,7 +148,7 @@ Ninety seconds from clone to chatting, on any arm64 phone with Android 13+:
 ```bash
 git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
 cd ENTITY---Arm-Create-AI-Optimization-Challenge
-adb install -r apk/ENTITY-v11-ui-polish-20260715-release.apk
+adb install -r apk/ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk
 ```
 
 Then on the phone:
