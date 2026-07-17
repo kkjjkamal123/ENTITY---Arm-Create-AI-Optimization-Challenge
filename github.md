@@ -82,7 +82,7 @@ The same optimization reproduces on Qualcomm silicon: OPPO CPH2729 with Snapdrag
 
 The core mechanism — ranking CPU cores by their maximum clock frequency from `/sys/devices/system/cpu/cpuN/cpufreq/cpuinfo_max_freq` and pinning inference to the performance cluster via `sched_setaffinity` — requires **no vendor-specific code**. The identical code path detects and uses the performance cores on both MediaTek and Qualcomm. On Snapdragon, power remains flat at 3.4 W while decode throughput more than doubles: the efficiency gain comes from finishing work faster at the same power cost, not from consuming additional current.
 
-![Current in-app benchmark](screenshots/Benchmark.png)
+![Current in-app benchmark](screenshots/Entity%20Chat/Benchmark.png)
 
 ### What this number does not say - and what ENTITY's own ablation found
 
