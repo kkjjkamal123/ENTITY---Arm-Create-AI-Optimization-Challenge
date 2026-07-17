@@ -19,7 +19,7 @@ The app has been measured on:
 
 | Device | SoC | Memory | Android |
 |---|---|---:|---:|
-| CMF Phone 1 | MediaTek Dimensity 7300 | 5.6 GB | 16 |
+| CMF Phone 1 | MediaTek Dimensity 7300 | 6 GB | 16 |
 | OPPO CPH2729 | Qualcomm Snapdragon 6 Gen 4 | 7.4 GB | 16 |
 
 ## Runtime decisions
@@ -95,8 +95,8 @@ report the end to end gain of the shipped configuration over what the phone does
 
 They do not attribute that gain to core pinning. The two arms change two things at once, the thread
 count and the core placement. The app now runs a third arm, threads only, which holds Auto's thread
-count and switches affinity off, and the answer is in: across six runs on two models the thread
-count earns +81% to +94% of decode and the pinning earns about 0%. ENTITY's own ablation disproved
+count and switches affinity off, and the answer is in: across twelve runs on two models the thread
+count earns +81% to +106% of decode and the pinning earns about 0%. ENTITY's own ablation disproved
 ENTITY's flagship optimization. Full record: [benchmarks](../benchmarks/BENCHMARKS.md).
 
 ### CMF Phone 1

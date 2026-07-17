@@ -1,4 +1,4 @@
-# ENTITY v2.1.0 benchmark record
+# ENTITY v2.2.0 benchmark record
 
 This is the one canonical benchmark document for ENTITY. It reports the benchmark path that ships
 in the Android app. The public source is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge).
@@ -46,7 +46,8 @@ Decode throughput, tokens/s:
 |---|---:|---:|---:|---:|---:|
 | Llama-3.2-1B Q3_K_L (3 runs) | 8.8 ± 0.50 | 16.9 ± 0.08 | 16.7 ± 1.3 | **+92%** | **−1%** |
 | Llama-3.2-1B Q4_0 (1 run) | 7.9 | 14.7 | 14.7 | **+86%** | **+0%** |
-| Llama-3.2-1B Q4_0 (3 runs, 2026-07-15) | 7.7 ± 0.78 | 15.9 ± 0.22 | 16.0 ± 2.1 | **+106%** | +1% |
+| Llama-3.2-1B Q4_0 (3 runs, 2026-07-15 midday) | 7.7 ± 0.78 | 15.9 ± 0.22 | 16.0 ± 2.1 | **+106%** | +1% |
+| Llama-3.2-1B Q4_0 (3 runs, 2026-07-15 evening) | 8.6 ± 0.82 | 15.9 ± 1.58 | 15.9 ± 0.09 | **+85%** | **+0%** |
 | Llama-3.2-3B Q4_0 (1 run) | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
 | Llama-3.2-3B Q4_0 (1 run) | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
 
@@ -59,6 +60,10 @@ bothers to pass the flag.
 **Pinning those four threads to the performance cluster adds nothing measurable.** The two 3B runs
 disagree (+13% and +0%), and a third 3B run taken while charging measured −16%; single 3B runs swing
 about ±15%, so the +13% is not a finding. Across every run the honest number is ~0%.
+
+The 2026-07-15 evening set is the sharpest statement of the pattern yet: the pinned and unpinned
+medians are identical at 15.9 tok/s, but pinning collapses the spread from ±1.58 to ±0.09 tok/s.
+What the pinning buys is repeatability, not speed.
 
 The affinity code still ships, because it costs nothing and a different SoC may behave differently.
 It is no longer claimed as the source of the speed-up.
@@ -130,7 +135,7 @@ and the benchmark screen shows both sides of it.
 
 ![Energy efficiency](plots/energy_efficiency.png)
 
-## Result 4: the same work costs 47% less battery
+## Result 4: the same work costs 42–47% less battery
 
 Tokens-per-watt is the metric every on-device app quotes, and it undersells what is happening. The
 app's CSV export records the battery current every 150 ms, so the *energy* a pass actually cost can
@@ -138,21 +143,27 @@ be integrated from the measured power curve rather than inferred.
 
 ![Energy per task](plots/energy_per_task.png)
 
+From the 2026-07-15 evening export (first pass of each arm):
+
 | Arm | Pass duration | Mean power | **Energy for 128 tokens** |
 |---|---:|---:|---:|
-| Naïve (8 threads) | 20.8 s | 4.57 W | **95 J** |
-| Threads only | 12.7 s | 4.45 W | **57 J** (−40%) |
-| **ENTITY Auto** | **11.7 s** | 4.31 W | **51 J** (−47%) |
+| Naïve (8 threads) | 19.9 s | 4.34 W | **86 J** |
+| Threads only | 12.2 s | 3.98 W | **49 J** (−44%) |
+| **ENTITY Auto** | **11.8 s** | 4.22 W | **50 J** (−42%) |
+
+The earlier 2026-07-14 single-run export measured the same shape: naïve 95 J, threads-only 57 J
+(−40%), Auto 51 J (−47%). Across both exports the saving is 42–47%, and threads-only versus Auto
+is inside the noise — consistent with Result 1's finding that the pinning earns nothing.
 
 **All three configurations draw roughly the same watts.** ENTITY does not win by sipping less
 current — it wins because it finishes in half the time. Energy is the area under the power curve,
 which is why the left panel of that figure is a literal picture of the right one.
 
-Integrated by trapezoid from 289 battery-current samples in
-[`results/entity_1b-q4_0_unplugged_1run_20260714.csv`](results/entity_1b-q4_0_unplugged_1run_20260714.csv):
+Integrated by trapezoid from 273 battery-current samples in
+[`results/entity_1b-q4_0_unplugged_3run_20260715b.csv`](results/entity_1b-q4_0_unplugged_3run_20260715b.csv):
 
 ```bash
-python3 benchmarks/plot_energy.py benchmarks/results/entity_1b-q4_0_unplugged_1run_20260714.csv
+python3 benchmarks/plot_energy.py benchmarks/results/entity_1b-q4_0_unplugged_3run_20260715b.csv
 ```
 
 The script refuses to run on a charging export, because the battery current would be the charger's
@@ -173,9 +184,12 @@ Setup, screenshots, and the caveats (including why ENTITY's live-chat 16.9 tok/s
 ## Interpretation and limits
 
 - One phone, two models, one quantization pair. Not a universal multiplier.
-- The 1B Q3_K_L row is three runs; the Q4_0 rows are single runs, so their sd columns are 0 and not
-  meaningful. Treat the single-run figures as indicative, and the ±15% swing seen across the 3B runs
-  as the noise floor for one pass.
+- The 1B Q3_K_L row and both 2026-07-15 1B Q4_0 rows are three runs; the remaining Q4_0 rows are
+  single runs, so their sd columns are 0 and not meaningful. Treat the single-run figures as
+  indicative, and the ±15% swing seen across the 3B runs as the noise floor for one pass.
+- The thread-count gain itself moves run to run: the two 1B Q4_0 three-run sets read +106% and
+  +85%, mostly because the naïve baseline is the noisiest arm. The honest summary across every
+  three-run set is "roughly 2×", not one fixed percentage.
 - These are synthetic benchmark values, not live multi-turn chat speed.
 - Power and tokens-per-watt are recorded only while unplugged; the app hides them while charging
   because USB input invalidates the battery-current reading.
@@ -229,8 +243,9 @@ to cache before the picker opens.
 | File | Run | Contents |
 |---|---|---|
 | `entity_1b-q4_0_unplugged_1run_20260714.csv` | 1B Q4_0, unplugged, 1 run | 4,046 telemetry samples, 2,312 CPU-frequency samples. Power is valid; every graph on this page comes from it. |
-| `entity_1b-q4_0_charging_3run_20260714.csv` | 1B Q4_0, charging, 3 runs | 12,012 telemetry samples. Speed is valid and this is the tightest three-run evidence in the project. **Its power columns are not** — the phone was charging, so they measure the charger. Both plot scripts refuse to draw power from it. |
+| `entity_1b-q4_0_charging_3run_20260714.csv` | 1B Q4_0, charging, 3 runs | 12,012 telemetry samples. Speed is valid and this was the tightest three-run evidence in the project until the 2026-07-15 evening export. **Its power columns are not** — the phone was charging, so they measure the charger. Both plot scripts refuse to draw power from it. |
 | `entity_1b-q4_0_unplugged_3run_20260715.csv` | 1B Q4_0, unplugged, 3 runs | 13,007 telemetry samples, app v2.2.0. The first unplugged three-run set: speed AND power both valid. Thread count +106% decode, pinning +1%. Caveat: its `affinity_naive` meta row says `pinned_fast_cores`; the naive mask is the 8 fastest of 8 cores, i.e. all of them, so the label was misleading and the CSV writer was corrected after this export. |
+| `entity_1b-q4_0_unplugged_3run_20260715b.csv` | 1B Q4_0, unplugged, 3 runs | 12,126 data rows (855 telemetry samples × 14 channels), app v2.2.0, evening of the same day. The first export with the corrected `affinity_naive` label (`mask_all_cores_effectively_unpinned`). Speed and power both valid, every pass LIGHT thermal from a 36 °C start. Thread count +85% decode; pinning +0% with the tightest Auto spread recorded (±0.09 tok/s). The energy figure is drawn from it. |
 
 Exports carry per-pass values, per-core CPU frequency samples, battery temperature, thermal state,
 power, and the per-arm affinity policy.
@@ -251,7 +266,26 @@ threads-only's worst (16.0), so the distributions overlap and the mean-to-mean d
 The pinning is somewhere between 0 and +2%, inside the run-to-run noise. That is consistent with
 every other run and with this document's conclusion: **the thread count earns the gain.**
 
+The 2026-07-15 evening export (`entity_1b-q4_0_unplugged_3run_20260715b.csv`) repeats the ablation
+unplugged with valid power:
+
+| Arm | Decode, per pass (tok/s) | Median |
+|---|---|---:|
+| Naïve | 8.60, 7.04, 8.92 | 8.60 |
+| Threads only | 15.9, 16.5, 12.9 | 15.9 |
+| ENTITY Auto | 15.9, 15.7, 15.9 | 15.9 |
+
+Thread count: **+85%**. Pinning: **+0.0%** — the medians are identical. Threads-only's third pass
+(12.9) is an outlier of the same kind the midday export saw in its Auto arm; the median is robust
+to it, and the pinned arm's three passes span just 0.2 tok/s.
+
 ## Contribute a device result
+
+The easiest path is the standalone [ENTITY Bench](../app/entity.bench.android/README.md) APK
+([`apk/ENTITY-Bench-v1.0.0-release.apk`](../apk/ENTITY-Bench-v1.0.0-release.apk)). It is a stripped-down
+app with no chat: you import a GGUF via the file picker, run the same three-arm ablation on an unplugged,
+cooled phone, and tap **Export CSV**. There is nothing to set up in the chat app and no model to import
+twice.
 
 Use [device-result-template.csv](device-result-template.csv) for a result from another arm64 Android
 phone, and commit the raw exported CSV beside it. Keep the model, quantization, app version,

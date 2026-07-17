@@ -9,7 +9,7 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
-## [2.3.0] 
+## [2.3.0] — 2026-07-15
 
 **UI polish and quality-of-life.** A visual pass over the whole app plus the small features a
 daily driver needs. No inference-path changes, so every published benchmark number carries over.
@@ -41,7 +41,7 @@ daily driver needs. No inference-path changes, so every published benchmark numb
   of the misleading `pinned_fast_cores` (the naive arm's mask is the N fastest of N cores, i.e.
   all of them; the behavior was always correct, the label was not).
 
-## [2.2.0] 
+## [2.2.0] — 2026-07-15
 
 **Sustained thermal benchmark.** The regular benchmark answers "how fast is a cool phone for one
 pass". This release adds the question a phone actually poses: does the rate hold once the SoC is
@@ -63,7 +63,7 @@ minutes per arm, with no cooldown between passes, and records how each arm degra
 - The fixed six-pass sustained loop became time-bounded: passes repeat until the selected duration
   elapses (always at least one), keeping the existing 2 s inter-pass gap.
 
-## [2.1.0] 
+## [2.1.0] — 2026-07-14
 
 **ENTITY's own benchmark disproved ENTITY's flagship optimization, and found two that actually
 work.** The v2.0.0 headline credited a +121% decode gain to big-core affinity pinning. The
@@ -125,7 +125,7 @@ Q3_K_L.
 Time-to-first-token improves **3.4×**. Decode gives up ~12%, the bandwidth cost of the larger
 quantization. Full record, graphs and limits: [BENCHMARKS.md](benchmarks/BENCHMARKS.md).
 
-## [2.0.0] 
+## [2.0.0] — 2026-07-12
 
 The headline: **universal Arm support via runtime CPU backend dispatch**. ENTITY previously shipped
 a single CPU backend compiled for one known SoC. v2.0.0 ships **7 Arm CPU backend variants** (armv8.0,
@@ -184,7 +184,7 @@ hardcoding Cortex-A78 names. Eight new unit tests cover device detection and pow
 
 ---
 
-## [1.7.0] 
+## [1.7.0] — 2026-07-12
 
 A polishing release focused on battery life and reliability. The headline is **Efficiency mode**, a
 toggle in Settings that trades speed for power: when on, inference is capped at 2 threads (vs. the
@@ -215,7 +215,7 @@ efficiency-mode doubling, and monotonicity across all statuses.
 
 ---
 
-## [1.6.0] 
+## [1.6.0] — 2026-07-10
 
 The biggest release since 1.0.0, on three fronts at once: the runtime got faster where it was
 weakest, the app became a real daily tool, and the UI got the polish pass it deserved. On the
@@ -305,7 +305,7 @@ symbols, the APK drops from ~100 MB to ~7 MB.
 
 ---
 
-## [1.5.0] 
+## [1.5.0] — 2026-07-04
 
 A UI-polish release focused on first impressions. Until now, opening ENTITY with no model loaded left
 you staring at an empty black screen with only an input hint — functional, but it read as unfinished.
@@ -342,7 +342,7 @@ drop-in update.
 
 ---
 
-## [1.4.0] 
+## [1.4.0] — 2026-07-04
 
 A personalization release that also hardened the benchmark path. The headline feature is a theme-aware
 app-icon switcher: ENTITY ships with two logos — a black-background and a white-background "E" — and this
@@ -401,7 +401,7 @@ icon-switch crash and an over-shrunk icon glyph.
 
 ---
 
-## [1.3.0] 
+## [1.3.0] — 2026-07-03
 
 This release turns ENTITY's core claim into something you can measure inside the app. The whole point of
 the project is that pinning inference to the Cortex-A78 big cores beats a naïve all-cores run on this
@@ -447,7 +447,7 @@ chat's context bounds.
 
 ---
 
-## [1.2.0] 
+## [1.2.0] — 2026-07-03
 
 A release about getting a model into the app on *any* phone, not just the developer's. The previous
 builds expected you to copy a `.gguf` file into the app's `Android/data/…` folder, which works over adb
@@ -488,7 +488,7 @@ to import was also fixed.
 
 ---
 
-## [1.1.0] 
+## [1.1.0] — 2026-07-03
 
 This release turns ENTITY from a chat app into a tunable, observable runtime. The idea was to stop
 treating the phone as a black box and expose both the levers and the readouts. On the observability side,
@@ -543,7 +543,7 @@ mid-generation can no longer wedge the UI.
 
 ---
 
-## [1.0.0] 
+## [1.0.0] — 2026-07-02
 
 The initial release, and the one that set ENTITY apart from a generic offline chat app. Rather than run a
 desktop-style build on a phone, this version was tuned specifically to the CMF Phone 1's Dimensity 7300.

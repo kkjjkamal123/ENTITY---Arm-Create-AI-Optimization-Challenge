@@ -21,6 +21,14 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 | `ENTITY-v1-runtime-graph-settings-20260703-1521.apk` | 1.1.0 | debug | |
 | `ENTITY-optimized-single-variant-20260702-2335.apk` | 1.0.0 | debug | |
 
+## Standalone benchmark app
+
+`ENTITY-Bench-v1.0.0-release.apk` is a separate, stripped-down app (no chat) that runs only ENTITY's three-arm ablation - naive, threads-only and Auto - on a model you import, and exports every pass to CSV. Anyone with an arm64 phone can install it, run the ablation on their own SoC, and contribute a row to [`benchmarks/device-result-template.csv`](../benchmarks/device-result-template.csv). See [app/entity.bench.android/README.md](../app/entity.bench.android/README.md).
+
+| File | Version | Build | Size |
+|---|---|---|---|
+| `ENTITY-Bench-v1.0.0-release.apk` | **1.0.0** | release-signed | 9.9 MB |
+
 ## Start here
 
 **Recommended**: `ENTITY-v8-universal-arm-20260712-1240-release.apk` is the current release (v2.0.0), properly release-signed, and 9.8 MB. It ships 7 Arm CPU backend variants with automatic runtime selection for universal Arm support.

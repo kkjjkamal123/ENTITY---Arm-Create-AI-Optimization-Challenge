@@ -2,7 +2,7 @@
 
 > A fully offline, adaptive LLM chat app for Android that profiles the device Arm CPU and automatically tunes itself to run any runnable GGUF model as fast as the hardware allows.
 
-**Track: Mobile AI**
+**Track 1: Optimization Output** (prize category: Edge AI)
 
 ---
 
@@ -92,7 +92,7 @@ configuration over the out-of-the-box default. It is **not** a measurement of wh
 contributes.
 
 ENTITY now ships the arm that separates them: **threads-only**, which runs Auto's thread count with
-affinity switched off - exactly what an upstream `llama.cpp -t 4` run does. Nine runs across two
+affinity switched off - exactly what an upstream `llama.cpp -t 4` run does. Twelve runs across two
 models, on the reference device:
 
 | Model | Naive, 8 thr | Threads only, 4 thr no pin | Auto, 4 thr pinned | Thread count | Pinning |
@@ -100,6 +100,7 @@ models, on the reference device:
 | 1B Q3_K_L (3 runs) | 8.8 | 16.9 | 16.7 | **+92%** | **-1%** |
 | 1B Q4_0 | 7.9 | 14.7 | 14.7 | **+86%** | **+0%** |
 | 1B Q4_0 (3 runs) | 7.7 | 15.9 | 16.0 | **+106%** | +1% |
+| 1B Q4_0 (3 runs, repeat) | 8.6 | 15.9 | 15.9 | **+85%** | **+0%** |
 | 3B Q4_0 | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
 | 3B Q4_0 | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
 
@@ -112,6 +113,11 @@ still ships - it costs nothing and another SoC may answer differently - but it i
 with the speed-up. What the cross-vendor repeat *does* prove is that the **mechanism** is
 SoC-agnostic: ranking cores by live `cpufreq` instead of hardcoding a mask finds the performance
 cluster unchanged on MediaTek and Qualcomm.
+
+The ablation is not just a screen inside the app; it now ships as a standalone APK,
+[ENTITY Bench](app/entity.bench.android/README.md), so any developer can run the exact
+thread-count-versus-pinning experiment on their own SoC and export the result to CSV. The finding is
+reusable rather than a claim to be taken on trust: the artifact that produced it is in the repo.
 
 ### The two optimizations that do pay on Arm
 
@@ -197,9 +203,12 @@ This is an honest, CLI-measured ceiling for the technique, not a claim about the
 
 ENTITY measures battery current and voltage (via Android's BatteryManager, no root needed) and computes **power (W) = |I µA| × V mV / 10⁹**, then reports **tokens/sec/watt** during inference. This reframes on-device AI from a "peak speed" story to an "efficiency under sustained load" story — the metric that actually matters on a phone.
 
-Measured in the current in-app run: the optimized configuration achieves **2.5× better
-tokens-per-watt** (1.7 → 4.2 tok/W) while drawing *lower* power (4.7 → 4.0 W) than naïve
-eight-core execution.
+Measured in the newest unplugged three-run set (1B Q4_0, 2026-07-15): the optimized configuration
+achieves **~2× better tokens-per-watt** (1.95 → 3.77 tok/W) while drawing slightly *lower* power
+(4.57 → 4.20 W) than naïve eight-core execution. Integrating the measured power curve over a pass,
+the same 128 tokens cost **86 J naïve versus 50 J optimized — 42% less battery** — not because the
+optimized run sips less current, but because it finishes in 11.8 s instead of 19.9 s. (The original
+v2.0.0 Q3_K_L two-arm run measured 2.5×, 1.7 → 4.2 tok/W.)
 
 **Impact:** energy transparency. Users and developers can now see the actual battery cost of inference on their device.
 
@@ -270,7 +279,7 @@ eight-core execution.
 
 ### CPU Backend Configuration
 
-The current v2.0.0 release uses `GGML_CPU_ALL_VARIANTS=ON`. It ships seven Arm CPU backend
+Since v2.0.0, releases use `GGML_CPU_ALL_VARIANTS=ON`. It ships seven Arm CPU backend
 variants and lets ggml select the best supported one at runtime. The same APK therefore supports
 older arm64 CPUs without dotprod and newer CPUs with i8mm, SVE2, or SME while retaining KleidiAI
 kernels in every variant.
@@ -298,6 +307,7 @@ ENTITY was **newly created during the hackathon submission period**, built from 
 - **v2.1.0** (2026-07-14): The three-arm benchmark ablation (naive, threads-only, Auto) that disproved the project's own +121% pinning claim; the KleidiAI advisor gating the acceleration claim on the loaded quantization; prompt processing narrowed back to the fast cores (widening was a measured regression); CSV export data-loss fix.
 - **v2.2.0** (2026-07-15): Sustained thermal benchmark - back-to-back passes for a selectable 2/5/10 minutes per arm with no cooldown, per-pass decode rate, thermal status, battery temperature and power in the table and CSV, showing whether the token rate holds once the SoC is hot.
 - **v2.3.0** (2026-07-15): UI polish pass - refined light/dark visual system (hairline borders, pill input bar, card-grouped Settings/Benchmark, KleidiAI advisor status pills), multi-select conversation delete, Share chat, graph style options gated by the Animations setting, and a benchmark CSV meta-label fix (`affinity_naive` no longer reads as pinned).
+- **ENTITY Bench v1.0.0** (2026-07-17): The three-arm ablation (naive, threads-only, Auto) packaged as a standalone installable APK (`apk/ENTITY-Bench-v1.0.0-release.apk`, source in `app/entity.bench.android/`) - a stripped-down app with no chat that imports a GGUF, runs the PP 512 / TG 128 ablation on the phone and exports every pass to CSV, so other developers can reproduce the thread-count-versus-pinning experiment on their own SoC. This is the bench app's own version, not a main-app release.
 
 **All versions from v1.6.0 onward ship with prebuilt debug and/or release-signed APKs in [`apk/`](apk/)** (see `apk/README.md`) and as copy-paste-ready notes in [`releases/`](releases/), installable via `adb install -r`. Versions 1.0–1.5 are available as debug APKs only.
 
@@ -305,13 +315,13 @@ ENTITY was **newly created during the hackathon submission period**, built from 
 
 ## Repository & License
 
-- **Public repository:** [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge). It contains the Gradle project in `app/entity.android/`, prebuilt APKs in `apk/`, versioned release notes in `releases/`, measurements in `benchmarks/`, technical documentation in `docs/`, and Termux helpers in `scripts/`.
+- **Public repository:** [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge). It contains the Gradle project in `app/entity.android/`, the standalone benchmark app in `app/entity.bench.android/`, prebuilt APKs in `apk/`, versioned release notes in `releases/`, measurements in `benchmarks/`, technical documentation in `docs/`, and Termux helpers in `scripts/`.
 - **Apache License 2.0** — see `LICENSE` file. Built on [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT) and Arm [KleidiAI](https://gitlab.arm.com/kleidi/kleidiai) (Apache-2.0).
 
 ---
 
 ## Summary
 
-ENTITY proves that **optimization for real Arm hardware is the leverage point** for on-device AI on phones. By treating the phone as an asymmetric big.LITTLE SoC with thermal and power constraints - instead of a small desktop - the shipped Auto path decodes **+81% to +94% faster than the out-of-the-box eight-thread default**, a gain its own three-arm ablation attributes to the thread count rather than core pinning. The KleidiAI Q4_0 finding cut **time-to-first-token from 13.4 s to 3.9 s**, and on the same phone and model ENTITY beats **Arm's own AI Chat app by 11% on prompt and 21% on token generation** - while the adaptive runtime still fits a 3B model into 2 GB of free RAM on a $200 phone.
+ENTITY proves that **optimization for real Arm hardware is the leverage point** for on-device AI on phones. By treating the phone as an asymmetric big.LITTLE SoC with thermal and power constraints - instead of a small desktop - the shipped Auto path decodes **+81% to +106% faster than the out-of-the-box eight-thread default**, a gain its own three-arm ablation attributes to the thread count rather than core pinning. The KleidiAI Q4_0 finding cut **time-to-first-token from 13.4 s to 3.9 s**, and on the same phone and model ENTITY beats **Arm's own AI Chat app by 11% on prompt and 21% on token generation** - while the adaptive runtime still fits a 3B model into 2 GB of free RAM on a $200 phone.
 
 The submission is reproducible, measured, and honest about trade-offs. The code is open-source. The results are on-device.

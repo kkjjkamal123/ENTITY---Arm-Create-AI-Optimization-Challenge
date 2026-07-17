@@ -2,30 +2,30 @@
 
 [Home](../README.md) · [Benchmarks](../benchmarks/BENCHMARKS.md) · [Optimization](OPTIMIZATIONS.md) · [Starter kit](../templates/arm64-android-runtime/README.md) · [Contributing](CONTRIBUTING.md) · [License](../LICENSE)
 
-## 1) Does ENTITY need internet access?
+## Does ENTITY need internet access?
 
 No. Model loading, prompt processing, generation, chat storage, and runtime metrics run locally on
 the phone. ENTITY does not require an inference server or a cloud API.
 
-## 2) Which devices are supported?
+## Which devices are supported?
 
 The current release targets arm64 Android phones running Android 13 or later. It ships seven Arm
 CPU backend variants and selects the strongest variant supported by the device at runtime. The
 release does not include x86 or x86_64 binaries.
 
-## 3) Which models can I use?
+## Which models can I use?
 
 Import a runnable GGUF model through the in-app document picker. Model weights are not bundled
 with the APK. A 1B model is a good starting point; a 3B class model needs more free memory and may
 receive a smaller Auto context window.
 
-## 4) What does Auto mode change?
+## What does Auto mode change?
 
 Auto mode ranks online CPU cores by their advertised maximum frequency, uses the fastest two to
 four cores for both inference phases, and sizes context from
 model size plus available memory. It also enables the thermal guard.
 
-## 5) Why not use every CPU core?
+## Why not use every CPU core?
 
 Because it is measurably slower — for **both** phases, which was a surprise.
 
@@ -37,13 +37,13 @@ A55 is about a third of an A78's throughput, so every GEMM waited on the straggl
 fast cores measures 135 tok/s; across all 8 it measures 86. Since v2.1.0 both phases run on the
 fast-core set.
 
-## 6) How does ENTITY avoid running out of memory?
+## How does ENTITY avoid running out of memory?
 
 Auto mode uses the GGUF file size and free RAM to choose a 2048, 4096, or 8192 token context. It
 reduces KV-cache pressure before a larger model makes the app unstable. Manual mode leaves the
 context decision to the user.
 
-## 6) Is a smaller quantization always faster?
+## Is a smaller quantization always faster?
 
 No — and on Arm this is the single most expensive thing to get wrong.
 
@@ -64,13 +64,13 @@ Prompt eval is a compute-bound GEMM, which is what KleidiAI accelerates. Decode 
 and tracks bytes-per-weight, so the slightly larger Q4_0 is slightly slower there. ENTITY's
 model-info card tells you which case you are in when you load a model.
 
-## 7) Are power and efficiency numbers trustworthy while charging?
+## Are power and efficiency numbers trustworthy while charging?
 
 No. Charging changes the battery-current reading, so ENTITY hides power and tokens-per-watt during
 charging. For comparable results, unplug the phone, let it cool, and run the same model and test
 configuration.
 
-## 8) What do the published benchmark numbers mean?
+## What do the published benchmark numbers mean?
 
 They compare a naïve eight-thread configuration with the same Auto path used by chat. The current
 record uses Llama 3.2 1B Instruct Q3 K L with PP 512 and TG 128. Read the full method, results,
@@ -80,35 +80,35 @@ They are the gain of the shipped configuration over the out-of-the-box default. 
 how much of it comes from core pinning as opposed to simply using fewer threads, because those two
 arms change both at once.
 
-## 9) So how much does the core pinning actually earn?
+## So how much does the core pinning actually earn?
 
 **About 0%.** ENTITY's own ablation disproved ENTITY's flagship optimization.
 
 The Benchmark screen runs a third arm — threads-only: Auto's thread count with affinity switched
-off, which is what an upstream `llama.cpp -t 4` run does. Across six runs on two models, dropping
-8 threads to 4 earns +81% to +94% of decode, and pinning those threads to the performance cluster
+off, which is what an upstream `llama.cpp -t 4` run does. Across twelve runs on two models, dropping
+8 threads to 4 earns +81% to +106% of decode, roughly 2x, and pinning those threads to the performance cluster
 adds nothing measurable.
 
 The affinity code still ships, because it is free and another SoC may behave differently. It is
 simply no longer claimed as the reason ENTITY is fast. Run the benchmark on your own phone and the
 numbers are yours: [full record](../benchmarks/BENCHMARKS.md).
 
-## 10) Does ENTITY use realtime scheduling or root-only controls?
+## Does ENTITY use realtime scheduling or root-only controls?
 
 No. The Android app uses standard CPU affinity and a cooperative thermal delay. Historical Termux
 experiments with realtime priority are kept separate and are not claimed as app behavior.
 
-## 11) Where can I see the full optimization algorithm?
+## Where can I see the full optimization algorithm?
 
 [OPTIMIZATIONS.md](OPTIMIZATIONS.md) documents the native implementation, core selection, context
 admission, thermal policy, power math, benchmark statistics, and the limits of each claim.
 
-## 12) How can I contribute or report an issue?
+## How can I contribute or report an issue?
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md) for build validation, project conventions, and next steps.
 The canonical source is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge).
 
-## 13) Can I reuse the Arm runtime logic in another Android project?
+## Can I reuse the Arm runtime logic in another Android project?
 
 Yes. The [Arm64 Android starter kit](../templates/arm64-android-runtime/README.md) contains the
 pure Kotlin runtime policy, a portable C++ affinity helper, and a retargeting checklist. It is a

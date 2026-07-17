@@ -40,11 +40,11 @@ ENTITY's own ablation disproved ENTITY's flagship optimization. That is recorded
 
 | Claim | Evidence | Boundary |
 |---|---|---|
-| Auto is much faster than the out of the box default | Decode +81% to +94% over an eight thread run, on two models, on an unplugged CMF Phone 1. | One phone, two models. Not a universal multiplier. |
-| **The gain is the thread count, not the core pinning** | The threads only arm runs Auto's thread count with affinity switched off. Across nine runs, pinning adds about **0%**: the whole gain is 8 threads to 4. The v2.0.0 claim of "+121% from big core affinity" was wrong, and this is the experiment that showed it. | A different SoC may answer differently. The affinity code still ships; it is simply no longer credited. |
+| Auto is much faster than the out of the box default | Decode +81% to +106%, roughly 2x, over an eight thread run, on two models, on an unplugged CMF Phone 1. | One phone, two models. Not a universal multiplier. |
+| **The gain is the thread count, not the core pinning** | The threads only arm runs Auto's thread count with affinity switched off. Across twelve runs, pinning adds about **0%**: the whole gain is 8 threads to 4. The v2.0.0 claim of "+121% from big core affinity" was wrong, and this is the experiment that showed it. | A different SoC may answer differently. The affinity code still ships; it is simply no longer credited. |
 | **KleidiAI only accelerates Q4_0 and Q8_0** | Verified in Arm's kernel source. Every benchmark published before v2.1.0 used Q3_K_L, so KleidiAI never ran. Switching to Q4_0, same phone and same thread config: prompt 43 to 121 tok/s, TTFT 12.1s to 4.3s. | Decode does not improve. It is bandwidth bound and tracks bytes per weight, not kernel quality. Q4_0 is also a quality tradeoff, so ENTITY recommends rather than switches. |
 | Widening prompt processing to all cores was a regression | Prompt on 4 fast cores measures 135 tok/s; spread across all 8 it measures 86. The efficiency cores gate every GEMM. Removed in v2.1.0. | Empirical to this SoC. A tri cluster chip may prefer a wider pool, which is why the benchmark decides it, not an assumption. |
-| Efficiency is measured, rather than inferred | Each pass samples battery current and voltage; watts and tok/W appear only while unplugged. | Battery current reporting is OEM dependent. Comparative on one device, not lab grade metering. |
+| Efficiency is measured, rather than inferred | Each pass samples battery current and voltage; watts and tok/W appear only while unplugged. Integrated over a pass, the same 128 tokens cost 86 J naive versus 50 J optimized: 42% less battery, from finishing in 11.8 s instead of 19.9 s at the same watts. | Battery current reporting is OEM dependent. Comparative on one device, not lab grade metering. |
 | A developer can reproduce or challenge any of it | The app runs the ablation and exports every pass to CSV. Each arm logs the CPU mask the kernel actually applied, so a failed pin cannot pass as "pinning earns nothing". | A matching device and model are needed for a direct numerical comparison. |
 
 This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has the full record, the graphs, and the limits.
@@ -80,12 +80,13 @@ Decode throughput, CMF Phone 1, Dimensity 7300:
 | Llama 3.2 1B Q3_K_L, 3 runs | 8.8 ± 0.50 | 16.9 ± 0.08 | 16.7 ± 1.3 | **+92%** | **-1%** |
 | Llama 3.2 1B Q4_0, 1 run | 7.9 | 14.7 | 14.7 | **+86%** | **+0%** |
 | Llama 3.2 1B Q4_0, 3 runs | 7.7 ± 0.78 | 15.9 ± 0.22 | 16.0 ± 2.1 | **+106%** | +1% |
+| Llama 3.2 1B Q4_0, 3 runs (repeat) | 8.6 ± 0.82 | 15.9 ± 1.58 | 15.9 ± 0.09 | **+85%** | **+0%** |
 | Llama 3.2 3B Q4_0, 1 run | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
 | Llama 3.2 3B Q4_0, 1 run | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
 
 ![Decode attribution](benchmarks/plots/decode_attribution.png)
 
-Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode step. Using four threads removes that. Pinning those four threads to the performance cluster adds nothing measurable: the two 3B runs disagree (+13% and +0%), a third measured -16% while charging, and single 3B runs swing about 15% either way. The v2.0.0 claim that +121% came from big core affinity was wrong, and ENTITY's own ablation is what proved it.
+Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode step. Using four threads removes that. Pinning those four threads to the performance cluster adds nothing measurable: the two 3B runs disagree (+13% and +0%), a third measured -16% while charging, and single 3B runs swing about 15% either way. The repeat three run set makes the point sharpest: identical 15.9 tok per s medians pinned and unpinned, with the pinned arm's spread collapsing from 1.58 to 0.09, so pinning buys repeatability rather than speed. The v2.0.0 claim that +121% came from big core affinity was wrong, and ENTITY's own ablation is what proved it.
 
 ### KleidiAI never ran
 
@@ -133,6 +134,8 @@ ENTITY's decode is the median of four runs with the full range published, not it
 
 TTFT here is derived from prompt evaluation plus one decode step. It is not a live chat first token measurement. Full method, the historical two arm v2.0.0 record, and every limit: [benchmarks](benchmarks/BENCHMARKS.md).
 
+The same ablation now ships as a standalone app, [ENTITY Bench](app/entity.bench.android/README.md), so a developer can run it on their own SoC and contribute a device row without installing the full chat app.
+
 ## Get started
 
 1. Install the current release signed APK from [apk](apk).
@@ -150,6 +153,7 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 | Location | Purpose |
 |---|---|
 | app/entity.android | Kotlin Android app and the native C++ inference library |
+| app/entity.bench.android | Standalone benchmark app: runs the three arm ablation on any arm64 phone and exports the result to CSV |
 | apk | Debug and release signed APKs |
 | benchmarks | Current app measurement, historical command line results and raw records |
 | docs | Architecture, build instructions, optimization details and contributor guidance |

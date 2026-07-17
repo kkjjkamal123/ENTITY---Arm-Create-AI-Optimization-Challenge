@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:extractNativeLibs="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.AiChatSample"
+        >
+
+        <activity
+            android:name=".BenchHomeActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true" />
+
+        <!-- Two launcher aliases so the user can pick the icon that suits their
+             phone theme. Exactly one is enabled at a time (see IconStyle). -->
+        <activity-alias
+            android:name=".MainBlack"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_entity_black"
+            android:roundIcon="@mipmap/ic_entity_black"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity" />
+
+        <activity-alias
+            android:name=".MainWhite"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_entity_white"
+            android:roundIcon="@mipmap/ic_entity_white"
+            android:label="@string/app_name"
+            android:targetActivity=".MainActivity" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".InfoActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".BenchmarkActivity"
+            android:exported="false"
+            android:parentActivityName=".MainActivity" />
+    </application>
+
+</manifest>

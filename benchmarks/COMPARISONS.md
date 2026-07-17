@@ -61,8 +61,8 @@ Implementation: `pinCores` in
 the pinned thread pool, and clears any mask inherited from the previous arm; the arm order and
 per-pass capture are in
 [`BenchmarkActivity.kt`](../app/entity.android/app/src/main/java/com/example/llama/BenchmarkActivity.kt).
-The three-arm result is published: across six runs on two models, the thread count earns +81% to
-+94% of decode and the core pinning earns ~0%. See [BENCHMARKS.md](BENCHMARKS.md).
+The three-arm result is published: across twelve runs on two models, the thread count earns +81% to
++106% of decode and the core pinning earns ~0%. See [BENCHMARKS.md](BENCHMARKS.md).
 
 ## ExecuTorch and MLC-LLM
 

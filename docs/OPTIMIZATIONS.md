@@ -181,13 +181,15 @@ llama.cpp falls back to default thread scheduling, and calls `unpin_all_cores()`
 inherited from the previous arm. Each arm then logs the mask the kernel actually applied, so a
 failed `sched_setaffinity` cannot masquerade as "pinning earns nothing".
 
-**Result, six runs across two models on the reference device: the thread count earns +81% to +94%
-of decode, and the pinning earns approximately 0%.**
+**Result, twelve runs across two models on the reference device: the thread count earns +81% to
++106% of decode — roughly 2× — and the pinning earns approximately 0%.**
 
 | Model | Naïve (8 thr) | Threads-only (4 thr, no pin) | Auto (4 thr, pinned) | Pinning earns |
 |---|---:|---:|---:|---:|
 | 1B Q3_K_L (3 runs) | 8.8 | 16.9 | 16.7 | **−1%** |
 | 1B Q4_0 | 7.9 | 14.7 | 14.7 | **+0%** |
+| 1B Q4_0 (3 runs) | 7.7 | 15.9 | 16.0 | +1% |
+| 1B Q4_0 (3 runs, repeat) | 8.6 | 15.9 | 15.9 | **+0%** |
 | 3B Q4_0 | 3.1 | 6.0 | 6.8 | +13% |
 | 3B Q4_0 | 3.5 | 6.3 | 6.3 | **+0%** |
 
