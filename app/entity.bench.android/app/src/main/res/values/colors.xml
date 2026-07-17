@@ -1,48 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="ic_launcher_background">#FF000000</color>
+    <!-- The entire app is two colors: paper and ink. Light mode is white paper,
+         black ink; values-night inverts them. Hierarchy comes from weight, size,
+         case and inversion - never from a third color or a gray. -->
+    <color name="mono_bg">#FFFFFF</color>
+    <color name="mono_fg">#000000</color>
 
-    <color name="accent">#10A37F</color>
-    <color name="accent_dark">#0E8C6D</color>
-
-    <color name="app_bg">#FFFFFF</color>
-    <color name="surface">#F9FAFB</color>
-    <color name="on_surface">#1F1F1F</color>
-    <color name="muted">#71717A</color>
-    <color name="divider">#EDEDEF</color>
-
-    <color name="user_bubble">#10A37F</color>
-    <color name="assistant_bubble">#F2F2F4</color>
-    <color name="input_bg">#F4F4F5</color>
-
-    <color name="bubble_stroke">#ECECEF</color>
-    <color name="code_bg">#E9E9EE</color>
-    <color name="ripple_on_accent">#33FFFFFF</color>
-
-    <!-- Soft-tinted status pills (KleidiAI advisor state on the model card). -->
-    <color name="ready_bg">#ECFDF5</color>
-    <color name="ready_text">#047857</color>
-    <color name="ready_border">#BBF7D0</color>
-    <color name="warn_bg">#FEF3C7</color>
-    <color name="warn_text">#B45309</color>
-    <color name="warn_border">#FDE68A</color>
-
-    <!-- ENTITY Bench home palette (always dark, per the v1.0 design). -->
-    <color name="bench_bg">#0E1211</color>
-    <color name="bench_card">#151A18</color>
-    <color name="bench_card_deep">#0E1413</color>
-    <color name="bench_border">#1D2622</color>
-    <color name="bench_border2">#223029</color>
-    <color name="bench_accent">#1EC98F</color>
-    <color name="bench_text">#E8ECEA</color>
-    <color name="bench_text2">#CFD8D4</color>
-    <color name="bench_sub">#9FB0A9</color>
-    <color name="bench_muted">#7D8A85</color>
-    <color name="bench_faint">#4D5A55</color>
-    <color name="bench_amber">#C9A24A</color>
-    <color name="bench_bar_dim">#3A4642</color>
-    <color name="bench_bar_mid">#3F6F60</color>
-    <color name="bench_on_accent">#08110D</color>
+    <color name="ic_launcher_background">#FFFFFF</color>
 </resources>

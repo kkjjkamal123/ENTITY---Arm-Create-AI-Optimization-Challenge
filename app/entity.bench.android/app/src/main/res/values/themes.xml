@@ -1,73 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- Color-agnostic base shared by the light and dark themes. Both
-         Base.Theme.AiChatSample definitions (this file and values-night)
-         inherit from it, so these items apply in both modes. -->
-    <style name="Theme.Entity.Shared" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="toolbarStyle">@style/Widget.Entity.Toolbar</item>
-    </style>
-
-    <style name="Base.Theme.AiChatSample" parent="Theme.Entity.Shared">
-        <item name="colorPrimary">@color/accent</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="android:colorBackground">@color/app_bg</item>
-        <item name="colorSurface">@color/app_bg</item>
-        <item name="colorOnSurface">@color/on_surface</item>
-        <item name="android:statusBarColor">@color/app_bg</item>
+    <style name="Theme.EntityBench" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/mono_fg</item>
+        <item name="colorOnPrimary">@color/mono_bg</item>
+        <item name="android:colorBackground">@color/mono_bg</item>
+        <item name="colorSurface">@color/mono_bg</item>
+        <item name="colorOnSurface">@color/mono_fg</item>
+        <item name="android:textColorPrimary">@color/mono_fg</item>
+        <item name="android:textColorSecondary">@color/mono_fg</item>
+        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:statusBarColor">@color/mono_bg</item>
+        <item name="android:navigationBarColor">@color/mono_bg</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:navigationBarColor">@color/app_bg</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="alertDialogTheme">@style/Dialog.EntityBench</item>
     </style>
 
-    <style name="Theme.AiChatSample" parent="Base.Theme.AiChatSample" />
-
-    <style name="Widget.Entity.Toolbar" parent="Widget.Material3.Toolbar">
-        <item name="titleTextAppearance">@style/TextAppearance.Entity.Toolbar.Title</item>
+    <!-- Dialogs follow the same two-color rule: square, bordered, monospace. -->
+    <style name="Dialog.EntityBench" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="colorAccent">@color/mono_fg</item>
+        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textColorPrimary">@color/mono_fg</item>
+        <item name="android:textColorSecondary">@color/mono_fg</item>
+        <item name="android:textColorAlertDialogListItem">@color/mono_fg</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:colorBackground">@color/mono_bg</item>
     </style>
 
-    <style name="TextAppearance.Entity.Toolbar.Title" parent="TextAppearance.Material3.TitleLarge">
-        <item name="android:textStyle">bold</item>
-        <item name="android:textSize">20sp</item>
-        <item name="android:letterSpacing">0.04</item>
-    </style>
-
-    <style name="Card.Entity" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardBackgroundColor">@color/surface</item>
-        <item name="cardElevation">0dp</item>
-        <item name="cardCornerRadius">16dp</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="strokeColor">@color/bubble_stroke</item>
-    </style>
-
-    <style name="SectionHeader">
-        <item name="android:layout_width">match_parent</item>
+    <!-- Section label: the only uppercase element, always over the border line. -->
+    <style name="Bench.Label" parent="">
+        <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">@color/muted</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textSize">11sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:letterSpacing">0.06</item>
+        <item name="android:letterSpacing">0.18</item>
         <item name="android:textAllCaps">true</item>
     </style>
 
-    <style name="SettingLabel">
+    <!-- Inverted block button (primary action). -->
+    <style name="Bench.Button" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">18dp</item>
-        <item name="android:textColor">@color/on_surface</item>
+        <item name="android:background">@drawable/btn_solid</item>
+        <item name="android:textColor">@color/tc_solid</item>
         <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingBottom">14dp</item>
     </style>
 
-    <style name="SettingValue">
+    <!-- Bordered button (secondary action). Inverts while pressed. -->
+    <style name="Bench.ButtonOutline" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">@color/muted</item>
+        <item name="android:background">@drawable/btn_outline</item>
+        <item name="android:textColor">@color/tc_outline</item>
         <item name="android:textSize">13sp</item>
-        <item name="android:fontFamily">monospace</item>
-    </style>
-
-    <style name="SettingSeek">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingTop">11dp</item>
+        <item name="android:paddingBottom">11dp</item>
     </style>
 </resources>

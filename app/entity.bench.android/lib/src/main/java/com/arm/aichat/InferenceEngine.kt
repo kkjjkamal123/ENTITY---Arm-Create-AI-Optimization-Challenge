@@ -47,6 +47,10 @@ interface InferenceEngine {
      * [pinCores] false runs inference with no core affinity and no pinned thread
      * pool, leaving placement to the scheduler. Only the benchmark's threads-only
      * ablation arm uses it; every shipped path keeps the default.
+     *
+     * [pinEfficiency] true (only alongside [pinCores]) pins to the SLOWEST cluster
+     * instead of the fastest — the benchmark's efficiency-cores arm, measuring
+     * whether the little cores are more energy-efficient (tok/W) for decode.
      */
     suspend fun applyConfig(
         nCtx: Int,
@@ -55,6 +59,7 @@ interface InferenceEngine {
         topK: Int,
         topP: Float,
         pinCores: Boolean = true,
+        pinEfficiency: Boolean = false,
     )
 
     /**

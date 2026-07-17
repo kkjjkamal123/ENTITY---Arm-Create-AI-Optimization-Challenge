@@ -12,13 +12,13 @@ val keystoreProperties = Properties().apply {
 }
 
 android {
-    namespace = "com.example.llama"
+    namespace = "com.entity.bench"
     compileSdk = 36
 
     ndkVersion = "27.1.12297006"
 
-    // BenchmarkActivity stamps BuildConfig.VERSION_NAME/VERSION_CODE into every exported
-    // CSV, so a result can always be traced back to the app that produced it. AGP 8
+    // Every saved result and exported CSV is stamped with VERSION_NAME/VERSION_CODE,
+    // so a result can always be traced back to the app that produced it. AGP 8
     // does not generate BuildConfig unless asked.
     buildFeatures {
         buildConfig = true
@@ -30,8 +30,8 @@ android {
         minSdk = 33
         targetSdk = 36
 
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

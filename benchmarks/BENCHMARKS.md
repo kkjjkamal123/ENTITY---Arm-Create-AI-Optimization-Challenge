@@ -282,10 +282,11 @@ to it, and the pinned arm's three passes span just 0.2 tok/s.
 ## Contribute a device result
 
 The easiest path is the standalone [ENTITY Bench](../app/entity.bench.android/README.md) APK
-([`apk/ENTITY-Bench-v1.0.0-release.apk`](../apk/ENTITY-Bench-v1.0.0-release.apk)). It is a stripped-down
-app with no chat: you import a GGUF via the file picker, run the same three-arm ablation on an unplugged,
-cooled phone, and tap **Export CSV**. There is nothing to set up in the chat app and no model to import
-twice.
+([`apk/ENTITY-Bench-v1.1.0-release.apk`](../apk/ENTITY-Bench-v1.1.0-release.apk)). It is a dedicated
+benchmark app with no chat: you import a GGUF via the file picker, run the same three-arm ablation on an
+unplugged, cooled phone, and tap **Export CSV** on the result page. Every result is autosaved on the
+device, so the CSV can also be exported later from the app's history. There is nothing to set up in the
+chat app and no model to import twice.
 
 Use [device-result-template.csv](device-result-template.csv) for a result from another arm64 Android
 phone, and commit the raw exported CSV beside it. Keep the model, quantization, app version,

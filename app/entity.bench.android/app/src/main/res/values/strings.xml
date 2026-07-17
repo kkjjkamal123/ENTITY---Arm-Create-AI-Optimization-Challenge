@@ -1,104 +1,59 @@
 <resources>
     <string name="app_name">ENTITY Bench</string>
 
-    <string name="menu_select_model">Select model</string>
-    <string name="menu_model_info">Model info</string>
-    <string name="menu_benchmark">Benchmark</string>
-    <string name="bench_intro">Runs the same PP 512 / TG 128 test three ways on the loaded model: naïve (8 threads across all cores), threads-only (the same thread count ENTITY picks, but with core pinning switched off), and ENTITY Auto (the shipped configuration, generation pinned to the performance cores). The middle run is what separates the gain that comes from the thread count from the gain that comes from pinning. Power draw is measured too, so you see speed and energy efficiency side by side. Unplug the phone: power and tokens-per-watt are hidden while charging.</string>
-    <string name="bench_run">Run benchmark</string>
-    <string name="bench_copy">Copy result</string>
-    <string name="bench_export">Export CSV</string>
-    <string name="bench_runs_label">Runs per config</string>
-    <string name="bench_runs_1">1</string>
-    <string name="bench_runs_3">3</string>
-    <string name="bench_runs_5">5</string>
-    <string name="bench_sustained">Sustained thermal test (no cooldown)</string>
-    <string name="bench_duration_label">Sustained duration</string>
-    <string name="bench_duration_2">2 min</string>
-    <string name="bench_duration_5">5 min</string>
-    <string name="bench_duration_10">10 min</string>
-    <string name="menu_show_stats">Show stats</string>
-    <string name="menu_stats">Stats</string>
-    <string name="stat_tokens">Tokens generated</string>
-    <string name="stat_speed">Tokens / sec</string>
-    <string name="stat_ttft">Time to first token</string>
-    <string name="stat_temp">Temperature</string>
-    <string name="stat_power">Power draw</string>
-    <string name="stat_cpu">App CPU utilization</string>
-    <string name="stat_memory">Memory available</string>
+    <!-- Home -->
+    <string name="home_title">ENTITY BENCH</string>
+    <string name="home_sub">on-device LLM benchmark</string>
+    <string name="home_settings">SET</string>
+    <string name="dut_label">DEVICE UNDER TEST</string>
+    <string name="dut_unplugged">UNPLUGGED OK</string>
+    <string name="dut_charging">CHARGING / power off</string>
+    <string name="model_label">MODEL</string>
+    <string name="model_none">tap to choose a .gguf</string>
+    <string name="model_import">Import from device…</string>
+    <string name="model_importing">importing…</string>
+    <string name="model_picker_title">Select a model</string>
+    <string name="cfg_label">CONFIG</string>
+    <string name="mode_ablation">3-ARM</string>
+    <string name="mode_sustained">SUSTAINED</string>
+    <string name="runs_label">RUNS PER ARM</string>
+    <string name="duration_label">DURATION (MIN)</string>
+    <string name="efficiency_arm">+ efficiency-core arm (tok/W of the little cores)</string>
+    <string name="workload">PP 512 / TG 128 · cooldown before every pass</string>
+    <string name="workload_sustained">PP 512 / TG 128 back-to-back · heat is the point</string>
+    <string name="run_cta">RUN BENCHMARK</string>
+    <string name="last_result">LAST RESULT</string>
+    <string name="open_full_results">OPEN FULL RESULT</string>
+    <string name="history_label">HISTORY</string>
+    <string name="history_all">ALL RESULTS</string>
+    <string name="home_footer">v1.1.0 · arm64 · no network · results stay on this phone</string>
 
-    <string name="menu_theme">Theme</string>
-    <string name="theme_system">System default</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_dark">Dark</string>
+    <!-- Run -->
+    <string name="run_title">RUNNING</string>
+    <string name="live_label">LIVE</string>
+    <string name="run_cancel">ABORT</string>
+    <string name="run_keep_on">screen stays on · leave the phone alone while it runs</string>
 
-    <string name="menu_new_chat">New chat</string>
-    <string name="menu_conversations">Conversations</string>
-    <string name="priming_context">Preparing conversation…</string>
-    <string name="menu_show_graph">Show graph</string>
-    <string name="bench_home_title">ENTITY bench</string>
-    <string name="bench_home_sub">on-device LLM benchmarking</string>
-    <string name="bench_dut">DEVICE UNDER TEST</string>
-    <string name="bench_new_run">New run</string>
-    <string name="bench_model_label">MODEL</string>
-    <string name="bench_model_none">Tap to choose a GGUF model</string>
-    <string name="bench_chevron">›</string>
-    <string name="bench_runs_config">RUNS / CONFIG · WORKLOAD</string>
-    <string name="bench_workload">PP 512 / TG 128</string>
-    <string name="bench_run_cta">Run 3-arm ablation</string>
-    <string name="bench_run_note">thermal cooldown before every pass · CPU mask logged per arm</string>
-    <string name="bench_last_result">Last result</string>
-    <string name="bench_open_results">Open full results</string>
-    <string name="bench_history">Run history</string>
-    <string name="bench_footer">v1.0.0 · arm64 · results are yours - CSV, mask logs, no network</string>
-    <string name="menu_share_chat">Share chat</string>
-    <string name="menu_graph_style">Graph style</string>
-    <string name="graph_fill">Fill area</string>
-    <string name="graph_smooth">Smooth lines</string>
-    <string name="menu_settings">Settings</string>
-    <string name="menu_about">About / Optimizations</string>
+    <!-- Result -->
+    <string name="result_title">RESULT</string>
+    <string name="result_copy">COPY</string>
+    <string name="result_export">EXPORT CSV</string>
+    <string name="result_delete">DELETE</string>
+    <string name="result_delete_confirm">Delete this result? The saved data and its CSV export go with it.</string>
+    <string name="result_copied">Result copied</string>
 
-    <string name="settings_title">Settings</string>
-    <string name="settings_section_inference">Inference</string>
-    <string name="settings_section_interface">Interface</string>
-    <string name="settings_section_general">General</string>
-    <string name="kleidiai_active">KleidiAI active</string>
-    <string name="kleidiai_not_used">KleidiAI not used</string>
-    <string name="settings_auto">Auto (optimized)</string>
-    <string name="settings_auto_desc">ENTITY picks context size and threads for this device automatically. Turn off to tune manually.</string>
-    <string name="settings_manual">Manual tuning</string>
-    <string name="settings_temp">Temperature</string>
-    <string name="settings_topk">Top-K</string>
-    <string name="settings_topp">Top-P</string>
-    <string name="settings_maxtok">Max tokens</string>
-    <string name="settings_ctx">Context size</string>
-    <string name="settings_threads">Threads</string>
-    <string name="settings_system_prompt">System prompt</string>
-    <string name="settings_system_prompt_reset">Reset to default</string>
-    <string name="settings_anim">Animations</string>
-    <string name="settings_anim_desc">Fade-in messages, the typing indicator and press feedback. Turn off for a static interface.</string>
-    <string name="settings_efficiency">Efficiency mode</string>
-    <string name="settings_efficiency_desc">Trade speed for battery: caps inference at 2 threads and throttles harder when the phone warms up.</string>
-    <string name="settings_optimize">Re-run device optimization</string>
-    <string name="settings_optimize_desc">Check this phone\'s cores, memory and CPU features again, and suggest the thread and context settings that suit it.</string>
+    <!-- History -->
+    <string name="history_title">ALL RESULTS</string>
+    <string name="history_empty">No results yet.\nRun a benchmark and every result is saved here automatically.</string>
 
-    <string name="optimize_title">Optimize for your device</string>
-    <string name="optimize_apply">Optimize</string>
-    <string name="optimize_not_now">Not now</string>
-    <string name="optimize_applied">Optimized. ENTITY will use this phone\'s performance cores and size the context automatically.</string>
-
-    <string name="action_copy">Copy</string>
-    <string name="action_regenerate">Regenerate</string>
-    <string name="copied_confirmation">Copied to clipboard</string>
-
-    <string name="empty_tagline">Fully offline · on-device AI</string>
-    <string name="settings_icon">App icon</string>
-    <string name="icon_auto">Auto — match phone theme</string>
-    <string name="icon_black">Black background</string>
-    <string name="icon_white">White background</string>
-
-    <string name="about_title">About / Optimizations</string>
-
-    <string name="hint_pick_model">Select a model to start</string>
-    <string name="hint_type_message">Message ENTITY…</string>
+    <!-- Settings -->
+    <string name="settings_title">SETTINGS</string>
+    <string name="theme_label">THEME</string>
+    <string name="theme_system">SYSTEM</string>
+    <string name="theme_light">LIGHT</string>
+    <string name="theme_dark">DARK</string>
+    <string name="about_label">ABOUT</string>
+    <string name="about_body">ENTITY Bench runs one job: a controlled CPU benchmark for local LLMs.\n\nWorkload: llama-bench PP 512 / TG 128 on the model you pick, with a thermal cooldown before every pass.\n\n3-ARM mode is an ablation. naive = 8 threads across all cores. threads-only = the tuned thread count with core pinning off (an upstream llama.cpp -t N run). auto = the tuned count pinned to the performance cores. The middle arm splits the gain between thread count and pinning.\n\nSUSTAINED mode runs threads-only vs auto back-to-back with no cooldown, so you see who throttles first.\n\nPower and tok/W need the phone UNPLUGGED - they are hidden while charging.\n\nEvery result is saved on the device and exportable as raw per-pass CSV. No network, no accounts, nothing leaves the phone.</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
 </resources>

@@ -1,41 +1,72 @@
 # ENTITY Bench
 
-A standalone, installable version of ENTITY's benchmark. It runs the three-arm ablation
-from the main app - and nothing else. There is no chat: you import a GGUF model, run the
-ablation on your own phone, read the attribution, and export every pass to CSV.
+A dedicated benchmark app for local LLMs on Arm phones. No chat, no reused screens from
+the main app: v1.1.0 is a ground-up rebuild around one job - run a controlled CPU
+benchmark, save the result, and let you come back to it later.
 
 Its purpose is to let anyone with an arm64 Android phone reproduce or challenge ENTITY's
 central finding on their own SoC: that on a 4+4 big.LITTLE phone the decode speed-up comes
 from the thread count, not from big-core pinning. A different SoC may well answer
 differently, which is the point of shipping the experiment rather than an assertion.
 
-## The three arms
+## What the app is
+
+- **Home** - device under test (topology, ABI, temperature, whether the kernel reports
+  battery current), model selection, run configuration, the last result and recent history.
+- **Run** - a live screen with per-arm status, cooldown countdowns, a progress bar and live
+  telemetry (battery temperature, power draw, thermal status, app CPU). The screen stays on;
+  the run can be aborted.
+- **Result** - every finished benchmark is **autosaved on the device** and opens as its own
+  page: headline attribution, decode bars, the full metric table, methodology notes, and
+  Copy / Export CSV / Delete. "Open full result" on the home screen opens this saved page -
+  never a fresh benchmark screen.
+- **All results** - the complete autosaved history. Any past run can be reopened and its
+  raw per-pass CSV exported at any time, not just right after the run.
+- **Settings** - theme (System / Light / Dark) and the methodology in plain words.
+
+The interface is two colors: pure black and pure white, inverted between the light and dark
+themes. Square corners, monospace, no shades - built to read like the lab instrument it is.
+
+## The three arms (3-ARM mode)
 
 The benchmark runs the same synthetic PP 512 / TG 128 workload three ways on the loaded
 model, with a thermal cooldown before every pass:
 
 | Arm | Configuration |
 |---|---|
-| Naive | 8 threads across all online cores. The out-of-the-box default. |
-| Threads only | The same thread count Auto derives, with affinity off: no `sched_setaffinity`, no pinned pool, placement left to the Linux scheduler. This is what an upstream `llama.cpp -t N` run does. |
-| ENTITY Auto | The shipped path: both phases on the fast-core thread count, pinned to the performance cluster. |
+| naive | 8 threads across all online cores. The out-of-the-box default. |
+| threads-only | The same thread count auto derives, with affinity off: no `sched_setaffinity`, no pinned pool, placement left to the Linux scheduler. This is what an upstream `llama.cpp -t N` run does. |
+| auto | The shipped path: both phases on the fast-core thread count, pinned to the performance cluster. |
 
-Naive and Auto differ in two variables at once - thread count and core placement - so a
+naive and auto differ in two variables at once - thread count and core placement - so a
 two-arm result cannot say which one earned the gain. The middle arm holds the thread count
-at Auto's value and drops only the affinity, so:
+at auto's value and drops only the affinity, so:
 
 - naive to threads-only isolates the thread count
-- threads-only to Auto isolates the core pinning
+- threads-only to auto isolates the core pinning
 
-The app prints that split under its own results table. That is why the middle arm exists:
-without it, "Auto is 2x faster" cannot be attributed.
+The result page prints that split as its headline. That is why the middle arm exists:
+without it, "auto is 2x faster" cannot be attributed.
+
+An optional fourth arm, **efficiency cores**, can be toggled on before a run: auto's
+placement logic inverted to the slowest cluster. It answers a different question - whether
+the "efficiency" cores are actually more energy-efficient (tok/W) for LLM decode, or just
+slower. Its passes export with the `affinity_efficiency` label and the same per-pass fields
+as the other arms.
+
+## SUSTAINED mode
+
+Back-to-back passes for a selectable 2 / 5 / 10 minutes per arm with only a 2 s gap instead
+of a cooldown, so heat accumulates inside a block. It runs only threads-only and auto, to
+see whether pinning pays off once the SoC is hot. Both blocks start from the same cooled
+baseline; read the trend across passes, not any single one.
 
 ## Install
 
 The app is arm64-v8a only and requires Android 13+.
 
 ```bash
-adb install -r apk/ENTITY-Bench-v1.0.0-release.apk
+adb install -r apk/ENTITY-Bench-v1.1.0-release.apk
 ```
 
 Launch it, tap the model field, and import a runnable GGUF model from device storage (the
@@ -60,22 +91,18 @@ The numbers are only comparable if the run conditions match the ones in
    until the battery returns to within 0.5 C of its pre-benchmark temperature. Do not
    interrupt it.
 
-The app runs a discarded warm-up, then naive, threads-only and Auto in that order, with the
-same cooldown before every pass so the ordering cannot favour the last arm. The results
-table shows prompt and decode throughput, derived TTFT, power and tok/W (unplugged only),
+The app runs a discarded warm-up, then naive, threads-only and auto in that order, with the
+same cooldown before every pass so the ordering cannot favour the last arm. The result page
+shows prompt and decode throughput, derived TTFT, power and tok/W (unplugged only),
 per-core clocks, thermal state, and the decode attribution.
-
-A **sustained** test is also available: back-to-back passes for a fixed duration with only a
-short gap instead of a cooldown, so heat accumulates. It runs only threads-only and Auto, to
-see whether pinning pays off once the little cores have heated up. Read the trend across
-passes, not any single one.
 
 ## Export a CSV and contribute a row
 
-After a run, tap **Export CSV**. The file carries device fingerprint, app version, model,
-charging state, thermal starting point, per-pass values, per-core CPU-frequency samples, and
-the CPU mask each arm actually applied - so a failed pin cannot pass as "pinning earns
-nothing". A median/stddev block per arm is included.
+Open any result (fresh or from history) and tap **Export CSV**. The file carries device
+fingerprint, app version, model, charging state, thermal starting point, per-pass values,
+per-core CPU-frequency samples, and the CPU mask each arm actually applied - so a failed
+pin cannot pass as "pinning earns nothing". A median/stddev block per arm is included. The
+row keys match the v1.0 exporter, so existing analysis scripts keep working.
 
 To contribute your device's result:
 

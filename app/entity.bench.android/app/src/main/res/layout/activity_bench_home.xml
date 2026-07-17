@@ -3,15 +3,17 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bench_bg"
+    android:background="@color/mono_bg"
     android:fitsSystemWindows="true"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:overScrollMode="never"
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingBottom="18dp">
+        android:padding="16dp">
 
         <!-- Header -->
         <LinearLayout
@@ -19,16 +21,15 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingStart="20dp"
-            android:paddingEnd="12dp"
-            android:paddingTop="18dp"
-            android:paddingBottom="10dp">
+            android:paddingTop="6dp"
+            android:paddingBottom="4dp">
 
             <ImageView
                 android:layout_width="34dp"
                 android:layout_height="34dp"
-                android:src="@mipmap/ic_entity_black"
-                android:contentDescription="@string/app_name" />
+                android:src="@drawable/bench_mark"
+                android:contentDescription="@string/app_name"
+                app:tint="@color/mono_fg" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -40,29 +41,33 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/bench_home_title"
-                    android:textColor="@color/bench_text"
-                    android:textSize="20sp"
+                    android:text="@string/home_title"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="21sp"
                     android:textStyle="bold"
-                    android:letterSpacing="0.1" />
+                    android:letterSpacing="0.08" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/bench_home_sub"
-                    android:textColor="@color/bench_muted"
-                    android:fontFamily="monospace"
-                    android:textSize="11sp" />
+                    android:text="@string/home_sub"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="10sp"
+                    android:letterSpacing="0.05" />
             </LinearLayout>
 
-            <ImageButton
-                android:id="@+id/home_settings"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@android:drawable/ic_menu_manage"
-                android:contentDescription="@string/menu_settings"
-                app:tint="@color/bench_sub" />
+            <TextView
+                android:id="@+id/btn_settings"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/btn_outline"
+                android:textColor="@color/tc_outline"
+                android:text="@string/home_settings"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.15"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="7dp" />
         </LinearLayout>
 
         <!-- Device under test -->
@@ -70,10 +75,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:background="@drawable/bg_bench_card"
-            android:padding="17dp">
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_box"
+            android:padding="16dp">
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -81,65 +85,51 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
-                <View
-                    android:id="@+id/dot_live"
-                    android:layout_width="8dp"
-                    android:layout_height="8dp"
-                    android:background="@drawable/bg_bench_dot" />
-
                 <TextView
+                    style="@style/Bench.Label"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/bench_dut"
-                    android:textColor="@color/bench_accent"
-                    android:textSize="11sp"
-                    android:letterSpacing="0.12" />
+                    android:text="@string/dut_label" />
 
                 <TextView
                     android:id="@+id/dut_power_state"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:textSize="10.5sp"
-                    android:textColor="@color/bench_accent" />
+                    android:textColor="@color/mono_fg"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/dut_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="9dp"
-                android:fontFamily="monospace"
-                android:textColor="@color/bench_text"
-                android:textSize="16sp" />
+                android:layout_marginTop="10dp"
+                android:textColor="@color/mono_fg"
+                android:textSize="16sp"
+                android:textStyle="bold" />
 
             <GridLayout
                 android:id="@+id/dut_grid"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="10dp"
                 android:columnCount="2" />
         </LinearLayout>
 
-        <!-- New run -->
+        <!-- Run configuration -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginHorizontal="16dp"
             android:layout_marginTop="12dp"
-            android:background="@drawable/bg_bench_card"
-            android:padding="17dp">
+            android:background="@drawable/bg_box"
+            android:padding="16dp">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/bench_new_run"
-                android:textColor="@color/bench_text"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                style="@style/Bench.Label"
+                android:text="@string/cfg_label" />
 
             <LinearLayout
                 android:id="@+id/row_model"
@@ -148,8 +138,7 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/bg_bench_inner"
-                android:foreground="?attr/selectableItemBackground"
+                android:background="@drawable/btn_outline"
                 android:padding="12dp">
 
                 <LinearLayout
@@ -161,23 +150,22 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/bench_model_label"
-                        android:textColor="@color/bench_muted"
-                        android:fontFamily="monospace"
-                        android:textSize="10sp"
-                        android:letterSpacing="0.1" />
+                        android:text="@string/model_label"
+                        android:textColor="@color/mono_fg"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.18" />
 
                     <TextView
                         android:id="@+id/model_name"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="3dp"
-                        android:fontFamily="monospace"
-                        android:textColor="@color/bench_text"
+                        android:textColor="@color/mono_fg"
                         android:textSize="13sp"
                         android:singleLine="true"
-                        android:ellipsize="end"
-                        android:text="@string/bench_model_none" />
+                        android:ellipsize="middle"
+                        android:text="@string/model_none" />
                 </LinearLayout>
 
                 <TextView
@@ -185,10 +173,11 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="10dp"
-                    android:fontFamily="monospace"
-                    android:textSize="10sp"
-                    android:textColor="@color/bench_accent"
-                    android:background="@drawable/bg_bench_inner"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:textColor="@color/mono_bg"
+                    android:background="@drawable/bg_fill"
                     android:paddingHorizontal="7dp"
                     android:paddingVertical="3dp"
                     android:visibility="gone" />
@@ -196,107 +185,206 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/bench_chevron"
-                    android:textColor="@color/bench_faint"
+                    android:layout_marginStart="10dp"
+                    android:text="&gt;"
+                    android:textColor="@color/mono_fg"
+                    android:textStyle="bold"
                     android:textSize="15sp" />
             </LinearLayout>
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:text="@string/bench_runs_config"
-                android:textColor="@color/bench_muted"
-                android:fontFamily="monospace"
-                android:textSize="10sp"
-                android:letterSpacing="0.1" />
-
+            <!-- Mode -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginTop="6dp">
+                android:layout_marginTop="10dp">
 
                 <TextView
-                    android:id="@+id/runs_1"
+                    android:id="@+id/mode_ablation"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:gravity="center"
-                    android:paddingVertical="9dp"
-                    android:fontFamily="monospace"
-                    android:textSize="13sp"
-                    android:text="@string/bench_runs_1" />
-
-                <TextView
-                    android:id="@+id/runs_3"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="6dp"
-                    android:gravity="center"
-                    android:paddingVertical="9dp"
-                    android:fontFamily="monospace"
-                    android:textSize="13sp"
-                    android:text="@string/bench_runs_3" />
-
-                <TextView
-                    android:id="@+id/runs_5"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="6dp"
-                    android:gravity="center"
-                    android:paddingVertical="9dp"
-                    android:fontFamily="monospace"
-                    android:textSize="13sp"
-                    android:text="@string/bench_runs_5" />
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1.6"
-                    android:layout_marginStart="8dp"
-                    android:gravity="center"
-                    android:paddingVertical="9dp"
-                    android:fontFamily="monospace"
+                    android:paddingVertical="10dp"
                     android:textSize="12sp"
-                    android:textColor="@color/bench_text2"
-                    android:background="@drawable/bg_bench_inner"
-                    android:text="@string/bench_workload" />
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:text="@string/mode_ablation" />
+
+                <TextView
+                    android:id="@+id/mode_sustained"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:gravity="center"
+                    android:paddingVertical="10dp"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:text="@string/mode_sustained" />
             </LinearLayout>
 
+            <!-- Ablation config -->
             <LinearLayout
-                android:id="@+id/arms_list"
+                android:id="@+id/group_ablation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/runs_label"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.18" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="6dp">
+
+                    <TextView
+                        android:id="@+id/runs_1"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:paddingVertical="9dp"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:text="1" />
+
+                    <TextView
+                        android:id="@+id/runs_3"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="6dp"
+                        android:gravity="center"
+                        android:paddingVertical="9dp"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:text="3" />
+
+                    <TextView
+                        android:id="@+id/runs_5"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="6dp"
+                        android:gravity="center"
+                        android:paddingVertical="9dp"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:text="5" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:id="@+id/row_eff_arm"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginTop="12dp"
+                    android:paddingVertical="2dp">
+
+                    <View
+                        android:id="@+id/eff_arm_box"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:background="@drawable/bg_inner" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="10dp"
+                        android:text="@string/efficiency_arm"
+                        android:textColor="@color/mono_fg"
+                        android:textSize="11sp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Sustained config -->
+            <LinearLayout
+                android:id="@+id/group_sustained"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginTop="12dp" />
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:text="@string/duration_label"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.18" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="6dp">
+
+                    <TextView
+                        android:id="@+id/dur_2"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:gravity="center"
+                        android:paddingVertical="9dp"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:text="2" />
+
+                    <TextView
+                        android:id="@+id/dur_5"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="6dp"
+                        android:gravity="center"
+                        android:paddingVertical="9dp"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:text="5" />
+
+                    <TextView
+                        android:id="@+id/dur_10"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:layout_marginStart="6dp"
+                        android:gravity="center"
+                        android:paddingVertical="9dp"
+                        android:textSize="13sp"
+                        android:textStyle="bold"
+                        android:text="10" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/workload_note"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/workload"
+                android:textColor="@color/mono_fg"
+                android:textSize="10sp" />
 
             <TextView
                 android:id="@+id/btn_run"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:gravity="center"
-                android:paddingVertical="14dp"
-                android:background="@drawable/bg_bench_run"
-                android:foreground="?attr/selectableItemBackground"
-                android:textColor="@color/bench_on_accent"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:text="@string/bench_run_cta" />
-
-            <TextView
-                android:id="@+id/run_note"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:fontFamily="monospace"
-                android:textColor="@color/bench_muted"
-                android:textSize="10.5sp"
-                android:text="@string/bench_run_note" />
+                style="@style/Bench.Button"
+                android:layout_marginTop="14dp"
+                android:text="@string/run_cta" />
         </LinearLayout>
 
         <!-- Last result -->
@@ -305,10 +393,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginHorizontal="16dp"
             android:layout_marginTop="12dp"
-            android:background="@drawable/bg_bench_card"
-            android:padding="17dp"
+            android:background="@drawable/bg_box"
+            android:padding="16dp"
             android:visibility="gone">
 
             <LinearLayout
@@ -318,39 +405,35 @@
                 android:gravity="center_vertical">
 
                 <TextView
+                    style="@style/Bench.Label"
                     android:layout_width="0dp"
-                    android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/bench_last_result"
-                    android:textColor="@color/bench_text"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    android:text="@string/last_result" />
 
                 <TextView
                     android:id="@+id/result_meta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:fontFamily="monospace"
-                    android:textColor="@color/bench_muted"
-                    android:textSize="10.5sp" />
+                    android:textColor="@color/mono_fg"
+                    android:textSize="10sp" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/result_headline"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:textColor="@color/bench_accent"
-                android:textSize="20sp"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/mono_fg"
+                android:textSize="21sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/result_sub"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textColor="@color/bench_sub"
-                android:textSize="11.5sp"
+                android:layout_marginTop="4dp"
+                android:textColor="@color/mono_fg"
+                android:textSize="11sp"
                 android:lineSpacingMultiplier="1.4" />
 
             <LinearLayout
@@ -361,17 +444,10 @@
                 android:layout_marginTop="12dp" />
 
             <TextView
-                android:id="@+id/btn_open_results"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:id="@+id/btn_open_result"
+                style="@style/Bench.ButtonOutline"
                 android:layout_marginTop="14dp"
-                android:gravity="center"
-                android:paddingVertical="11dp"
-                android:background="@drawable/bg_bench_outline"
-                android:foreground="?attr/selectableItemBackground"
-                android:textColor="@color/bench_accent"
-                android:textSize="13.5sp"
-                android:text="@string/bench_open_results" />
+                android:text="@string/open_full_results" />
         </LinearLayout>
 
         <!-- History -->
@@ -380,34 +456,38 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="22dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_box"
+            android:padding="16dp"
             android:visibility="gone">
 
             <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/bench_history"
-                android:textColor="@color/bench_text"
-                android:textSize="13sp"
-                android:textStyle="bold" />
+                style="@style/Bench.Label"
+                android:text="@string/history_label" />
 
             <LinearLayout
                 android:id="@+id/history_list"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
-                android:layout_marginTop="10dp" />
+                android:layout_marginTop="12dp" />
+
+            <TextView
+                android:id="@+id/btn_all_results"
+                style="@style/Bench.ButtonOutline"
+                android:layout_marginTop="6dp"
+                android:text="@string/history_all" />
         </LinearLayout>
 
         <TextView
+            android:id="@+id/footer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:paddingTop="24dp"
-            android:fontFamily="monospace"
-            android:textColor="@color/bench_faint"
+            android:paddingTop="20dp"
+            android:paddingBottom="6dp"
+            android:textColor="@color/mono_fg"
             android:textSize="10sp"
-            android:text="@string/bench_footer" />
+            android:text="@string/home_footer" />
     </LinearLayout>
 </ScrollView>

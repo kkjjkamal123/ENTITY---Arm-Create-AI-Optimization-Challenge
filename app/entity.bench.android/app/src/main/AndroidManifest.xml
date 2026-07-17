@@ -2,16 +2,16 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <application
+        android:name=".BenchApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:extractNativeLibs="true"
         android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher_round"
+        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.AiChatSample"
-        >
+        android:theme="@style/Theme.EntityBench">
 
         <activity
             android:name=".BenchHomeActivity"
@@ -22,44 +22,26 @@
             </intent-filter>
         </activity>
 
+        <!-- Portrait-locked: a rotation would tear down the in-flight benchmark. -->
         <activity
-            android:name=".MainActivity"
-            android:exported="true" />
+            android:name=".RunActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
-        <!-- Two launcher aliases so the user can pick the icon that suits their
-             phone theme. Exactly one is enabled at a time (see IconStyle). -->
-        <activity-alias
-            android:name=".MainBlack"
-            android:enabled="true"
-            android:exported="true"
-            android:icon="@mipmap/ic_entity_black"
-            android:roundIcon="@mipmap/ic_entity_black"
-            android:label="@string/app_name"
-            android:targetActivity=".MainActivity" />
+        <activity
+            android:name=".ResultActivity"
+            android:exported="false"
+            android:parentActivityName=".BenchHomeActivity" />
 
-        <activity-alias
-            android:name=".MainWhite"
-            android:enabled="false"
-            android:exported="true"
-            android:icon="@mipmap/ic_entity_white"
-            android:roundIcon="@mipmap/ic_entity_white"
-            android:label="@string/app_name"
-            android:targetActivity=".MainActivity" />
+        <activity
+            android:name=".HistoryActivity"
+            android:exported="false"
+            android:parentActivityName=".BenchHomeActivity" />
 
         <activity
             android:name=".SettingsActivity"
             android:exported="false"
-            android:parentActivityName=".MainActivity" />
-
-        <activity
-            android:name=".InfoActivity"
-            android:exported="false"
-            android:parentActivityName=".MainActivity" />
-
-        <activity
-            android:name=".BenchmarkActivity"
-            android:exported="false"
-            android:parentActivityName=".MainActivity" />
+            android:parentActivityName=".BenchHomeActivity" />
     </application>
 
 </manifest>

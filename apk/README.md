@@ -4,7 +4,8 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-v11-ui-polish-20260715-release.apk` | **2.3.0** (current) | release-signed | 10.3 MB |
+| `ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk` | **2.4.0** (current) | release-signed | 10.3 MB |
+| `ENTITY-v11-ui-polish-20260715-release.apk` | 2.3.0 | release-signed | 10.3 MB |
 | `ENTITY-v10-sustained-thermal-20260715-release.apk` | 2.2.0 | release-signed | 10.3 MB |
 | `ENTITY-v9-kleidiai-quant-20260714-release.apk` | 2.1.0 | release-signed | |
 | `ENTITY-v9-kleidiai-quant-20260714-debug.apk` | 2.1.0 | debug | |
@@ -23,15 +24,25 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 ## Standalone benchmark app
 
-`ENTITY-Bench-v1.0.0-release.apk` is a separate, stripped-down app (no chat) that runs only ENTITY's three-arm ablation - naive, threads-only and Auto - on a model you import, and exports every pass to CSV. Anyone with an arm64 phone can install it, run the ablation on their own SoC, and contribute a row to [`benchmarks/device-result-template.csv`](../benchmarks/device-result-template.csv). See [app/entity.bench.android/README.md](../app/entity.bench.android/README.md).
+`ENTITY-Bench` is a separate, dedicated benchmark app (no chat) that runs ENTITY's three-arm ablation - naive, threads-only and auto - on a model you import, autosaves every result on the device, and exports every pass to CSV. Anyone with an arm64 phone can install it, run the ablation on their own SoC, and contribute a row to [`benchmarks/device-result-template.csv`](../benchmarks/device-result-template.csv). See [app/entity.bench.android/README.md](../app/entity.bench.android/README.md).
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-Bench-v1.0.0-release.apk` | **1.0.0** | release-signed | 9.9 MB |
+| `ENTITY-Bench-v1.1.0-release.apk` | **1.1.0** (current) | release-signed | 9.7 MB |
+| `ENTITY-Bench-v1.0.0-release.apk` | 1.0.0 | release-signed | 9.9 MB |
+
+v1.1.0 is a ground-up rebuild as a purpose-built benchmark instrument: its own home / live-run /
+result screens instead of the chat app's benchmark page, every result autosaved with a browsable
+history (any past run can be reopened and its CSV exported later), a pure black-and-white
+theme with System / Light / Dark selection in Settings, a new pixel-art launcher icon, and an
+optional fourth arm, "efficiency cores": auto's thread count pinned to the slowest cluster,
+exported as `affinity_efficiency` in the CSV, to measure whether the efficiency cores are
+actually more energy-efficient (tok/W) for LLM decode or just slower. CSV row keys are unchanged
+from v1.0.0.
 
 ## Start here
 
-**Recommended**: `ENTITY-v8-universal-arm-20260712-1240-release.apk` is the current release (v2.0.0), properly release-signed, and 9.8 MB. It ships 7 Arm CPU backend variants with automatic runtime selection for universal Arm support.
+**Recommended**: `ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk` is the current release (v2.4.0), release-signed. It ships 7 Arm CPU backend variants with automatic runtime selection, KV-cache session reuse, and a topology-derived thread count.
 
 ## Installation
 

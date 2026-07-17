@@ -30,8 +30,11 @@ static std::string join(const std::vector<T> &values, const std::string &delim) 
  * LLama resources: context, model, batch and sampler
  */
 constexpr int   N_THREADS_MIN           = 2;
-constexpr int   N_THREADS_MAX           = 4;
-constexpr int   N_THREADS_HEADROOM      = 2;
+// Upper clamp for the topology-derived generation thread count. 6, not 4: a 4+4
+// big.LITTLE phone still derives 4 (only four cores sit in its top frequency
+// cluster), but a flagship with more than four performance cores is allowed to
+// use up to six of them. See top_cluster_core_count().
+constexpr int   N_THREADS_MAX           = 6;
 
 constexpr int   DEFAULT_CONTEXT_SIZE    = 4096;
 constexpr int   OVERFLOW_HEADROOM       = 4;
@@ -79,6 +82,13 @@ static float g_top_p     = 0.95f;
 // alone. Only the benchmark's threads-only configuration sets this false.
 static bool  g_pin_cores = true;
 
+// Efficiency-cluster benchmark arm. When true (only the bench app's efficiency arm
+// sets it, and only alongside g_pin_cores), inference pins to the SLOWEST cores
+// instead of the fastest: the ranked cpu list is consumed back-to-front. Purpose is
+// to measure whether the little cores are actually more energy-efficient (tok/W) for
+// decode, not merely slower. Reset to false on the shipped path.
+static bool  g_pin_slow = false;
+
 // CPU indices ranked by max cpufreq, fastest first.
 // On big.LITTLE the leading entries are the performance cluster (e.g. the A78
 // cores), the trailing ones the efficiency cluster.
@@ -105,10 +115,49 @@ static std::vector<int> ranked_fast_cpus() {
     return ranked;
 }
 
-// Build a CPU set of the n fastest cores; pinning to it keeps inference off the
-// little cores.
+// Number of cores in the top frequency cluster: cpuinfo_max_freq within 10% of the
+// fastest core. This is the default generation thread count (before the
+// N_THREADS_MIN/MAX clamp), derived from topology rather than hardcoded, so a phone
+// with more than four performance cores threads wider than a 4+4 device. On the
+// reference Dimensity 7300 (4x 2.5 GHz + 4x 2.0 GHz) the 2.0 GHz cores fall below the
+// 2.25 GHz threshold, so exactly the four A78s count. Falls back to half the cores
+// when cpufreq is unreadable.
+static int top_cluster_core_count() {
+    const int ncpu = (int) sysconf(_SC_NPROCESSORS_CONF);
+    std::vector<long> khz;
+    khz.reserve(ncpu);
+    for (int i = 0; i < ncpu; i++) {
+        char path[128];
+        snprintf(path, sizeof(path),
+                 "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", i);
+        long v = 0;
+        if (FILE *f = fopen(path, "r")) {
+            if (fscanf(f, "%ld", &v) != 1) { v = 0; }
+            fclose(f);
+        }
+        khz.push_back(v);
+    }
+    long top = 0;
+    for (long v : khz) { top = std::max(top, v); }
+    if (top <= 0) { return std::max(1, ncpu / 2); }
+    const long threshold = top - top / 10;   // within 10% of the fastest core
+    int count = 0;
+    for (long v : khz) { if (v >= threshold) { count++; } }
+    return count;
+}
+
+// The cpu ranking inference pins against: fastest-first on the shipped path,
+// slowest-first for the efficiency-cluster benchmark arm (g_pin_slow).
+static std::vector<int> ranked_cpus_for_pinning() {
+    std::vector<int> ranked = ranked_fast_cpus();
+    if (g_pin_slow) { std::reverse(ranked.begin(), ranked.end()); }
+    return ranked;
+}
+
+// Build a CPU set of the n fastest cores (or slowest, for the efficiency arm);
+// pinning to it keeps inference on the chosen cluster.
 static void build_fast_cpu_set(int want) {
-    const std::vector<int> ranked = ranked_fast_cpus();
+    const std::vector<int> ranked = ranked_cpus_for_pinning();
     CPU_ZERO(&g_fast_cpus);
     g_fast_count = 0;
     for (int i = 0; i < (int) ranked.size() && g_fast_count < want; i++) {
@@ -165,7 +214,7 @@ static void unpin_all_cores() {
 static ggml_threadpool_t new_threadpool_on_fast_cores(int want) {
     if (!g_pin_cores) { return nullptr; }
     if (want <= 0 || !g_threadpool_new_fn || !g_threadpool_free_fn) { return nullptr; }
-    const std::vector<int> ranked = ranked_fast_cpus();
+    const std::vector<int> ranked = ranked_cpus_for_pinning();
     ggml_threadpool_params tpp;
     ggml_threadpool_params_init(&tpp, want);
     int set = 0;
@@ -260,7 +309,7 @@ static llama_context *init_context(llama_model *model, int n_ctx_override = -1) 
     const int n_online = (int) sysconf(_SC_NPROCESSORS_ONLN);
     const int n_threads = g_n_threads > 0
             ? std::max(1, std::min(n_online, g_n_threads))
-            : std::max(N_THREADS_MIN, std::min(N_THREADS_MAX, n_online - N_THREADS_HEADROOM));
+            : std::max(N_THREADS_MIN, std::min(N_THREADS_MAX, top_cluster_core_count()));
 
     // Context size: explicit override (benchmark) wins, else the app's value.
     int n_ctx = n_ctx_override > 0 ? n_ctx_override
@@ -371,15 +420,18 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_arm_aichat_internal_InferenceEngineImpl_configure(
         JNIEnv * /*env*/, jobject /*unused*/,
-        jint nCtx, jint nThreads, jfloat temp, jint topK, jfloat topP, jboolean pinCores) {
+        jint nCtx, jint nThreads, jfloat temp, jint topK, jfloat topP,
+        jboolean pinCores, jboolean pinEfficiency) {
     if (nCtx > 0) { g_n_ctx = nCtx; }
     g_n_threads = nThreads < 0 ? 0 : nThreads;
     g_temp  = temp;
     g_top_k = topK;
     g_top_p = topP;
     g_pin_cores = pinCores != JNI_FALSE;
-    LOGi("%s: ctx=%d threads=%d temp=%.2f topK=%d topP=%.2f pinCores=%d",
-         __func__, g_n_ctx, g_n_threads, g_temp, g_top_k, g_top_p, (int) g_pin_cores);
+    g_pin_slow  = pinEfficiency != JNI_FALSE;
+    LOGi("%s: ctx=%d threads=%d temp=%.2f topK=%d topP=%.2f pinCores=%d pinEfficiency=%d",
+         __func__, g_n_ctx, g_n_threads, g_temp, g_top_k, g_top_p,
+         (int) g_pin_cores, (int) g_pin_slow);
 }
 
 extern "C"
