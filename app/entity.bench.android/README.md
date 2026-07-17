@@ -1,6 +1,9 @@
 <div align="center">
 
-<img src="../../Icons/Bench_icon.png" width="25%" alt="ENTITY Bench icon">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../Icons/Bench_icon_dark.png">
+  <img src="../../Icons/Bench_icon.png" width="20%" alt="ENTITY Bench icon">
+</picture>
 
 # ENTITY Bench: the on device LLM benchmark for Arm phones
 
