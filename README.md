@@ -8,6 +8,11 @@
 
 [View the source on GitHub](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge) · [Read the complete Arm Create submission](github.md)
 
+![License](https://img.shields.io/badge/license-Apache--2.0-blue)
+![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
+![Release](https://img.shields.io/badge/release-v2.3.0-orange)
+![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
+
 </div>
 
 ## Navigation
@@ -138,11 +143,20 @@ The same ablation now ships as a standalone app, [ENTITY Bench](app/entity.bench
 
 ## Get started
 
-1. Install the current release signed APK from [apk](apk).
-2. Open ENTITY and choose Import from device.
-3. Select a runnable GGUF model.
-4. Leave Auto mode enabled for device aware CPU and context decisions.
-5. Open Benchmark from the app menu to run the three arm ablation on the loaded model: the naive default, threads only, and the optimized path.
+Ninety seconds from clone to chatting, on any arm64 phone with Android 13+:
+
+```bash
+git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
+cd ENTITY---Arm-Create-AI-Optimization-Challenge
+adb install -r apk/ENTITY-v11-ui-polish-20260715-release.apk
+```
+
+Then on the phone:
+
+1. Download a model such as [Llama-3.2-1B-Instruct-Q4_0.gguf](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF) (Q4_0 reaches Arm's KleidiAI kernels; see [why](docs/KLEIDIAI-QUANTS.md)).
+2. Open ENTITY and choose Import from device, then select the GGUF file.
+3. Leave Auto mode enabled for device aware CPU and context decisions.
+4. Open Benchmark from the app menu to run the three arm ablation on the loaded model: the naive default, threads only, and the optimized path. Unplug the phone to see power and tokens per watt.
 
 To build from source use the exact Android SDK, NDK, CMake and JDK setup in [BUILD](docs/BUILD.md). The release build is arm64 only and includes all seven CPU backend variants.
 

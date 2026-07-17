@@ -14,6 +14,7 @@ short version, `SETUP.md` is a fine quick reference.
 | Android Gradle Plugin | 8.13.2 | `gradle/libs.versions.toml` (`agp`) |
 | Kotlin | 2.3.0 | `gradle/libs.versions.toml` (`kotlin`) |
 | NDK | 27.1.12297006 | `lib/build.gradle.kts` (`ndkVersion`) |
+| C/C++ compiler | clang 18.0.2 (bundled with NDK 27.1) | determined by the NDK version; cross-compiles to `aarch64-linux-android` |
 | CMake | 3.31.6 | `lib/build.gradle.kts` (`externalNativeBuild.cmake.version`) |
 | llama.cpp | upstream `master` | fetched separately, not vendored in this repo |
 
@@ -163,6 +164,26 @@ arguments += "-DGGML_CPU_ALL_VARIANTS=ON"
 At startup, ggml scores each variant against the physical CPU and `prepare()` selects the best one.
 This makes the APK larger (~9.8 MB) but enables universal Arm support — no SIGILL on old cores, no
 missed optimizations on new ones.
+
+### The seven variants, exactly
+
+These come from ggml's Android branch of `ggml/src/CMakeLists.txt` (`ggml_add_cpu_backend_variant`,
+`CMAKE_SYSTEM_NAME MATCHES "Android"`). Each is the baseline Armv8-a NEON build plus the listed
+optional features; ggml picks the highest one whose every feature the CPU reports.
+
+| Variant | Optional ISA features | Typical cores |
+|---|---|---|
+| `android_armv8.0_1` | none (baseline NEON) | Cortex-A53/A72-era phones; the no-SIGILL fallback |
+| `android_armv8.2_1` | dotprod | first dotprod cores without fp16 vector arithmetic |
+| `android_armv8.2_2` | dotprod, fp16 | Cortex-A75 to A78 class — **what the reference Dimensity 7300 selects** |
+| `android_armv8.6_1` | dotprod, fp16, i8mm | Armv8.6/early Armv9 big cores with `i8mm` (Cortex-A710 class) |
+| `android_armv9.0_1` | dotprod, fp16, i8mm, SVE2 | Armv9.0 cores exposing SVE2 to userspace |
+| `android_armv9.2_1` | dotprod, fp16, i8mm, SVE, SME | Armv9.2 cores with SME |
+| `android_armv9.2_2` | dotprod, fp16, i8mm, SVE, SVE2, SME | newest Armv9.2 cores (Cortex-X925 class) |
+
+To see which variant loaded on a given phone, watch logcat during model load — ggml logs the
+chosen backend — or check `/proc/cpuinfo` `Features` (`asimddp` = dotprod, `asimdhp` = fp16,
+`i8mm`, `sve`, `sve2`, `sme`) and read the table bottom-up.
 
 and `lib/src/main/cpp/CMakeLists.txt` additionally turns on KleidiAI for `arm64-v8a`:
 

@@ -217,7 +217,7 @@ v2.0.0 Q3_K_L two-arm run measured 2.5×, 1.7 → 4.2 tok/W.)
 ## Setup Instructions
 
 ### Prerequisites
-- Android SDK with **compileSdk 36** (Android 16) and matching build-tools, **NDK 27.1.12297006**, and **CMake 3.31.6**.
+- Android SDK with **compileSdk 36** (Android 16) and matching build-tools, **NDK 27.1.12297006** (bundles clang 18.0.2, the compiler for all native code), and **CMake 3.31.6**.
 - **JDK 17**.
 - llama.cpp master branch.
 - GGUF models (Llama-3.2-1B or -3B Q4_0 recommended).
