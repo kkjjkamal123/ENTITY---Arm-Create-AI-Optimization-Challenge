@@ -11,6 +11,8 @@ import java.util.ArrayDeque
 // Lightweight multi-series line graph. No external library: fixed ring buffers
 // keep memory bounded, and each series is normalized to its own min/max so
 // values with different units (tok/s, watts, °C, GB) can overlay cleanly.
+// Deliberately the ONE colored surface in the mono UI: seven overlaid series
+// need hue to stay readable, so data gets color and chrome stays ink.
 class MetricsGraphView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
@@ -28,13 +30,13 @@ class MetricsGraphView @JvmOverloads constructor(
 
     private val cap = 120
     private val series = listOf(
-        Series("stat_tokens", "tok", 0xFF4E79A7.toInt()) { it.toInt().toString() },
-        Series("stat_speed", "tok/s", 0xFF10A37F.toInt()) { "%.1f".format(it) },
-        Series("stat_ttft", "TTFT", 0xFFB07AA1.toInt()) { "${it.toInt()}ms" },
-        Series("stat_temp", "°C", 0xFFE15759.toInt()) { "%.1f".format(it) },
-        Series("stat_power", "W", 0xFFF28E2B.toInt()) { "%.2f".format(it) },
-        Series("stat_cpu", "CPU", 0xFF9C755F.toInt()) { "%.0f%%".format(it) },
-        Series("stat_memory", "GB", 0xFF17A2B8.toInt()) { "%.1f".format(it) },
+        Series(Settings.KEY_STAT_TOKENS, "tok", 0xFF4E79A7.toInt()) { it.toInt().toString() },
+        Series(Settings.KEY_STAT_SPEED, "tok/s", 0xFF10A37F.toInt()) { "%.1f".format(it) },
+        Series(Settings.KEY_STAT_TTFT, "TTFT", 0xFFB07AA1.toInt()) { "${it.toInt()}ms" },
+        Series(Settings.KEY_STAT_TEMP, "°C", 0xFFE15759.toInt()) { "%.1f".format(it) },
+        Series(Settings.KEY_STAT_POWER, "W", 0xFFF28E2B.toInt()) { "%.2f".format(it) },
+        Series(Settings.KEY_STAT_CPU, "CPU", 0xFF9C755F.toInt()) { "%.0f%%".format(it) },
+        Series(Settings.KEY_STAT_MEMORY, "GB", 0xFF17A2B8.toInt()) { "%.1f".format(it) },
     )
 
     private fun dp(v: Float) = v * resources.displayMetrics.density
@@ -49,8 +51,9 @@ class MetricsGraphView @JvmOverloads constructor(
         strokeWidth = dp(1f)
     }
     private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        textSize = sp(11f)
+        textSize = sp(10f)
         color = 0xFF9A9AA6.toInt()
+        typeface = android.graphics.Typeface.MONOSPACE
     }
     private val dotPaint = Paint(Paint.ANTI_ALIAS_FLAG)
     private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
@@ -88,13 +91,13 @@ class MetricsGraphView @JvmOverloads constructor(
         cpu: Float,
         memory: Float,
     ) {
-        push("stat_tokens", tokens)
-        push("stat_speed", speed)
-        push("stat_ttft", ttft)
-        push("stat_temp", temp)
-        push("stat_power", power)
-        push("stat_cpu", cpu)
-        push("stat_memory", memory)
+        push(Settings.KEY_STAT_TOKENS, tokens)
+        push(Settings.KEY_STAT_SPEED, speed)
+        push(Settings.KEY_STAT_TTFT, ttft)
+        push(Settings.KEY_STAT_TEMP, temp)
+        push(Settings.KEY_STAT_POWER, power)
+        push(Settings.KEY_STAT_CPU, cpu)
+        push(Settings.KEY_STAT_MEMORY, memory)
         invalidate()
     }
 
@@ -119,8 +122,8 @@ class MetricsGraphView @JvmOverloads constructor(
         val gap = dp(14f)
         val dotR = dp(3.5f)
         var lx = padX
-        var ly = dp(15f)
-        val lineH = dp(18f)
+        var ly = dp(16f)
+        val lineH = dp(16f)
         for (s in active) {
             val latest = s.values.lastOrNull()
             val txt = "${s.label} ${latest?.let(s.format) ?: "-"}"

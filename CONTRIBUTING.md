@@ -97,7 +97,7 @@ checked against the in-app benchmark before and after:
 
 1. Build and install your change.
 2. Load a model (Llama-3.2-1B-Instruct-Q4_0 is the fastest round-trip for iteration).
-3. ⋮ → **Benchmark** → **Run benchmark**.
+3. Menu drawer (≡) → **BENCHMARK** → **RUN BENCHMARK**.
 4. Compare the "Optimized" column's decode t/s and tok/W against a baseline run from `main` on the
    same model, same phone, unplugged, screen on, no other apps active (charging invalidates power
    numbers — the app will warn and hide them).

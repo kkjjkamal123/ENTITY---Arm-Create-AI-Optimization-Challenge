@@ -9,6 +9,65 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [3.0.0] — 2026-07-18
+
+**MONO: full UI remake in the ENTITY Bench design language.** Every screen rebuilt from scratch
+around the bench app's two-color system: paper and ink only (white/black, `values-night` inverts),
+square corners, monospace type, uppercase section labels, and press feedback as a hard color
+inversion instead of ripples. Major version because the interface is a remake — the toolbar and its
+overflow menu are gone. No inference-path changes, so every published benchmark number carries over.
+
+### Added
+
+- **Left navigation drawer** replaces the toolbar menu entirely. NEW CHAT and the conversation
+  list live in one section (tap to switch, long-press to rename/delete, EDIT for multi-select
+  delete; the active conversation renders inverted — the design's selection idiom), plus MODEL
+  (switch model, model info), TOOLS (benchmark, share chat) and SETTINGS / ABOUT.
+- **Settings rebuilt and expanded** into six sections, absorbing everything that used to hide
+  in the overflow menu (About stays outside Settings, in the drawer):
+  - *Theme* — System / Light / Dark segmented control (was a menu submenu).
+  - *Interface* — chat text size (Small / Medium / Large, new), animations, app icon.
+  - *Live metrics* — stats bar, metrics graph, graph style (fill area, smooth lines) and all
+    seven series toggles (all were menu items).
+  - *Chat* — system prompt editor, haptic feedback (new), keep screen on while generating (new).
+  - *Inference* — auto/manual tuning sliders, efficiency mode, re-run device optimization
+    (behavior unchanged).
+  - *Data* (new) — manage imported models (per-file delete with size totals, active model
+    protected), export all chats as plain text, clear all conversations.
+- **Daily-driver features**: chat text size, haptic ticks on send and on reply completion,
+  keep-screen-on during generation, model storage management, full-chat export, clear-all.
+- Model name lives in the header — tap the title block to switch models without opening the
+  drawer. Live battery °C and free-RAM readouts stay in the header.
+
+### Changed
+
+- **Theme**: two colors total (`mono_bg` / `mono_fg`), exactly like ENTITY Bench. Theme choice is
+  applied via AppCompatDelegate before any activity inflates, so there is no wrong-mode flash.
+- **Chat**: user messages are solid ink blocks with inverted text; assistant messages are bordered
+  boxes on paper; bubbles cap at 84% of the list width on any screen size. Markdown inline code
+  renders as reverse video and fenced code blocks get a hard left ink bar — no gray washes.
+- **Metrics graph** is deliberately the one colored surface in the mono UI: seven overlaid series
+  need hue to stay readable, so the data keeps its per-series colors while every piece of chrome
+  around it is ink.
+- **Dialogs** are square, bordered and monospace, with bold ink action buttons styled explicitly
+  at the theme level.
+- **Benchmark screen** restyled to the bench app's bordered boxes and segmented pickers; the
+  results table scrolls horizontally with fixed columns instead of cramped weighted cells.
+  Measurement logic, the three-arm ablation and the CSV schema are untouched.
+- Typing indicator, progress bars and status pills are all mono; the KleidiAI advisor
+  pill is a solid inversion (ACTIVE) or a dashed box (NOT USED).
+
+### Removed
+
+- The toolbar, its overflow menu and every menu-item toggle (all relocated into Settings), the
+  teal accent, every intermediate gray, rounded corners, ripples and the press-scale animator.
+
+### Upgrade notes
+
+- Everything carries over in place: preferences (same keys), conversations, KV session files and
+  imported models. versionCode 8 → 9, release-signed with the same key, so
+  `adb install -r` upgrades without uninstalling.
+
 ## [2.4.0] — 2026-07-17
 
 **KV-cache session reuse and topology-adaptive threads.** Two inference-path changes: multi-turn
@@ -597,6 +656,7 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 3.0.0 | `ENTITY-v13-mono-ui-refresh-20260718-release.apk` (release-signed, ~10.3 MB) |
 | 2.4.0 | `ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk` (release-signed, ~10.3 MB) |
 | 2.3.0 | `ENTITY-v11-ui-polish-20260715-release.apk` (release-signed, ~10.3 MB) |
 | 2.2.0 | `ENTITY-v10-sustained-thermal-20260715-release.apk` (release-signed, ~10.3 MB) |

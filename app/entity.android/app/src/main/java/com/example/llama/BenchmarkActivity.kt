@@ -14,17 +14,14 @@ import android.os.SystemClock
 import android.util.Log
 import android.view.Gravity
 import android.view.View
-import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ProgressBar
-import android.widget.RadioGroup
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.arm.aichat.AiChat
 import com.arm.aichat.InferenceEngine
-import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
@@ -86,16 +83,20 @@ class BenchmarkActivity : AppCompatActivity() {
     private lateinit var statusTv: TextView
     private lateinit var headlineTv: TextView
     private lateinit var noteTv: TextView
-    private lateinit var runBtn: Button
-    private lateinit var sustainedBtn: Button
-    private lateinit var copyBtn: Button
-    private lateinit var exportBtn: Button
-    private lateinit var runsGroup: RadioGroup
-    private lateinit var durationGroup: RadioGroup
+    private lateinit var runBtn: TextView
+    private lateinit var sustainedBtn: TextView
+    private lateinit var copyBtn: TextView
+    private lateinit var exportBtn: TextView
     private lateinit var runningBox: View
     private lateinit var resultsBox: View
     private lateinit var table: LinearLayout
     private lateinit var progress: ProgressBar
+
+    // Segmented pickers, bench-style: index 0/1/2.
+    private var runsSegs = listOf<TextView>()
+    private var durSegs = listOf<TextView>()
+    private var selectedRunsIdx = 1   // 1 / 3 / 5 runs
+    private var selectedDurIdx = 1    // 2 / 5 / 10 min
 
     private var lastResultText: String? = null
     private var pendingCsvBuilder: (() -> String)? = null
@@ -179,25 +180,26 @@ class BenchmarkActivity : AppCompatActivity() {
         // Recover the staged export if the system killed us while the file picker was up.
         pendingCsvPath = savedInstanceState?.getString(STATE_PENDING_CSV)
 
-        val toolbar = findViewById<MaterialToolbar>(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        toolbar.setNavigationOnClickListener { finish() }
+        findViewById<View>(R.id.btn_back).setOnClickListener { finish() }
 
         modelTv = findViewById(R.id.bench_model)
         statusTv = findViewById(R.id.bench_status)
         headlineTv = findViewById(R.id.bench_headline)
         noteTv = findViewById(R.id.bench_note)
-        runBtn = findViewById(R.id.run_bench)
-        sustainedBtn = findViewById(R.id.run_sustained_bench)
+        runBtn = findViewById(R.id.btn_run)
+        sustainedBtn = findViewById(R.id.btn_run_sustained)
         copyBtn = findViewById(R.id.bench_copy)
         exportBtn = findViewById(R.id.bench_export)
-        runsGroup = findViewById(R.id.bench_runs)
-        durationGroup = findViewById(R.id.bench_duration)
         runningBox = findViewById(R.id.bench_running)
         resultsBox = findViewById(R.id.bench_results)
         table = findViewById(R.id.bench_table)
         progress = findViewById(R.id.bench_progress)
+
+        runsSegs = listOf(findViewById(R.id.runs_1), findViewById(R.id.runs_3), findViewById(R.id.runs_5))
+        durSegs = listOf(findViewById(R.id.dur_2), findViewById(R.id.dur_5), findViewById(R.id.dur_10))
+        runsSegs.forEachIndexed { i, tv -> tv.setOnClickListener { selectedRunsIdx = i; styleSegs() } }
+        durSegs.forEachIndexed { i, tv -> tv.setOnClickListener { selectedDurIdx = i; styleSegs() } }
+        styleSegs()
 
         engine = AiChat.getInferenceEngine(applicationContext)
         prefs = getSharedPreferences(Settings.PREFS, Context.MODE_PRIVATE)
@@ -210,21 +212,17 @@ class BenchmarkActivity : AppCompatActivity() {
         exportBtn.isEnabled = false
     }
 
-    private fun selectedRuns() = when (runsGroup.checkedRadioButtonId) {
-        R.id.bench_runs_1 -> 1
-        R.id.bench_runs_5 -> 5
-        else -> 3
+    private fun styleSegs() {
+        runsSegs.forEachIndexed { i, tv -> Ui.seg(tv, i == selectedRunsIdx) }
+        durSegs.forEachIndexed { i, tv -> Ui.seg(tv, i == selectedDurIdx) }
     }
 
-    private fun selectedDurationMs() = when (durationGroup.checkedRadioButtonId) {
-        R.id.bench_duration_2 -> 2 * 60_000L
-        R.id.bench_duration_10 -> 10 * 60_000L
-        else -> 5 * 60_000L
-    }
+    private fun selectedRuns() = intArrayOf(1, 3, 5)[selectedRunsIdx]
+
+    private fun selectedDurationMs() = longArrayOf(2, 5, 10)[selectedDurIdx] * 60_000L
 
     private fun setRunsEnabled(enabled: Boolean) {
-        for (i in 0 until runsGroup.childCount) runsGroup.getChildAt(i).isEnabled = enabled
-        for (i in 0 until durationGroup.childCount) durationGroup.getChildAt(i).isEnabled = enabled
+        (runsSegs + durSegs).forEach { it.isClickable = enabled }
     }
 
     private fun runBenchmark() {
@@ -723,31 +721,34 @@ class BenchmarkActivity : AppCompatActivity() {
         else -> "UNKNOWN($status)"
     }
 
-    // cells = naïve, threads-only, Auto, Δ. Auto and Δ are accented: the shipped path
-    // and its gain over naïve.
+    // cells = naïve, threads-only, Auto, Δ. Two-color rule: the shipped path and
+    // its gain over naïve are emphasized by weight, not by a third color. Fixed
+    // column widths — the table lives in a HorizontalScrollView.
     private fun addRow(metric: String, vararg cells: String, header: Boolean = false) {
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
-            setPadding(dp(12), dp(10), dp(12), dp(10))
+            setPadding(dp(10), dp(8), dp(10), dp(8))
         }
-        val onSurface = getColor(R.color.on_surface)
-        val muted = getColor(R.color.muted)
-        val accent = getColor(R.color.accent)
-        fun cell(text: String, weight: Float, color: Int, bold: Boolean, gravity: Int) {
+        val ink = Ui.fg(this)
+        fun cell(text: String, widthDp: Int, bold: Boolean, gravity: Int) {
             row.addView(TextView(this).apply {
                 this.text = text
-                setTextColor(color)
-                textSize = 12f
+                setTextColor(ink)
+                textSize = 10.5f
                 this.gravity = gravity
-                if (bold) setTypeface(typeface, android.graphics.Typeface.BOLD)
-                layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
+                typeface = if (bold) {
+                    android.graphics.Typeface.create(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD)
+                } else {
+                    android.graphics.Typeface.MONOSPACE
+                }
+                layoutParams = LinearLayout.LayoutParams(dp(widthDp), LinearLayout.LayoutParams.WRAP_CONTENT)
             })
         }
-        cell(metric, 2.0f, if (header) onSurface else muted, header, Gravity.START)
-        cell(cells.getOrElse(0) { "" }, 1.5f, onSurface, header, Gravity.END)
-        cell(cells.getOrElse(1) { "" }, 1.6f, onSurface, header, Gravity.END)
-        cell(cells.getOrElse(2) { "" }, 1.7f, if (header) onSurface else accent, true, Gravity.END)
-        cell(cells.getOrElse(3) { "" }, 1.1f, accent, true, Gravity.END)
+        cell(metric, 118, header, Gravity.START)
+        cell(cells.getOrElse(0) { "" }, 82, header, Gravity.END)
+        cell(cells.getOrElse(1) { "" }, 88, header, Gravity.END)
+        cell(cells.getOrElse(2) { "" }, 92, true, Gravity.END)
+        cell(cells.getOrElse(3) { "" }, 56, true, Gravity.END)
         table.addView(row)
     }
 

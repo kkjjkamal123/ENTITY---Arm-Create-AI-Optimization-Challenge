@@ -202,7 +202,7 @@ tensor weights**, so it's cheap to run on every model load. `GgufMetadata` mirro
 grouped keys (`BasicInfo`, `ArchitectureInfo`, `DimensionsInfo`, `AttentionInfo`, `RopeInfo`,
 `ExpertsInfo`, tokenizer/author/base-model info). `FileType` maps the numeric `general.file_type`
 code to the same human labels `llama-cli` prints (e.g. `2` → `"Q4_0"`). `MainActivity.buildModelInfo`
-consumes this to render the model-info card (⋮ → Model info).
+consumes this to render the model-info card (menu drawer → MODEL INFO).
 
 ## Native / JNI layer (`lib/src/main/cpp/ai_chat.cpp`)
 

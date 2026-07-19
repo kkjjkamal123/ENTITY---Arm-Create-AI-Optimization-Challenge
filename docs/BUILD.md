@@ -123,7 +123,7 @@ Models are not bundled with this repo. Q4_0 GGUF quantizations are recommended o
 [Hugging Face / bartowski](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF).
 
 **End users don't use `adb push`.** The app's real model-loading path is the in-app **Import from
-device** picker (⋮ → Select model → Import from device…), built on the Storage Access Framework —
+device** picker (tap the model line in the header → Import from device…), built on the Storage Access Framework —
 it works from any storage location on any phone, without a computer or adb. `adb push` is a
 developer shortcut that happens to work because `adb` can write to `Android/data/` directly.
 
@@ -133,7 +133,7 @@ developer shortcut that happens to work because `adb` can write to `Android/data
   numbers. The current reference in-app measurement is
   [`../benchmarks/BENCHMARKS.md`](../benchmarks/BENCHMARKS.md). The historical Termux raw output
   uses different workloads and CLI-only realtime priority.
-- ⋮ → **Benchmark** on the loaded model — runs three arms: the naïve eight-thread path,
+- Menu drawer (≡) → **BENCHMARK** on the loaded model — runs three arms: the naïve eight-thread path,
   threads-only (Auto's thread count with affinity off), and ENTITY Auto, which ranks cores by
   maximum frequency and runs both inference phases on that fast-core set. This is the fastest way
   to confirm a native or affinity change has not regressed the shipped path.

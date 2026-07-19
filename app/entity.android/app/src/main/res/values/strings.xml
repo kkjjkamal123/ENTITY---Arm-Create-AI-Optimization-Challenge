@@ -1,89 +1,132 @@
 <resources>
     <string name="app_name">ENTITY</string>
+    <string name="home_sub">on-device LLM chat</string>
 
-    <string name="menu_select_model">Select model</string>
-    <string name="menu_model_info">Model info</string>
-    <string name="menu_benchmark">Benchmark</string>
-    <string name="bench_intro">Runs the same PP 512 / TG 128 test three ways on the loaded model: naïve (8 threads across all cores), threads-only (the same thread count ENTITY picks, but with core pinning switched off), and ENTITY Auto (the shipped configuration, generation pinned to the performance cores). The middle run is what separates the gain that comes from the thread count from the gain that comes from pinning. Power draw is measured too, so you see speed and energy efficiency side by side. Unplug the phone: power and tokens-per-watt are hidden while charging.</string>
-    <string name="bench_run">Run benchmark</string>
-    <string name="bench_copy">Copy result</string>
-    <string name="bench_export">Export CSV</string>
-    <string name="bench_runs_label">Runs per config</string>
-    <string name="bench_runs_1">1</string>
-    <string name="bench_runs_3">3</string>
-    <string name="bench_runs_5">5</string>
-    <string name="bench_sustained">Sustained thermal test (no cooldown)</string>
-    <string name="bench_duration_label">Sustained duration</string>
-    <string name="bench_duration_2">2 min</string>
-    <string name="bench_duration_5">5 min</string>
-    <string name="bench_duration_10">10 min</string>
-    <string name="menu_show_stats">Show stats</string>
-    <string name="menu_stats">Stats</string>
+    <!-- Header / chat -->
+    <string name="no_model">NO MODEL — tap to load one</string>
+    <string name="hint_pick_model">Select a model to start</string>
+    <string name="hint_type_message">Message ENTITY…</string>
+    <string name="priming_context">Preparing conversation…</string>
+    <string name="empty_tagline">fully offline · on-device AI</string>
+    <string name="empty_hint_no_model">TAP THE MENU AND PICK A MODEL\nany .gguf works — import it once, it stays</string>
+    <string name="empty_hint_ready">MODEL READY\nsend a message to begin</string>
+    <string name="send">Send</string>
+    <string name="stop">Stop</string>
+
+    <!-- Drawer -->
+    <string name="drawer_new_chat">NEW CHAT</string>
+    <string name="drawer_conversations">CONVERSATIONS</string>
+    <string name="drawer_edit">EDIT</string>
+    <string name="drawer_model">MODEL</string>
+    <string name="drawer_model_info">MODEL INFO</string>
+    <string name="drawer_tools">TOOLS</string>
+    <string name="drawer_benchmark">BENCHMARK</string>
+    <string name="drawer_share">SHARE CHAT</string>
+    <string name="drawer_settings">SETTINGS</string>
+    <string name="drawer_about">ABOUT</string>
+    <string name="conv_untitled">Untitled</string>
+    <string name="conv_none">No conversations yet.\nStart one below.</string>
+
+    <!-- Model picker -->
+    <string name="model_picker_title">Select a model</string>
+    <string name="model_import">Import from device…</string>
+    <string name="model_add_title">Add a model</string>
+    <string name="model_add_body">No models yet. Import a .gguf file from your storage — ENTITY copies it in for you. No file-manager copying needed.</string>
+
+    <!-- Settings -->
+    <string name="settings_title">SETTINGS</string>
+    <string name="sec_theme">Theme</string>
+    <string name="theme_system">SYSTEM</string>
+    <string name="theme_light">LIGHT</string>
+    <string name="theme_dark">DARK</string>
+
+    <string name="sec_interface">Interface</string>
+    <string name="text_size_label">TEXT SIZE</string>
+    <string name="text_small">SMALL</string>
+    <string name="text_medium">MEDIUM</string>
+    <string name="text_large">LARGE</string>
+    <string name="settings_anim">Animations</string>
+    <string name="settings_anim_desc">Fade-in messages and the typing indicator. Off = fully static.</string>
+    <string name="settings_icon">App icon</string>
+    <string name="icon_auto">Auto — match phone theme</string>
+    <string name="icon_black">Black background</string>
+    <string name="icon_white">White background</string>
+
+    <string name="sec_metrics">Live metrics</string>
+    <string name="settings_show_stats">Stats bar</string>
+    <string name="settings_show_stats_desc">One line under the header: tokens, speed, TTFT, temperature, power, CPU, memory.</string>
+    <string name="settings_show_graph">Metrics graph</string>
+    <string name="settings_show_graph_desc">Live colour line graph while generating — the one colour surface in the app.</string>
+    <string name="graph_style_label">GRAPH STYLE</string>
+    <string name="graph_fill">Fill area</string>
+    <string name="graph_smooth">Smooth lines</string>
+    <string name="stats_shown_label">SERIES SHOWN</string>
     <string name="stat_tokens">Tokens generated</string>
     <string name="stat_speed">Tokens / sec</string>
     <string name="stat_ttft">Time to first token</string>
-    <string name="stat_temp">Temperature</string>
+    <string name="stat_temp">Battery temperature</string>
     <string name="stat_power">Power draw</string>
     <string name="stat_cpu">App CPU utilization</string>
     <string name="stat_memory">Memory available</string>
 
-    <string name="menu_theme">Theme</string>
-    <string name="theme_system">System default</string>
-    <string name="theme_light">Light</string>
-    <string name="theme_dark">Dark</string>
+    <string name="sec_chat">Chat</string>
+    <string name="settings_system_prompt">System prompt</string>
+    <string name="settings_system_prompt_reset">Reset to default</string>
+    <string name="settings_haptics">Haptic feedback</string>
+    <string name="settings_haptics_desc">A light tick when you send and when a reply finishes.</string>
+    <string name="settings_keep_on">Keep screen on while generating</string>
+    <string name="settings_keep_on_desc">The display never sleeps mid-answer.</string>
 
-    <string name="menu_new_chat">New chat</string>
-    <string name="menu_conversations">Conversations</string>
-    <string name="priming_context">Preparing conversation…</string>
-    <string name="menu_show_graph">Show graph</string>
-    <string name="menu_share_chat">Share chat</string>
-    <string name="menu_graph_style">Graph style</string>
-    <string name="graph_fill">Fill area</string>
-    <string name="graph_smooth">Smooth lines</string>
-    <string name="menu_settings">Settings</string>
-    <string name="menu_about">About / Optimizations</string>
-
-    <string name="settings_title">Settings</string>
-    <string name="settings_section_inference">Inference</string>
-    <string name="settings_section_interface">Interface</string>
-    <string name="settings_section_general">General</string>
-    <string name="kleidiai_active">KleidiAI active</string>
-    <string name="kleidiai_not_used">KleidiAI not used</string>
+    <string name="sec_inference">Inference</string>
     <string name="settings_auto">Auto (optimized)</string>
     <string name="settings_auto_desc">ENTITY picks context size and threads for this device automatically. Turn off to tune manually.</string>
-    <string name="settings_manual">Manual tuning</string>
+    <string name="settings_manual">MANUAL TUNING</string>
     <string name="settings_temp">Temperature</string>
     <string name="settings_topk">Top-K</string>
     <string name="settings_topp">Top-P</string>
     <string name="settings_maxtok">Max tokens</string>
     <string name="settings_ctx">Context size</string>
     <string name="settings_threads">Threads</string>
-    <string name="settings_system_prompt">System prompt</string>
-    <string name="settings_system_prompt_reset">Reset to default</string>
-    <string name="settings_anim">Animations</string>
-    <string name="settings_anim_desc">Fade-in messages, the typing indicator and press feedback. Turn off for a static interface.</string>
     <string name="settings_efficiency">Efficiency mode</string>
     <string name="settings_efficiency_desc">Trade speed for battery: caps inference at 2 threads and throttles harder when the phone warms up.</string>
-    <string name="settings_optimize">Re-run device optimization</string>
-    <string name="settings_optimize_desc">Check this phone\'s cores, memory and CPU features again, and suggest the thread and context settings that suit it.</string>
+    <string name="settings_optimize">RE-RUN DEVICE OPTIMIZATION</string>
 
+    <string name="sec_data">Data</string>
+    <string name="settings_models">Manage models</string>
+    <string name="settings_export">Export all chats</string>
+    <string name="settings_export_desc">Share every conversation as plain text.</string>
+    <string name="settings_clear">Clear all conversations</string>
+    <string name="settings_clear_desc">Deletes every chat on this phone. Models stay.</string>
+    <string name="settings_clear_confirm">Delete ALL conversations? This cannot be undone. Imported models are not touched.</string>
+    <string name="models_none">No models imported yet.</string>
+    <string name="model_active_block">This model is currently loaded — switch models first, then delete it.</string>
+    <string name="model_delete_confirm">Delete %1$s (%2$s)? You would need to import it again.</string>
+
+    <string name="about_title">ABOUT</string>
+
+    <!-- First-run optimizer -->
     <string name="optimize_title">Optimize for your device</string>
     <string name="optimize_apply">Optimize</string>
     <string name="optimize_not_now">Not now</string>
     <string name="optimize_applied">Optimized. ENTITY will use this phone\'s performance cores and size the context automatically.</string>
 
+    <!-- Model info -->
+    <string name="kleidiai_active">KLEIDIAI ACTIVE</string>
+    <string name="kleidiai_not_used">KLEIDIAI NOT USED</string>
+
+    <!-- Message actions -->
     <string name="action_copy">Copy</string>
     <string name="action_regenerate">Regenerate</string>
     <string name="copied_confirmation">Copied to clipboard</string>
 
-    <string name="empty_tagline">Fully offline · on-device AI</string>
-    <string name="settings_icon">App icon</string>
-    <string name="icon_auto">Auto — match phone theme</string>
-    <string name="icon_black">Black background</string>
-    <string name="icon_white">White background</string>
-
-    <string name="about_title">About / Optimizations</string>
-
-    <string name="hint_pick_model">Select a model to start</string>
-    <string name="hint_type_message">Message ENTITY…</string>
+    <!-- Benchmark -->
+    <string name="bench_title">BENCHMARK</string>
+    <string name="bench_intro">Runs the same PP 512 / TG 128 test three ways on the loaded model: naïve (8 threads across all cores), threads-only (the same thread count ENTITY picks, but with core pinning switched off), and ENTITY Auto (the shipped configuration, generation pinned to the performance cores). The middle run separates the gain from the thread count from the gain from pinning. Power draw is measured too. Unplug the phone: power and tokens-per-watt are hidden while charging.</string>
+    <string name="bench_run">RUN BENCHMARK</string>
+    <string name="bench_sustained">SUSTAINED THERMAL TEST</string>
+    <string name="bench_copy">COPY</string>
+    <string name="bench_export">EXPORT CSV</string>
+    <string name="bench_runs_label">RUNS PER CONFIG</string>
+    <string name="bench_duration_label">SUSTAINED DURATION (MIN)</string>
+    <string name="bench_workload">PP 512 / TG 128 · cooldown before every pass</string>
 </resources>

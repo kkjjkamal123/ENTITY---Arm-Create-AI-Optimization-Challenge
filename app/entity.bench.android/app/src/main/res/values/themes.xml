@@ -20,6 +20,7 @@
     <!-- Dialogs follow the same two-color rule: square, bordered, monospace. -->
     <style name="Dialog.EntityBench" parent="Theme.AppCompat.DayNight.Dialog.Alert">
         <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="colorPrimary">@color/mono_fg</item>
         <item name="colorAccent">@color/mono_fg</item>
         <item name="android:textColor">@color/mono_fg</item>
         <item name="android:textColorPrimary">@color/mono_fg</item>
@@ -27,6 +28,19 @@
         <item name="android:textColorAlertDialogListItem">@color/mono_fg</item>
         <item name="android:fontFamily">monospace</item>
         <item name="android:colorBackground">@color/mono_bg</item>
+        <!-- Force ink text on the OK/Cancel/etc. buttons; without this the button
+             color can resolve from the base dialog theme and vanish into the bg. -->
+        <item name="buttonBarButtonStyle">@style/Dialog.EntityBench.Button</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Dialog.EntityBench.Button</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Dialog.EntityBench.Button</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Dialog.EntityBench.Button</item>
+    </style>
+
+    <style name="Dialog.EntityBench.Button" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:letterSpacing">0.08</item>
     </style>
 
     <!-- Section label: the only uppercase element, always over the border line. -->

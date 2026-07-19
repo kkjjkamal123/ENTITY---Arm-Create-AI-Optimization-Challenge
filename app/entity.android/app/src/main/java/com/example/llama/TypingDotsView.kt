@@ -21,7 +21,7 @@ class TypingDotsView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = ContextCompat.getColor(context, R.color.accent)
+        color = ContextCompat.getColor(context, R.color.mono_fg)
     }
     private val density = resources.displayMetrics.density
     private val dotRadius = 3f * density

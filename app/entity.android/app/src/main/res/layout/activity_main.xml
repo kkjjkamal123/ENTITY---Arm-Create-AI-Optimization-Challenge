@@ -1,211 +1,507 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.drawerlayout.widget.DrawerLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    android:id="@+id/drawer_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:fitsSystemWindows="true"
-    android:background="@color/app_bg"
     tools:context=".MainActivity">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/app_bg"
-        app:title="ENTITY"
-        app:titleTextColor="@color/on_surface"
-        app:subtitleTextColor="@color/muted" />
-
+    <!-- ============ MAIN CHAT ============ -->
     <LinearLayout
-        android:id="@+id/header_chips"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="end"
-        android:paddingHorizontal="14dp"
-        android:paddingBottom="6dp">
-
-        <TextView
-            android:id="@+id/chip_temp"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@drawable/bg_chip"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="5dp"
-            android:textColor="@color/on_surface"
-            android:textSize="12sp"
-            tools:text="35°C" />
-
-        <TextView
-            android:id="@+id/chip_mem"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:background="@drawable/bg_chip"
-            android:paddingHorizontal="12dp"
-            android:paddingVertical="5dp"
-            android:textColor="@color/on_surface"
-            android:textSize="12sp"
-            tools:text="1.6 GB free" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:id="@+id/load_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:orientation="vertical"
-        android:visibility="gone"
-        android:background="@color/app_bg"
-        android:paddingHorizontal="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="10dp"
-        tools:visibility="visible">
+        android:fitsSystemWindows="true"
+        android:background="@color/mono_bg">
 
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingHorizontal="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp">
+
+            <TextView
+                android:id="@+id/btn_menu"
+                style="@style/Entity.GlyphButton"
+                android:text="≡"
+                android:contentDescription="@string/drawer_conversations" />
+
+            <LinearLayout
+                android:id="@+id/header_title"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="8dp"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/app_name"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08" />
+
+                <TextView
+                    android:id="@+id/model_sub"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="1dp"
+                    android:text="@string/no_model"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="9sp"
+                    android:letterSpacing="0.05"
+                    android:singleLine="true"
+                    android:ellipsize="middle" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="10dp"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/chip_temp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    tools:text="35°C" />
+
+                <TextView
+                    android:id="@+id/chip_mem"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="9sp"
+                    tools:text="1.6 GB free" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btn_new_top"
+                style="@style/Entity.GlyphButton"
+                android:text="+"
+                android:contentDescription="@string/drawer_new_chat" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/mono_fg" />
+
+        <!-- Model load / import progress -->
+        <LinearLayout
+            android:id="@+id/load_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:paddingHorizontal="14dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            tools:visibility="visible">
+
+            <TextView
+                android:id="@+id/load_label"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/mono_fg"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                tools:text="IMPORTING MODEL…  45%" />
+
+            <ProgressBar
+                android:id="@+id/load_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="14dp"
+                android:layout_marginTop="5dp"
+                android:progressDrawable="@drawable/progress_mono"
+                android:indeterminateTint="@color/mono_fg"
+                android:indeterminate="true" />
+        </LinearLayout>
+
+        <!-- Live stats bar -->
         <TextView
-            android:id="@+id/load_label"
+            android:id="@+id/stats_bar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/muted"
-            android:textSize="13sp"
-            tools:text="Importing model…  45%" />
+            android:visibility="gone"
+            android:paddingHorizontal="14dp"
+            android:paddingVertical="5dp"
+            android:textColor="@color/mono_fg"
+            android:textSize="10sp"
+            android:letterSpacing="0.02"
+            tools:text="128tok · 17.3t/s · TTFT 240ms · 31.5°C · 2.1GB"
+            tools:visibility="visible" />
 
-        <ProgressBar
-            android:id="@+id/load_progress"
-            style="?android:attr/progressBarStyleHorizontal"
+        <!-- Live metrics graph -->
+        <com.example.llama.MetricsGraphView
+            android:id="@+id/graph"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="150dp"
+            android:layout_marginHorizontal="14dp"
             android:layout_marginTop="4dp"
-            android:indeterminate="true" />
+            android:layout_marginBottom="6dp"
+            android:visibility="gone"
+            android:background="@drawable/bg_inner"
+            tools:visibility="visible" />
 
+        <!-- Messages -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/messages"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:clipToPadding="false"
+                android:paddingVertical="8dp"
+                android:scrollbars="none"
+                tools:listitem="@layout/item_message_assistant" />
+
+            <LinearLayout
+                android:id="@+id/empty_state"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingHorizontal="32dp"
+                android:paddingBottom="40dp">
+
+                <ImageView
+                    android:layout_width="56dp"
+                    android:layout_height="56dp"
+                    android:src="@drawable/entity_mark"
+                    app:tint="@color/mono_fg"
+                    android:contentDescription="@string/app_name" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="14dp"
+                    android:text="@string/app_name"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.14" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:text="@string/empty_tagline"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="10sp"
+                    android:letterSpacing="0.06" />
+
+                <TextView
+                    android:id="@+id/empty_hint"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/bg_dashed"
+                    android:padding="14dp"
+                    android:gravity="center"
+                    android:text="@string/empty_hint_no_model"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="10sp"
+                    android:lineSpacingMultiplier="1.6"
+                    android:letterSpacing="0.04" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="@color/mono_fg" />
+
+        <!-- Input -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="bottom"
+            android:paddingHorizontal="14dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="12dp">
+
+            <EditText
+                android:id="@+id/user_input"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:minHeight="46dp"
+                android:enabled="false"
+                android:background="@drawable/bg_inner"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="12dp"
+                android:maxLines="5"
+                android:inputType="textCapSentences|textMultiLine"
+                android:textColor="@color/mono_fg"
+                android:textColorHint="@color/mono_fg"
+                android:textCursorDrawable="@null"
+                android:textSize="14sp"
+                android:importantForAutofill="no"
+                android:hint="@string/hint_pick_model" />
+
+            <ImageButton
+                android:id="@+id/btn_send"
+                android:layout_width="46dp"
+                android:layout_height="46dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/btn_solid"
+                android:scaleType="centerInside"
+                android:src="@drawable/outline_send_24"
+                app:tint="@color/tc_solid"
+                android:contentDescription="@string/send" />
+        </LinearLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/stats_bar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        android:background="@color/surface"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="6dp"
-        android:textColor="@color/muted"
-        android:textSize="12sp"
-        android:fontFamily="sans-serif-medium"
-        android:letterSpacing="0.01"
-        tools:text="128 tok · 17.3 tok/s · TTFT 240ms · 31.5°C · 2.1GB free"
-        tools:visibility="visible" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider" />
-
-    <com.example.llama.MetricsGraphView
-        android:id="@+id/graph"
-        android:layout_width="match_parent"
-        android:layout_height="150dp"
-        android:visibility="gone"
-        android:background="@color/surface"
-        tools:visibility="visible" />
-
+    <!-- ============ DRAWER ============ -->
     <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/messages"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingVertical="8dp"
-            android:scrollbars="none"
-            tools:listitem="@layout/item_message_assistant" />
+        android:id="@+id/drawer_pane"
+        android:layout_width="300dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="start"
+        android:fitsSystemWindows="true"
+        android:background="@color/mono_bg">
 
         <LinearLayout
-            android:id="@+id/empty_state"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
             android:orientation="vertical"
-            android:gravity="center"
-            android:paddingBottom="40dp">
+            android:paddingStart="14dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp">
 
-            <ImageView
-                android:layout_width="68dp"
-                android:layout_height="68dp"
-                android:src="@drawable/entity_mark"
-                android:alpha="0.32"
-                app:tint="@color/on_surface"
-                android:contentDescription="@string/app_name" />
-
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
-                android:text="@string/app_name"
-                android:textColor="@color/on_surface"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.1" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <ImageView
+                    android:layout_width="26dp"
+                    android:layout_height="26dp"
+                    android:src="@drawable/entity_mark"
+                    app:tint="@color/mono_fg"
+                    android:contentDescription="@string/app_name" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/app_name"
+                        android:textColor="@color/mono_fg"
+                        android:textSize="17sp"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.1" />
+
+                    <TextView
+                        android:id="@+id/drawer_version"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/mono_fg"
+                        android:textSize="9sp"
+                        android:letterSpacing="0.05"
+                        tools:text="v3.0.0 · on-device LLM chat" />
+                </LinearLayout>
+            </LinearLayout>
 
             <TextView
-                android:layout_width="wrap_content"
+                android:id="@+id/btn_drawer_new"
+                style="@style/Entity.Button"
+                android:layout_marginTop="14dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="12dp"
+                android:text="@string/drawer_new_chat" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="16dp">
+
+                <TextView
+                    style="@style/Entity.Label"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/drawer_conversations" />
+
+                <TextView
+                    android:id="@+id/btn_conv_edit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/btn_outline"
+                    android:textColor="@color/tc_outline"
+                    android:text="@string/drawer_edit"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.12"
+                    android:paddingHorizontal="9dp"
+                    android:paddingVertical="4dp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/conv_empty"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="8dp"
-                android:text="@string/empty_tagline"
-                android:textColor="@color/muted"
-                android:textSize="14sp"
-                android:letterSpacing="0.01" />
+                android:background="@drawable/bg_dashed"
+                android:padding="12dp"
+                android:gravity="center"
+                android:text="@string/conv_none"
+                android:textColor="@color/mono_fg"
+                android:textSize="10sp"
+                android:lineSpacingMultiplier="1.5"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/conv_list"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="8dp"
+                android:scrollbars="none" />
+
+            <TextView
+                style="@style/Entity.Label"
+                android:layout_marginTop="12dp"
+                android:text="@string/drawer_model" />
+
+            <LinearLayout
+                android:id="@+id/row_model"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/btn_outline"
+                android:padding="10dp">
+
+                <TextView
+                    android:id="@+id/model_name_drawer"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textColor="@color/mono_fg"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:singleLine="true"
+                    android:ellipsize="middle"
+                    tools:text="Llama-3.2-1B-Instruct-Q4_0" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="&gt;"
+                    android:textColor="@color/mono_fg"
+                    android:textStyle="bold"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btn_model_info"
+                style="@style/Entity.ButtonOutline"
+                android:layout_marginTop="6dp"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp"
+                android:textSize="10sp"
+                android:visibility="gone"
+                android:text="@string/drawer_model_info" />
+
+            <TextView
+                style="@style/Entity.Label"
+                android:layout_marginTop="12dp"
+                android:text="@string/drawer_tools" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/btn_bench"
+                    style="@style/Entity.ButtonOutline"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:paddingTop="9dp"
+                    android:paddingBottom="9dp"
+                    android:textSize="10sp"
+                    android:text="@string/drawer_benchmark" />
+
+                <TextView
+                    android:id="@+id/btn_share"
+                    style="@style/Entity.ButtonOutline"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:paddingTop="9dp"
+                    android:paddingBottom="9dp"
+                    android:textSize="10sp"
+                    android:text="@string/drawer_share" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <TextView
+                    android:id="@+id/btn_settings"
+                    style="@style/Entity.Button"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:textSize="11sp"
+                    android:text="@string/drawer_settings" />
+
+                <TextView
+                    android:id="@+id/btn_about"
+                    style="@style/Entity.ButtonOutline"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
+                    android:textSize="11sp"
+                    android:text="@string/drawer_about" />
+            </LinearLayout>
         </LinearLayout>
+
+        <!-- Hard ink edge on the drawer -->
+        <View
+            android:layout_width="2dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="end"
+            android:background="@color/mono_fg" />
     </FrameLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/divider" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="bottom"
-        android:background="@color/app_bg"
-        android:paddingHorizontal="14dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="12dp">
-
-        <EditText
-            android:id="@+id/user_input"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:enabled="false"
-            android:background="@drawable/bg_input"
-            android:paddingHorizontal="18dp"
-            android:paddingVertical="13dp"
-            android:maxLines="5"
-            android:inputType="textCapSentences|textMultiLine"
-            android:textColor="@color/on_surface"
-            android:textColorHint="@color/muted"
-            android:textSize="15sp"
-            android:hint="@string/hint_pick_model" />
-
-        <ImageButton
-            android:id="@+id/fab"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:layout_marginStart="8dp"
-            android:layout_gravity="bottom"
-            android:background="@drawable/bg_send_button"
-            android:stateListAnimator="@animator/press_scale"
-            android:elevation="3dp"
-            android:scaleType="centerInside"
-            android:src="@drawable/outline_send_24"
-            app:tint="@color/white" />
-
-    </LinearLayout>
-
-</LinearLayout>
+</androidx.drawerlayout.widget.DrawerLayout>

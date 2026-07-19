@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/conv_root"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="6dp"
+    android:orientation="vertical"
+    android:background="@drawable/btn_outline"
+    android:paddingHorizontal="10dp"
+    android:paddingVertical="8dp">
+
+    <TextView
+        android:id="@+id/conv_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/mono_fg"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:singleLine="true"
+        android:ellipsize="end"
+        tools:text="Explain KleidiAI kernels" />
+
+    <TextView
+        android:id="@+id/conv_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/mono_fg"
+        android:textSize="9sp"
+        tools:text="2 hours ago" />
+</LinearLayout>

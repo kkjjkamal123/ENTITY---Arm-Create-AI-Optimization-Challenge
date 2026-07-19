@@ -1,17 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <style name="Base.Theme.AiChatSample" parent="Theme.Entity.Shared">
-        <item name="colorPrimary">@color/accent</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="android:colorBackground">@color/app_bg</item>
-        <item name="colorSurface">@color/app_bg</item>
-        <item name="colorOnSurface">@color/on_surface</item>
-        <item name="android:statusBarColor">@color/app_bg</item>
+    <style name="Theme.Entity" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/mono_fg</item>
+        <item name="colorOnPrimary">@color/mono_bg</item>
+        <item name="android:colorBackground">@color/mono_bg</item>
+        <item name="colorSurface">@color/mono_bg</item>
+        <item name="colorOnSurface">@color/mono_fg</item>
+        <item name="android:textColorPrimary">@color/mono_fg</item>
+        <item name="android:textColorSecondary">@color/mono_fg</item>
+        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textColorHint">@color/mono_fg</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:statusBarColor">@color/mono_bg</item>
+        <item name="android:navigationBarColor">@color/mono_bg</item>
         <item name="android:windowLightStatusBar">false</item>
-        <item name="android:navigationBarColor">@color/app_bg</item>
         <item name="android:windowLightNavigationBar">false</item>
+        <item name="alertDialogTheme">@style/Dialog.Entity</item>
     </style>
-
-    <style name="Theme.AiChatSample" parent="Base.Theme.AiChatSample" />
 </resources>

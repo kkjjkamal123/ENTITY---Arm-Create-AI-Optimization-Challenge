@@ -68,6 +68,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
     val listVersion: StateFlow<Int> = _listVersion.asStateFlow()
 
     private var conversationId = 0L
+    val activeConversationId: Long get() = conversationId
 
     // Conversation whose turns the live engine KV currently reflects; null when
     // the engine context does not match the on-screen history (fresh load,
@@ -119,6 +120,19 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             generationJob?.cancelAndJoin()
             persistActiveState()
+            loadInto(id)
+        }
+    }
+
+    // The DB changed underneath us (Settings cleared all chats): drop the
+    // in-memory conversation and land on whatever the DB has now.
+    fun reloadFromDb() {
+        viewModelScope.launch {
+            generationJob?.cancelAndJoin()
+            val id = withContext(Dispatchers.IO) {
+                db.latestConversationId() ?: db.createConversation(System.currentTimeMillis())
+            }
+            conversationId = 0L
             loadInto(id)
         }
     }

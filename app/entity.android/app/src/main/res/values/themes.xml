@@ -1,73 +1,101 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-
-    <!-- Color-agnostic base shared by the light and dark themes. Both
-         Base.Theme.AiChatSample definitions (this file and values-night)
-         inherit from it, so these items apply in both modes. -->
-    <style name="Theme.Entity.Shared" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="toolbarStyle">@style/Widget.Entity.Toolbar</item>
-    </style>
-
-    <style name="Base.Theme.AiChatSample" parent="Theme.Entity.Shared">
-        <item name="colorPrimary">@color/accent</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <item name="android:colorBackground">@color/app_bg</item>
-        <item name="colorSurface">@color/app_bg</item>
-        <item name="colorOnSurface">@color/on_surface</item>
-        <item name="android:statusBarColor">@color/app_bg</item>
+    <!-- v3.0.0 MONO refresh: the chat app shares ENTITY Bench's design language.
+         Two colors, square corners, monospace, press feedback = inversion. -->
+    <style name="Theme.Entity" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/mono_fg</item>
+        <item name="colorOnPrimary">@color/mono_bg</item>
+        <item name="android:colorBackground">@color/mono_bg</item>
+        <item name="colorSurface">@color/mono_bg</item>
+        <item name="colorOnSurface">@color/mono_fg</item>
+        <item name="android:textColorPrimary">@color/mono_fg</item>
+        <item name="android:textColorSecondary">@color/mono_fg</item>
+        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textColorHint">@color/mono_fg</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:statusBarColor">@color/mono_bg</item>
+        <item name="android:navigationBarColor">@color/mono_bg</item>
         <item name="android:windowLightStatusBar">true</item>
-        <item name="android:navigationBarColor">@color/app_bg</item>
         <item name="android:windowLightNavigationBar">true</item>
+        <item name="alertDialogTheme">@style/Dialog.Entity</item>
     </style>
 
-    <style name="Theme.AiChatSample" parent="Base.Theme.AiChatSample" />
-
-    <style name="Widget.Entity.Toolbar" parent="Widget.Material3.Toolbar">
-        <item name="titleTextAppearance">@style/TextAppearance.Entity.Toolbar.Title</item>
+    <!-- Dialogs follow the same two-color rule: square, bordered, monospace. -->
+    <style name="Dialog.Entity" parent="Theme.AppCompat.DayNight.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="colorPrimary">@color/mono_fg</item>
+        <item name="colorAccent">@color/mono_fg</item>
+        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textColorPrimary">@color/mono_fg</item>
+        <item name="android:textColorSecondary">@color/mono_fg</item>
+        <item name="android:textColorAlertDialogListItem">@color/mono_fg</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:colorBackground">@color/mono_bg</item>
+        <!-- Force ink text on the OK/Cancel/etc. buttons; without this the button
+             color can resolve from the base dialog theme and vanish into the bg. -->
+        <item name="buttonBarButtonStyle">@style/Dialog.Entity.Button</item>
+        <item name="buttonBarPositiveButtonStyle">@style/Dialog.Entity.Button</item>
+        <item name="buttonBarNegativeButtonStyle">@style/Dialog.Entity.Button</item>
+        <item name="buttonBarNeutralButtonStyle">@style/Dialog.Entity.Button</item>
     </style>
 
-    <style name="TextAppearance.Entity.Toolbar.Title" parent="TextAppearance.Material3.TitleLarge">
+    <style name="Dialog.Entity.Button" parent="Widget.AppCompat.Button.Borderless">
+        <item name="android:textColor">@color/mono_fg</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:textSize">20sp</item>
-        <item name="android:letterSpacing">0.04</item>
+        <item name="android:fontFamily">monospace</item>
+        <item name="android:letterSpacing">0.08</item>
     </style>
 
-    <style name="Card.Entity" parent="Widget.Material3.CardView.Elevated">
-        <item name="cardBackgroundColor">@color/surface</item>
-        <item name="cardElevation">0dp</item>
-        <item name="cardCornerRadius">16dp</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="strokeColor">@color/bubble_stroke</item>
-    </style>
-
-    <style name="SectionHeader">
-        <item name="android:layout_width">match_parent</item>
+    <!-- Section label: the only uppercase element, always over the border line. -->
+    <style name="Entity.Label" parent="">
+        <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">@color/muted</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textSize">11sp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:letterSpacing">0.06</item>
+        <item name="android:letterSpacing">0.18</item>
         <item name="android:textAllCaps">true</item>
     </style>
 
-    <style name="SettingLabel">
+    <!-- Inverted block button (primary action). -->
+    <style name="Entity.Button" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginTop">18dp</item>
-        <item name="android:textColor">@color/on_surface</item>
+        <item name="android:background">@drawable/btn_solid</item>
+        <item name="android:textColor">@color/tc_solid</item>
         <item name="android:textSize">14sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingTop">14dp</item>
+        <item name="android:paddingBottom">14dp</item>
     </style>
 
-    <style name="SettingValue">
+    <!-- Bordered button (secondary action). Inverts while pressed. -->
+    <style name="Entity.ButtonOutline" parent="">
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">@color/muted</item>
+        <item name="android:background">@drawable/btn_outline</item>
+        <item name="android:textColor">@color/tc_outline</item>
         <item name="android:textSize">13sp</item>
-        <item name="android:fontFamily">monospace</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.12</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingTop">11dp</item>
+        <item name="android:paddingBottom">11dp</item>
     </style>
 
-    <style name="SettingSeek">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
+    <!-- Small square glyph button for the header row (menu, new chat). -->
+    <style name="Entity.GlyphButton" parent="">
+        <item name="android:layout_width">40dp</item>
+        <item name="android:layout_height">40dp</item>
+        <item name="android:background">@drawable/btn_outline</item>
+        <item name="android:textColor">@color/tc_outline</item>
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center</item>
+        <item name="android:includeFontPadding">false</item>
     </style>
 </resources>

@@ -5,6 +5,7 @@ the matching APK filename, an intro paragraph, and Added/Changed/Fixed bullets f
 
 | File | Version | APK |
 |---|---|---|
+| [`RELEASE-v3.0.0.md`](RELEASE-v3.0.0.md) | 3.0.0 | `ENTITY-v13-mono-ui-refresh-20260718-release.apk` (release) |
 | [`RELEASE-Bench-v1.1.0.md`](RELEASE-Bench-v1.1.0.md) | Bench 1.1.0 | `ENTITY-Bench-v1.1.0-release.apk` (release) |
 | [`RELEASE-v2.4.0.md`](RELEASE-v2.4.0.md) | 2.4.0 | `ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk` (release) |
 | [`RELEASE-v2.3.0.md`](RELEASE-v2.3.0.md) | 2.3.0 | `ENTITY-v11-ui-polish-20260715-release.apk` (release) |

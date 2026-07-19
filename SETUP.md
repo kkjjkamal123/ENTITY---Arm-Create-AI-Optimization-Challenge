@@ -89,7 +89,7 @@ adb push Llama-3.2-3B-Instruct-Q4_0.gguf $DIR/
 adb shell am start -n com.entity.chat/com.example.llama.MainActivity
 ```
 
-Open the app, tap the folder icon, pick a model, and chat — fully offline.
+Open the app, tap the model line in the header, import a model, and chat — fully offline.
 
 ## Notes
 

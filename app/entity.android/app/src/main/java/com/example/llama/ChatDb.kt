@@ -70,6 +70,10 @@ class ChatDb(context: Context) :
         writableDatabase.delete("conversations", "id = ?", arrayOf(conversationId.toString()))
     }
 
+    fun clearAll() {
+        writableDatabase.delete("conversations", null, null)
+    }
+
     fun insertMessage(conversationId: Long, role: String, content: String, now: Long): Long {
         val db = writableDatabase
         val values = ContentValues().apply {

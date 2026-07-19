@@ -1,278 +1,317 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="@color/mono_bg"
     android:fitsSystemWindows="true"
-    android:background="@color/app_bg">
+    android:fillViewport="true"
+    android:overScrollMode="never"
+    android:scrollbars="none">
 
-    <com.google.android.material.appbar.MaterialToolbar
-        android:id="@+id/toolbar"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="?attr/actionBarSize"
-        android:background="@color/app_bg"
-        app:title="@string/menu_benchmark"
-        app:titleTextColor="@color/on_surface" />
-
-    <ScrollView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="24dp">
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingTop="6dp">
 
             <TextView
+                android:id="@+id/btn_back"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/btn_outline"
+                android:textColor="@color/tc_outline"
+                android:text="&lt;"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="6dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:text="@string/bench_title"
+                android:textColor="@color/mono_fg"
+                android:textSize="21sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.08" />
+        </LinearLayout>
+
+        <!-- Config -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_box"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/bench_model"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/muted"
-                android:textSize="13sp"
-                android:lineSpacingMultiplier="1.3"
-                android:text="@string/bench_intro" />
+                android:textColor="@color/mono_fg"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:singleLine="true"
+                android:ellipsize="middle"
+                tools:text="Llama-3.2-1B-Instruct-Q4_0" />
 
-            <com.google.android.material.card.MaterialCardView
-                style="@style/Card.Entity"
-                android:layout_width="match_parent"
+            <TextView
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <TextView
-                        android:id="@+id/bench_model"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/on_surface"
-                        android:textSize="15sp"
-                        android:textStyle="bold"
-                        tools:text="Llama-3.2-1B-Instruct-Q4_0" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="horizontal"
-                        android:layout_marginTop="12dp"
-                        android:gravity="center_vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/muted"
-                            android:textSize="14sp"
-                            android:text="@string/bench_runs_label" />
-
-                        <RadioGroup
-                            android:id="@+id/bench_runs"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginStart="12dp">
-
-                            <RadioButton
-                                android:id="@+id/bench_runs_1"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textColor="@color/on_surface"
-                                android:buttonTint="@color/accent"
-                                android:text="@string/bench_runs_1" />
-
-                            <RadioButton
-                                android:id="@+id/bench_runs_3"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:textColor="@color/on_surface"
-                                android:buttonTint="@color/accent"
-                                android:checked="true"
-                                android:text="@string/bench_runs_3" />
-
-                            <RadioButton
-                                android:id="@+id/bench_runs_5"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginStart="8dp"
-                                android:textColor="@color/on_surface"
-                                android:buttonTint="@color/accent"
-                                android:text="@string/bench_runs_5" />
-                        </RadioGroup>
-                    </LinearLayout>
-
-                    <Button
-                        android:id="@+id/run_bench"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/bench_run"
-                        android:textColor="@color/white"
-                        app:cornerRadius="24dp"
-                        android:backgroundTint="@color/accent" />
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginTop="16dp"
-                        android:layout_marginBottom="12dp"
-                        android:background="@color/divider" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:textColor="@color/muted"
-                            android:textSize="14sp"
-                            android:text="@string/bench_duration_label" />
-
-                        <RadioGroup
-                            android:id="@+id/bench_duration"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:layout_marginTop="4dp">
-
-                            <RadioButton
-                                android:id="@+id/bench_duration_2"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:textColor="@color/on_surface"
-                                android:buttonTint="@color/accent"
-                                android:text="@string/bench_duration_2" />
-
-                            <RadioButton
-                                android:id="@+id/bench_duration_5"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:textColor="@color/on_surface"
-                                android:buttonTint="@color/accent"
-                                android:checked="true"
-                                android:text="@string/bench_duration_5" />
-
-                            <RadioButton
-                                android:id="@+id/bench_duration_10"
-                                android:layout_width="0dp"
-                                android:layout_height="wrap_content"
-                                android:layout_weight="1"
-                                android:textColor="@color/on_surface"
-                                android:buttonTint="@color/accent"
-                                android:text="@string/bench_duration_10" />
-                        </RadioGroup>
-                    </LinearLayout>
-
-                    <Button
-                        android:id="@+id/run_sustained_bench"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/bench_sustained"
-                        android:textColor="@color/accent"
-                        android:backgroundTint="@android:color/transparent" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                android:layout_marginTop="12dp"
+                android:text="@string/bench_runs_label"
+                android:textColor="@color/mono_fg"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.18" />
 
             <LinearLayout
-                android:id="@+id/bench_running"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="18dp"
-                android:visibility="gone"
-                tools:visibility="visible">
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp">
 
                 <TextView
-                    android:id="@+id/bench_status"
-                    android:layout_width="match_parent"
+                    android:id="@+id/runs_1"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/on_surface"
-                    android:textSize="14sp"
-                    tools:text="Optimized run - performance cores" />
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:paddingVertical="9dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:text="1" />
 
-                <ProgressBar
-                    android:id="@+id/bench_progress"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
+                <TextView
+                    android:id="@+id/runs_3"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="6dp"
-                    android:indeterminate="true" />
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:gravity="center"
+                    android:paddingVertical="9dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:text="3" />
+
+                <TextView
+                    android:id="@+id/runs_5"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:gravity="center"
+                    android:paddingVertical="9dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:text="5" />
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/btn_run"
+                style="@style/Entity.Button"
+                android:layout_marginTop="14dp"
+                android:text="@string/bench_run" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/bench_duration_label"
+                android:textColor="@color/mono_fg"
+                android:textSize="9sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.18" />
+
             <LinearLayout
-                android:id="@+id/bench_results"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:layout_marginTop="20dp"
-                android:visibility="gone"
-                tools:visibility="visible">
+                android:orientation="horizontal"
+                android:layout_marginTop="6dp">
 
                 <TextView
-                    android:id="@+id/bench_headline"
-                    android:layout_width="match_parent"
+                    android:id="@+id/dur_2"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/accent"
-                    android:textSize="17sp"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:paddingVertical="9dp"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    android:lineSpacingMultiplier="1.2"
-                    tools:text="Big-core optimization: decode +96% faster" />
+                    android:text="2" />
+
+                <TextView
+                    android:id="@+id/dur_5"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:gravity="center"
+                    android:paddingVertical="9dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:text="5" />
+
+                <TextView
+                    android:id="@+id/dur_10"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:gravity="center"
+                    android:paddingVertical="9dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:text="10" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/btn_run_sustained"
+                style="@style/Entity.ButtonOutline"
+                android:layout_marginTop="10dp"
+                android:text="@string/bench_sustained" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/bench_workload"
+                android:textColor="@color/mono_fg"
+                android:textSize="10sp" />
+        </LinearLayout>
+
+        <!-- Intro -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_dashed"
+            android:padding="12dp"
+            android:textColor="@color/mono_fg"
+            android:textSize="10sp"
+            android:lineSpacingMultiplier="1.5"
+            android:text="@string/bench_intro" />
+
+        <!-- Live status -->
+        <LinearLayout
+            android:id="@+id/bench_running"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_box"
+            android:padding="16dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                style="@style/Entity.Label"
+                android:text="RUNNING" />
+
+            <TextView
+                android:id="@+id/bench_status"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/mono_fg"
+                android:textSize="11sp"
+                android:lineSpacingMultiplier="1.4"
+                tools:text="Optimized run — performance cores" />
+
+            <ProgressBar
+                android:id="@+id/bench_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="14dp"
+                android:layout_marginTop="10dp"
+                android:indeterminateTint="@color/mono_fg"
+                android:indeterminate="true" />
+        </LinearLayout>
+
+        <!-- Results -->
+        <LinearLayout
+            android:id="@+id/bench_results"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_box"
+            android:padding="16dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <TextView
+                style="@style/Entity.Label"
+                android:text="RESULT" />
+
+            <TextView
+                android:id="@+id/bench_headline"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/mono_fg"
+                android:textSize="15sp"
+                android:textStyle="bold"
+                android:lineSpacingMultiplier="1.25"
+                tools:text="Big-core optimization: decode +96% faster" />
+
+            <HorizontalScrollView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:scrollbars="none"
+                android:overScrollMode="never">
 
                 <LinearLayout
                     android:id="@+id/bench_table"
-                    android:layout_width="match_parent"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:layout_marginTop="16dp"
-                    android:background="@drawable/bg_card"
+                    android:background="@drawable/bg_inner"
                     android:padding="4dp" />
+            </HorizontalScrollView>
+
+            <TextView
+                android:id="@+id/bench_note"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:textColor="@color/mono_fg"
+                android:textSize="10sp"
+                android:lineSpacingMultiplier="1.4"
+                tools:text="Synthetic PP 512 / TG 128 run" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
 
                 <TextView
-                    android:id="@+id/bench_note"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="14dp"
-                    android:textColor="@color/muted"
-                    android:textSize="12sp"
-                    android:lineSpacingMultiplier="1.2"
-                    tools:text="Synthetic PP 512 / TG 128 run" />
+                    android:id="@+id/bench_copy"
+                    style="@style/Entity.ButtonOutline"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:text="@string/bench_copy" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:layout_marginTop="8dp">
-
-                    <Button
-                        android:id="@+id/bench_copy"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/bench_copy"
-                        android:textColor="@color/accent"
-                        android:backgroundTint="@android:color/transparent" />
-
-                    <Button
-                        android:id="@+id/bench_export"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="@string/bench_export"
-                        android:textColor="@color/accent"
-                        android:backgroundTint="@android:color/transparent" />
-                </LinearLayout>
+                <TextView
+                    android:id="@+id/bench_export"
+                    style="@style/Entity.ButtonOutline"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/bench_export" />
             </LinearLayout>
-
         </LinearLayout>
-    </ScrollView>
-</LinearLayout>
+    </LinearLayout>
+</ScrollView>

@@ -7,28 +7,28 @@ import android.graphics.Typeface
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.BackgroundColorSpan
+import android.text.style.ForegroundColorSpan
+import android.text.style.LeadingMarginSpan
 import android.text.style.LineBackgroundSpan
 import android.text.style.RelativeSizeSpan
 import android.text.style.StyleSpan
-import android.text.style.TypefaceSpan
-import androidx.core.content.ContextCompat
 
-// Hand-rolled Markdown -> Spanned. Deliberately narrow: bold, italic, inline
-// code, fenced code blocks, bullet lists and headings. Any parse failure or
-// malformed markup falls back to plain text; it never throws.
+// Hand-rolled Markdown -> Spanned in the two-color style. Deliberately narrow:
+// bold, italic, inline code (reverse video), fenced code blocks (left ink bar),
+// bullet lists and headings. Any parse failure falls back to plain text.
 object Markdown {
 
     private const val SPAN = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
 
     fun render(src: String, context: Context): CharSequence {
         return try {
-            build(src, ContextCompat.getColor(context, R.color.code_bg))
+            build(src, Ui.fg(context), Ui.bg(context), Ui.dp(context, 3), Ui.dp(context, 10))
         } catch (t: Throwable) {
             src
         }
     }
 
-    private fun build(src: String, codeBg: Int): CharSequence {
+    private fun build(src: String, ink: Int, paper: Int, barWidth: Int, barGap: Int): CharSequence {
         val out = SpannableStringBuilder()
         val lines = src.split("\n")
         var inFence = false
@@ -41,7 +41,7 @@ object Markdown {
                     codeStart = out.length
                 } else {
                     inFence = false
-                    if (out.length > codeStart) applyCode(out, codeStart, out.length, codeBg)
+                    if (out.length > codeStart) applyCode(out, codeStart, out.length, ink, barWidth, barGap)
                 }
                 continue
             }
@@ -49,20 +49,20 @@ object Markdown {
                 out.append(raw).append('\n')
                 continue
             }
-            appendBlockLine(out, raw, trimmed, codeBg)
+            appendBlockLine(out, raw, trimmed, ink, paper)
             out.append('\n')
         }
         while (out.isNotEmpty() && out.last() == '\n') out.delete(out.length - 1, out.length)
         return out
     }
 
-    private fun appendBlockLine(out: SpannableStringBuilder, raw: String, trimmed: String, codeBg: Int) {
+    private fun appendBlockLine(out: SpannableStringBuilder, raw: String, trimmed: String, ink: Int, paper: Int) {
         if (trimmed.startsWith("#")) {
             var level = 0
             while (level < trimmed.length && trimmed[level] == '#') level++
             if (level in 1..6 && level < trimmed.length && trimmed[level] == ' ') {
                 val start = out.length
-                appendInline(out, trimmed.substring(level + 1), codeBg)
+                appendInline(out, trimmed.substring(level + 1), ink, paper)
                 out.setSpan(StyleSpan(Typeface.BOLD), start, out.length, SPAN)
                 out.setSpan(RelativeSizeSpan(headingScale(level)), start, out.length, SPAN)
                 return
@@ -70,13 +70,13 @@ object Markdown {
         }
         if (isBullet(trimmed)) {
             out.append("•  ")
-            appendInline(out, trimmed.substring(2), codeBg)
+            appendInline(out, trimmed.substring(2), ink, paper)
             return
         }
-        appendInline(out, raw, codeBg)
+        appendInline(out, raw, ink, paper)
     }
 
-    private fun appendInline(out: SpannableStringBuilder, s: String, codeBg: Int) {
+    private fun appendInline(out: SpannableStringBuilder, s: String, ink: Int, paper: Int) {
         var i = 0
         while (i < s.length) {
             val c = s[i]
@@ -84,10 +84,12 @@ object Markdown {
                 val close = s.indexOf('`', i + 1)
                 if (close > i) {
                     val start = out.length
+                    // Reverse video, terminal-style: ink block, paper text.
+                    out.append(' ')
                     out.append(s, i + 1, close)
-                    out.setSpan(TypefaceSpan("monospace"), start, out.length, SPAN)
-                    out.setSpan(RelativeSizeSpan(0.92f), start, out.length, SPAN)
-                    out.setSpan(BackgroundColorSpan(codeBg), start, out.length, SPAN)
+                    out.append(' ')
+                    out.setSpan(BackgroundColorSpan(ink), start, out.length, SPAN)
+                    out.setSpan(ForegroundColorSpan(paper), start, out.length, SPAN)
                     i = close + 1
                     continue
                 }
@@ -95,7 +97,7 @@ object Markdown {
                 val close = s.indexOf("**", i + 2)
                 if (close > i + 1) {
                     val start = out.length
-                    appendInline(out, s.substring(i + 2, close), codeBg)
+                    appendInline(out, s.substring(i + 2, close), ink, paper)
                     out.setSpan(StyleSpan(Typeface.BOLD), start, out.length, SPAN)
                     i = close + 2
                     continue
@@ -104,7 +106,7 @@ object Markdown {
                 val close = s.indexOf('*', i + 1)
                 if (close > i) {
                     val start = out.length
-                    appendInline(out, s.substring(i + 1, close), codeBg)
+                    appendInline(out, s.substring(i + 1, close), ink, paper)
                     out.setSpan(StyleSpan(Typeface.ITALIC), start, out.length, SPAN)
                     i = close + 1
                     continue
@@ -115,10 +117,10 @@ object Markdown {
         }
     }
 
-    private fun applyCode(out: SpannableStringBuilder, start: Int, end: Int, bg: Int) {
-        out.setSpan(TypefaceSpan("monospace"), start, end, SPAN)
+    private fun applyCode(out: SpannableStringBuilder, start: Int, end: Int, ink: Int, barWidth: Int, barGap: Int) {
         out.setSpan(RelativeSizeSpan(0.92f), start, end, SPAN)
-        out.setSpan(CodeBlockSpan(bg), start, end, SPAN)
+        out.setSpan(LeadingMarginSpan.Standard(barWidth + barGap), start, end, SPAN)
+        out.setSpan(CodeBarSpan(ink, barWidth), start, end, SPAN)
     }
 
     private fun isBullet(t: String) =
@@ -130,7 +132,8 @@ object Markdown {
         else -> 1.12f
     }
 
-    private class CodeBlockSpan(private val bg: Int) : LineBackgroundSpan {
+    // Fenced code marker: a hard ink bar down the left edge instead of a gray wash.
+    private class CodeBarSpan(private val ink: Int, private val barWidth: Int) : LineBackgroundSpan {
         override fun drawBackground(
             canvas: Canvas,
             paint: Paint,
@@ -145,8 +148,8 @@ object Markdown {
             lineNumber: Int,
         ) {
             val prev = paint.color
-            paint.color = bg
-            canvas.drawRect(left.toFloat(), top.toFloat(), right.toFloat(), bottom.toFloat(), paint)
+            paint.color = ink
+            canvas.drawRect(left.toFloat(), top.toFloat(), (left + barWidth).toFloat(), bottom.toFloat(), paint)
             paint.color = prev
         }
     }

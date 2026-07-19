@@ -1,6 +1,7 @@
 package com.example.llama
 
 import android.content.Context
+import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,11 +26,16 @@ class MessageAdapter(
         private const val VIEW_TYPE_ASSISTANT = 2
         const val PAYLOAD_TEXT = "text"
         const val PAYLOAD_DONE = "done"
+        // Messages never span the whole row; the gap keeps the speaker readable.
+        private const val MAX_WIDTH_FRACTION = 0.84f
     }
 
     private val rendered = HashMap<String, CharSequence>()
     private val renderedFrom = HashMap<String, String>()
     private val animated = HashSet<String>()
+
+    // Chat text size from Settings; MainActivity refreshes it on resume.
+    var textSizeSp = Settings.TEXT_SIZES_SP[Settings.DEF_TEXT_SIZE]
 
     override fun getItemViewType(position: Int) =
         if (messages[position].isUser) VIEW_TYPE_USER else VIEW_TYPE_ASSISTANT
@@ -39,6 +45,8 @@ class MessageAdapter(
         val layout = if (viewType == VIEW_TYPE_USER) R.layout.item_message_user
         else R.layout.item_message_assistant
         val holder = MessageViewHolder(inflater.inflate(layout, parent, false))
+        // Percent max width keeps bubbles readable from small phones to tablets.
+        if (parent.width > 0) holder.text.maxWidth = (parent.width * MAX_WIDTH_FRACTION).toInt()
         holder.itemView.setOnLongClickListener {
             val pos = holder.bindingAdapterPosition
             if (pos != RecyclerView.NO_POSITION) showActions(holder.text, messages[pos], pos)
@@ -50,6 +58,7 @@ class MessageAdapter(
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         val msg = messages[position]
         val vh = holder as MessageViewHolder
+        vh.text.setTextSize(TypedValue.COMPLEX_UNIT_SP, textSizeSp)
         if (animated.add(msg.id) && position >= itemCount - 2) Anim.enter(vh.itemView)
         else Anim.clear(vh.itemView)
         when {

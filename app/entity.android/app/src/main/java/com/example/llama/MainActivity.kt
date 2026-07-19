@@ -10,22 +10,25 @@ import android.os.Bundle
 import android.os.SystemClock
 import android.provider.OpenableColumns
 import android.text.format.DateUtils
-import android.view.Menu
-import android.view.MenuItem
+import android.view.HapticFeedbackConstants
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
+import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
-import android.widget.ArrayAdapter
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -37,7 +40,6 @@ import com.arm.aichat.gguf.FileType
 import com.arm.aichat.gguf.GgufMetadata
 import com.arm.aichat.gguf.GgufMetadataReader
 import com.arm.aichat.isModelLoaded
-import com.google.android.material.appbar.MaterialToolbar
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,10 +50,16 @@ import java.io.InputStream
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var toolbar: MaterialToolbar
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var modelSub: TextView
+    private lateinit var modelNameDrawer: TextView
+    private lateinit var btnModelInfo: TextView
+    private lateinit var drawerVersion: TextView
     private lateinit var statsBar: TextView
     private lateinit var graph: MetricsGraphView
     private lateinit var messagesRv: RecyclerView
+    private lateinit var convRv: RecyclerView
+    private lateinit var convEmpty: TextView
     private lateinit var userInputEt: EditText
     private lateinit var sendButton: ImageButton
     private lateinit var loadContainer: View
@@ -60,17 +68,20 @@ class MainActivity : AppCompatActivity() {
     private lateinit var chipTemp: TextView
     private lateinit var chipMem: TextView
     private lateinit var emptyState: View
+    private lateinit var emptyHint: TextView
 
     private lateinit var engine: InferenceEngine
     private lateinit var prefs: android.content.SharedPreferences
 
     private val vm: ChatViewModel by viewModels()
     private lateinit var messageAdapter: MessageAdapter
+    private val convAdapter = ConvAdapter()
 
     private var isModelReady = false
     private var isLoadingModel = false
     private var optimizeDialogShown = false
     private var modelInfoText: String? = null
+    private var lastPhase = ChatViewModel.GenPhase.IDLE
 
     // View-only render throttles (safe to reset across config changes).
     private var lastRenderMs = 0L
@@ -89,40 +100,49 @@ class MainActivity : AppCompatActivity() {
 
         prefs = getSharedPreferences(Settings.PREFS, Context.MODE_PRIVATE)
         Anim.setUserEnabled(prefs.getBoolean(Settings.KEY_ANIM, Settings.DEF_ANIM))
-        AppCompatDelegate.setDefaultNightMode(nightMode(prefs.getInt(KEY_THEME, 0)))
 
         setContentView(R.layout.activity_main)
 
         // Keep the launcher icon in sync with the theme when set to Auto.
         IconStyle.apply(this, prefs.getInt(IconStyle.KEY, IconStyle.AUTO))
 
-        toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-
+        drawerLayout = findViewById(R.id.drawer_layout)
+        // The window already paints the bars mono; DrawerLayout's default
+        // colorPrimaryDark status-bar fill would draw an ink band over it.
+        drawerLayout.setStatusBarBackground(null)
+        modelSub = findViewById(R.id.model_sub)
+        modelNameDrawer = findViewById(R.id.model_name_drawer)
+        btnModelInfo = findViewById(R.id.btn_model_info)
+        drawerVersion = findViewById(R.id.drawer_version)
         statsBar = findViewById(R.id.stats_bar)
         graph = findViewById(R.id.graph)
-        for ((_, key) in statItems) graph.setSeriesEnabled(key, prefs.getBoolean(key, true))
-        graph.setStyle(prefs.getBoolean(KEY_GRAPH_FILL, false), prefs.getBoolean(KEY_GRAPH_SMOOTH, false))
-        graph.visibility = if (prefs.getBoolean(KEY_SHOW_GRAPH, false)) View.VISIBLE else View.GONE
-
-        messageAdapter = MessageAdapter(
-            vm.messages,
-            onCopy = { copyToClipboard(it) },
-            onRegenerate = { vm.regenerateLastAnswer() }
-        )
-        messagesRv = findViewById(R.id.messages)
-        messagesRv.layoutManager = LinearLayoutManager(this).apply { stackFromEnd = true }
-        messagesRv.adapter = messageAdapter
-        messagesRv.itemAnimator = null
-
         userInputEt = findViewById(R.id.user_input)
-        sendButton = findViewById(R.id.fab)
+        sendButton = findViewById(R.id.btn_send)
         loadContainer = findViewById(R.id.load_container)
         loadLabel = findViewById(R.id.load_label)
         loadProgress = findViewById(R.id.load_progress)
         chipTemp = findViewById(R.id.chip_temp)
         chipMem = findViewById(R.id.chip_mem)
         emptyState = findViewById(R.id.empty_state)
+        emptyHint = findViewById(R.id.empty_hint)
+
+        drawerVersion.text = "v${BuildConfig.VERSION_NAME} · ${getString(R.string.home_sub)}"
+
+        messageAdapter = MessageAdapter(
+            vm.messages,
+            onCopy = { copyToClipboard(it) },
+            onRegenerate = { vm.regenerateLastAnswer() }
+        )
+        messageAdapter.textSizeSp = Settings.textSizeSp(prefs)
+        messagesRv = findViewById(R.id.messages)
+        messagesRv.layoutManager = LinearLayoutManager(this).apply { stackFromEnd = true }
+        messagesRv.adapter = messageAdapter
+        messagesRv.itemAnimator = null
+
+        convRv = findViewById(R.id.conv_list)
+        convEmpty = findViewById(R.id.conv_empty)
+        convRv.layoutManager = LinearLayoutManager(this)
+        convRv.adapter = convAdapter
 
         sendButton.setOnClickListener {
             when {
@@ -131,6 +151,21 @@ class MainActivity : AppCompatActivity() {
                 else -> showModelPicker()
             }
         }
+
+        wireHeaderAndDrawer()
+        applyMetricsPrefs()
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    drawerLayout.closeDrawer(GravityCompat.START)
+                } else {
+                    isEnabled = false
+                    onBackPressedDispatcher.onBackPressed()
+                    isEnabled = true
+                }
+            }
+        })
 
         lifecycleScope.launch {
             engine = withContext(Dispatchers.Default) { AiChat.getInferenceEngine(applicationContext) }
@@ -147,14 +182,80 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // Header stays at NO MODEL until the engine confirms a loaded model
+        // (onEngineState restores the name from prefs on activity recreation).
         updateEmptyState()
         refreshStatsBar()
         vm.restoreLatest()
     }
 
+    private fun wireHeaderAndDrawer() {
+        findViewById<TextView>(R.id.btn_menu).setOnClickListener {
+            drawerLayout.openDrawer(GravityCompat.START)
+        }
+        findViewById<TextView>(R.id.btn_new_top).setOnClickListener { newChat() }
+        findViewById<View>(R.id.header_title).setOnClickListener { showModelPicker() }
+
+        findViewById<TextView>(R.id.btn_drawer_new).setOnClickListener {
+            newChat()
+            drawerLayout.closeDrawer(GravityCompat.START)
+        }
+        findViewById<TextView>(R.id.btn_conv_edit).setOnClickListener { showSelectConversations() }
+        findViewById<View>(R.id.row_model).setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            showModelPicker()
+        }
+        btnModelInfo.setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            showModelInfo()
+        }
+        findViewById<TextView>(R.id.btn_bench).setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            openBenchmark()
+        }
+        findViewById<TextView>(R.id.btn_share).setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            shareChat()
+        }
+        findViewById<TextView>(R.id.btn_settings).setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+        findViewById<TextView>(R.id.btn_about).setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            startActivity(Intent(this, InfoActivity::class.java))
+        }
+
+        drawerLayout.addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
+            override fun onDrawerOpened(drawerView: View) = refreshConversations()
+        })
+    }
+
+    // Metrics prefs are edited in Settings; re-apply whenever we come back.
+    private fun applyMetricsPrefs() {
+        for ((key, _) in Settings.STAT_KEYS) graph.setSeriesEnabled(key, prefs.getBoolean(key, true))
+        graph.setStyle(
+            prefs.getBoolean(Settings.KEY_GRAPH_FILL, false),
+            prefs.getBoolean(Settings.KEY_GRAPH_SMOOTH, false)
+        )
+        graph.visibility =
+            if (prefs.getBoolean(Settings.KEY_SHOW_GRAPH, false)) View.VISIBLE else View.GONE
+    }
+
     override fun onResume() {
         super.onResume()
         Anim.setUserEnabled(prefs.getBoolean(Settings.KEY_ANIM, Settings.DEF_ANIM))
+        applyMetricsPrefs()
+        refreshStatsBar()
+        val size = Settings.textSizeSp(prefs)
+        if (messageAdapter.textSizeSp != size) {
+            messageAdapter.textSizeSp = size
+            messageAdapter.notifyDataSetChanged()
+        }
+        if (prefs.getBoolean(Settings.KEY_CHATS_CHANGED, false)) {
+            prefs.edit().putBoolean(Settings.KEY_CHATS_CHANGED, false).apply()
+            vm.reloadFromDb()
+        }
         // Sampler changes from Settings apply live; ctx/threads apply on next load.
         if (isModelReady && ::engine.isInitialized) {
             val v = Settings.load(prefs)
@@ -171,67 +272,6 @@ class MainActivity : AppCompatActivity() {
         if (isModelReady) vm.saveActiveState()
     }
 
-    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
-        return true
-    }
-
-    override fun onPrepareOptionsMenu(menu: Menu): Boolean {
-        menu.findItem(R.id.action_model_info).isVisible = modelInfoText != null
-        menu.findItem(R.id.action_show_stats).isChecked = prefs.getBoolean(KEY_SHOW_STATS, false)
-        menu.findItem(R.id.action_show_graph).isChecked = prefs.getBoolean(KEY_SHOW_GRAPH, false)
-        menu.findItem(R.id.graph_fill).isChecked = prefs.getBoolean(KEY_GRAPH_FILL, false)
-        menu.findItem(R.id.graph_smooth).isChecked = prefs.getBoolean(KEY_GRAPH_SMOOTH, false)
-        for ((id, key) in statItems) {
-            menu.findItem(id).isChecked = prefs.getBoolean(key, true)
-        }
-        menu.findItem(themeItems[prefs.getInt(KEY_THEME, 0)]).isChecked = true
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.action_new_chat -> newChat()
-            R.id.action_conversations -> showConversations()
-            R.id.action_share_chat -> shareChat()
-            R.id.action_select_model -> showModelPicker()
-            R.id.action_model_info -> showModelInfo()
-            R.id.action_benchmark -> openBenchmark()
-            R.id.action_show_stats -> toggle(item, KEY_SHOW_STATS)
-            R.id.action_show_graph -> toggleGraph(item)
-            R.id.graph_fill -> toggleGraphStyle(item, KEY_GRAPH_FILL)
-            R.id.graph_smooth -> toggleGraphStyle(item, KEY_GRAPH_SMOOTH)
-            in statItems.keys -> statItems[item.itemId]?.let { toggleStat(item, it) }
-            in themeItems -> applyTheme(themeItems.indexOf(item.itemId))
-            R.id.action_settings -> startActivity(Intent(this, SettingsActivity::class.java))
-            R.id.action_about -> startActivity(Intent(this, InfoActivity::class.java))
-            else -> return super.onOptionsItemSelected(item)
-        }
-        return true
-    }
-
-    private fun toggle(item: MenuItem, key: String) {
-        val value = !prefs.getBoolean(key, false)
-        prefs.edit().putBoolean(key, value).apply()
-        item.isChecked = value
-        refreshStatsBar()
-    }
-
-    private fun toggleStat(item: MenuItem, key: String) {
-        val value = !prefs.getBoolean(key, true)
-        prefs.edit().putBoolean(key, value).apply()
-        item.isChecked = value
-        graph.setSeriesEnabled(key, value)
-        refreshStatsBar()
-    }
-
-    private fun toggleGraphStyle(item: MenuItem, key: String) {
-        val value = !prefs.getBoolean(key, false)
-        prefs.edit().putBoolean(key, value).apply()
-        item.isChecked = value
-        graph.setStyle(prefs.getBoolean(KEY_GRAPH_FILL, false), prefs.getBoolean(KEY_GRAPH_SMOOTH, false))
-    }
-
     private fun shareChat() {
         if (vm.messages.isEmpty()) {
             Toast.makeText(this, "Nothing to share yet.", Toast.LENGTH_SHORT).show()
@@ -245,34 +285,22 @@ class MainActivity : AppCompatActivity() {
             }
         }.trim()
         val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, text)
-        startActivity(Intent.createChooser(send, getString(R.string.menu_share_chat)))
-    }
-
-    private fun toggleGraph(item: MenuItem) {
-        val value = !prefs.getBoolean(KEY_SHOW_GRAPH, false)
-        prefs.edit().putBoolean(KEY_SHOW_GRAPH, value).apply()
-        item.isChecked = value
-        graph.visibility = if (value) View.VISIBLE else View.GONE
-    }
-
-    private fun applyTheme(mode: Int) {
-        prefs.edit().putInt(KEY_THEME, mode).apply()
-        AppCompatDelegate.setDefaultNightMode(nightMode(mode))
+        startActivity(Intent.createChooser(send, getString(R.string.drawer_share)))
     }
 
     private fun onEngineState(state: InferenceEngine.State) {
         val loaded = state.isModelLoaded
         isModelReady = loaded
         if (loaded && modelInfoText == null && !isLoadingModel) {
-            modelInfoText = prefs.getString(KEY_ACTIVE_INFO, null)
-            prefs.getString(KEY_ACTIVE_MODEL, null)?.let { supportActionBar?.subtitle = it }
-            invalidateOptionsMenu()
+            modelInfoText = prefs.getString(Settings.KEY_ACTIVE_INFO, null)
+            setModelName(prefs.getString(Settings.KEY_ACTIVE_MODEL, null))
         }
         if (!isLoadingModel && vm.genState.value == ChatViewModel.GenPhase.IDLE) {
             setSendMode(false)
             userInputEt.isEnabled = loaded
             userInputEt.hint = getString(if (loaded) R.string.hint_type_message else R.string.hint_pick_model)
         }
+        updateEmptyState()
         // First launch: once the native library is up (so its CPU info is real), offer
         // the device-tuned settings. The dialog itself marks first-run done either way.
         if (state !is InferenceEngine.State.Uninitialized &&
@@ -281,6 +309,18 @@ class MainActivity : AppCompatActivity() {
         ) {
             optimizeDialogShown = true
             DeviceOptimizer.show(this, engine.cpuInfo())
+        }
+    }
+
+    private fun setModelName(name: String?) {
+        if (name.isNullOrBlank()) {
+            modelSub.text = getString(R.string.no_model)
+            modelNameDrawer.text = getString(R.string.no_model)
+            btnModelInfo.visibility = View.GONE
+        } else {
+            modelSub.text = name
+            modelNameDrawer.text = name
+            btnModelInfo.visibility = if (modelInfoText != null) View.VISIBLE else View.GONE
         }
     }
 
@@ -294,6 +334,7 @@ class MainActivity : AppCompatActivity() {
         val generating = phase != ChatViewModel.GenPhase.IDLE
         setSendMode(generating)
         userInputEt.isEnabled = isModelReady && !generating
+        keepScreenOn(generating && prefs.getBoolean(Settings.KEY_KEEP_ON, Settings.DEF_KEEP_ON))
         when (phase) {
             ChatViewModel.GenPhase.PRIMING -> showLoad(getString(R.string.priming_context))
             else -> if (!isLoadingModel) hideLoad()
@@ -304,6 +345,19 @@ class MainActivity : AppCompatActivity() {
                 messageAdapter.notifyItemChanged(last, MessageAdapter.PAYLOAD_DONE)
                 messagesRv.scrollToPosition(last)
             }
+            if (lastPhase == ChatViewModel.GenPhase.GENERATING) haptic(HapticFeedbackConstants.CONTEXT_CLICK)
+        }
+        lastPhase = phase
+    }
+
+    private fun keepScreenOn(on: Boolean) {
+        if (on) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        else window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    }
+
+    private fun haptic(constant: Int) {
+        if (prefs.getBoolean(Settings.KEY_HAPTICS, Settings.DEF_HAPTICS)) {
+            sendButton.performHapticFeedback(constant)
         }
     }
 
@@ -318,7 +372,7 @@ class MainActivity : AppCompatActivity() {
             messagesRv.scrollToPosition(last)
         }
 
-        val statsVisible = prefs.getBoolean(KEY_SHOW_STATS, false)
+        val statsVisible = prefs.getBoolean(Settings.KEY_SHOW_STATS, false)
         val graphVisible = graph.visibility == View.VISIBLE
         val chipsDue = now - lastChipMs >= CHIP_INTERVAL_MS
         if (!statsVisible && !graphVisible && !chipsDue) return
@@ -333,96 +387,53 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showModelPicker() {
-        if (!::engine.isInitialized) {
-            Toast.makeText(this, "Engine is still starting…", Toast.LENGTH_SHORT).show()
-            return
+    // ---------- Conversations (drawer) ----------
+
+    private fun refreshConversations() {
+        lifecycleScope.launch {
+            val convs = withContext(Dispatchers.IO) { vm.listConversations() }
+            convAdapter.submit(convs, vm.activeConversationId)
+            convEmpty.visibility = if (convs.isEmpty()) View.VISIBLE else View.GONE
         }
-
-        val models = scanModels()
-
-        // Empty state: a real Import button (a dialog can't show a message AND a list).
-        if (models.isEmpty()) {
-            AlertDialog.Builder(this)
-                .setTitle("Add a model")
-                .setMessage("No models yet. Import a .gguf file from your storage — ENTITY copies it in for you. No file-manager copying needed.")
-                .setPositiveButton("Import from device…") { _, _ -> getContent.launch(arrayOf("*/*")) }
-                .setNegativeButton("Cancel", null)
-                .show()
-            return
-        }
-
-        val labels = models.map {
-            val b = it.length()
-            val size = if (b >= 1_000_000_000L) String.format("%.2f GB", b / 1e9)
-                       else String.format("%.0f MB", b / 1e6)
-            "${it.name}\n$size"
-        } + "Import from device…"
-        AlertDialog.Builder(this)
-            .setTitle("Select a model")
-            .setItems(labels.toTypedArray()) { _, which ->
-                if (which < models.size) loadModel(models[which]) else getContent.launch(arrayOf("*/*"))
-            }
-            .show()
     }
 
-    private fun showConversations() {
+    private fun showSelectConversations() {
         lifecycleScope.launch {
             val convs = withContext(Dispatchers.IO) { vm.listConversations() }
             if (convs.isEmpty()) {
                 Toast.makeText(this@MainActivity, "No conversations yet.", Toast.LENGTH_SHORT).show()
                 return@launch
             }
-            val now = System.currentTimeMillis()
-            val labels = convs.map {
-                val title = it.title.ifBlank { "Untitled" }
-                val rel = DateUtils.getRelativeTimeSpanString(it.updatedAt, now, DateUtils.MINUTE_IN_MILLIS)
-                "$title\n$rel"
-            }.toTypedArray()
-            val adapter = ArrayAdapter(this@MainActivity, android.R.layout.simple_list_item_1, labels)
-            val dialog = AlertDialog.Builder(this@MainActivity)
-                .setTitle(R.string.menu_conversations)
-                .setAdapter(adapter) { _, which -> vm.switchTo(convs[which].id) }
-                .setPositiveButton("New chat") { _, _ -> newChat() }
-                .setNeutralButton("Select…") { _, _ -> showSelectConversations(convs) }
-                .setNegativeButton("Close", null)
-                .create()
-            dialog.show()
-            dialog.listView.setOnItemLongClickListener { _, _, which, _ ->
-                dialog.dismiss()
-                showConversationActions(convs[which])
-                true
-            }
+            val labels = convs.map { it.title.ifBlank { getString(R.string.conv_untitled) } }.toTypedArray()
+            val checked = BooleanArray(convs.size)
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("Select conversations")
+                .setMultiChoiceItems(labels, checked) { _, i, v -> checked[i] = v }
+                .setPositiveButton("Delete") { _, _ ->
+                    val picked = convs.filterIndexed { i, _ -> checked[i] }
+                    if (picked.isNotEmpty()) confirmDeleteMultiple(picked)
+                }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
         }
     }
 
-    private fun showSelectConversations(convs: List<ConversationRow>) {
-        val labels = convs.map { it.title.ifBlank { "Untitled" } }.toTypedArray()
-        val checked = BooleanArray(convs.size)
-        AlertDialog.Builder(this)
-            .setTitle("Select conversations")
-            .setMultiChoiceItems(labels, checked) { _, i, v -> checked[i] = v }
-            .setPositiveButton("Delete") { _, _ ->
-                val picked = convs.filterIndexed { i, _ -> checked[i] }
-                if (picked.isNotEmpty()) confirmDeleteMultiple(picked)
-            }
-            .setNegativeButton(android.R.string.cancel, null)
-            .show()
-    }
-
     private fun confirmDeleteMultiple(convs: List<ConversationRow>) {
-        val what = if (convs.size == 1) convs[0].title.ifBlank { "Untitled" }
+        val what = if (convs.size == 1) convs[0].title.ifBlank { getString(R.string.conv_untitled) }
                    else "${convs.size} conversations"
         AlertDialog.Builder(this)
             .setTitle("Delete $what?")
-            .setPositiveButton("Delete") { _, _ -> convs.forEach { vm.deleteConversation(it.id) } }
+            .setPositiveButton("Delete") { _, _ ->
+                convs.forEach { vm.deleteConversation(it.id) }
+                refreshConversations()
+            }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
 
     private fun showConversationActions(conv: ConversationRow) {
         AlertDialog.Builder(this)
-            .setTitle(conv.title.ifBlank { "Untitled" })
+            .setTitle(conv.title.ifBlank { getString(R.string.conv_untitled) })
             .setItems(arrayOf("Rename", "Delete")) { _, which ->
                 if (which == 0) renameConversation(conv) else confirmDeleteConversation(conv)
             }
@@ -439,7 +450,10 @@ class MainActivity : AppCompatActivity() {
             .setView(dialogInputContainer(input))
             .setPositiveButton("Save") { _, _ ->
                 val t = input.text.toString().trim()
-                if (t.isNotEmpty()) vm.renameConversation(conv.id, t)
+                if (t.isNotEmpty()) {
+                    vm.renameConversation(conv.id, t)
+                    refreshConversationsSoon()
+                }
             }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
@@ -448,29 +462,103 @@ class MainActivity : AppCompatActivity() {
     private fun confirmDeleteConversation(conv: ConversationRow) {
         AlertDialog.Builder(this)
             .setTitle("Delete conversation?")
-            .setMessage(conv.title.ifBlank { "Untitled" })
-            .setPositiveButton("Delete") { _, _ -> vm.deleteConversation(conv.id) }
+            .setMessage(conv.title.ifBlank { getString(R.string.conv_untitled) })
+            .setPositiveButton("Delete") { _, _ ->
+                vm.deleteConversation(conv.id)
+                refreshConversationsSoon()
+            }
             .setNegativeButton(android.R.string.cancel, null)
             .show()
     }
 
+    // Rename/delete run through the VM's coroutines; give them a beat to land.
+    private fun refreshConversationsSoon() {
+        convRv.postDelayed({ refreshConversations() }, 150)
+    }
+
     private fun dialogInputContainer(input: EditText): View {
-        val pad = (20 * resources.displayMetrics.density).toInt()
+        val pad = Ui.dp(this, 20)
         return FrameLayout(this).apply {
             setPadding(pad, pad / 2, pad, 0)
             addView(input)
         }
     }
 
-    private fun modelDirs() =
-        listOfNotNull(getExternalFilesDir("models"), File(filesDir, "models"))
-            .onEach { if (!it.exists()) it.mkdirs() }
+    private inner class ConvAdapter : RecyclerView.Adapter<ConvAdapter.VH>() {
+        private var items: List<ConversationRow> = emptyList()
+        private var activeId = 0L
 
-    private fun scanModels(): List<File> =
-        modelDirs()
-            .flatMap { it.listFiles { f -> f.extension == "gguf" }?.toList() ?: emptyList() }
-            .distinctBy { it.name }
-            .sortedBy { it.name }
+        fun submit(convs: List<ConversationRow>, active: Long) {
+            items = convs
+            activeId = active
+            notifyDataSetChanged()
+        }
+
+        inner class VH(view: View) : RecyclerView.ViewHolder(view) {
+            val title: TextView = view.findViewById(R.id.conv_title)
+            val time: TextView = view.findViewById(R.id.conv_time)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_conversation, parent, false)
+            return VH(v)
+        }
+
+        override fun getItemCount() = items.size
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val c = items[position]
+            val active = c.id == activeId
+            holder.title.text = c.title.ifBlank { getString(R.string.conv_untitled) }
+            holder.time.text = DateUtils.getRelativeTimeSpanString(
+                c.updatedAt, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS
+            )
+            // Active conversation = solid inversion, the design's selection idiom.
+            holder.itemView.setBackgroundResource(if (active) R.drawable.bg_fill else R.drawable.btn_outline)
+            val textColor = if (active) Ui.bg(this@MainActivity) else Ui.fg(this@MainActivity)
+            holder.title.setTextColor(textColor)
+            holder.time.setTextColor(textColor)
+            holder.itemView.setOnClickListener {
+                vm.switchTo(c.id)
+                drawerLayout.closeDrawer(GravityCompat.START)
+            }
+            holder.itemView.setOnLongClickListener {
+                showConversationActions(c)
+                true
+            }
+        }
+    }
+
+    // ---------- Model handling ----------
+
+    private fun showModelPicker() {
+        if (!::engine.isInitialized) {
+            Toast.makeText(this, "Engine is still starting…", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val models = ModelStore.scan(this)
+
+        // Empty state: a real Import button (a dialog can't show a message AND a list).
+        if (models.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.model_add_title)
+                .setMessage(R.string.model_add_body)
+                .setPositiveButton(R.string.model_import) { _, _ -> getContent.launch(arrayOf("*/*")) }
+                .setNegativeButton(android.R.string.cancel, null)
+                .show()
+            return
+        }
+
+        val labels = models.map { "${it.name}\n${ModelStore.sizeLabel(it.length())}" } +
+            getString(R.string.model_import)
+        AlertDialog.Builder(this)
+            .setTitle(R.string.model_picker_title)
+            .setItems(labels.toTypedArray()) { _, which ->
+                if (which < models.size) loadModel(models[which]) else getContent.launch(arrayOf("*/*"))
+            }
+            .show()
+    }
 
     private val getContent = registerForActivityResult(
         ActivityResultContracts.OpenDocument()
@@ -480,7 +568,7 @@ class MainActivity : AppCompatActivity() {
         setLoadingUi()
         lifecycleScope.launch(Dispatchers.IO) {
             try {
-                val target = File(modelDirs().first(), pickedFileName(uri))
+                val target = File(ModelStore.dirs(this@MainActivity).first(), pickedFileName(uri))
                 // reuse an already-imported copy; otherwise stream it into private storage
                 if (!target.exists() || target.length() == 0L) {
                     val total = pickedFileSize(uri)
@@ -495,6 +583,7 @@ class MainActivity : AppCompatActivity() {
                     userInputEt.isEnabled = isModelReady
                     userInputEt.hint = getString(if (isModelReady) R.string.hint_type_message else R.string.hint_pick_model)
                     sendButton.isEnabled = true
+                    hideLoad()
                     Toast.makeText(this@MainActivity, "Import failed: ${e.message}", Toast.LENGTH_LONG).show()
                 }
             }
@@ -567,15 +656,15 @@ class MainActivity : AppCompatActivity() {
                 isModelReady = true
                 modelInfoText = info
                 prefs.edit()
-                    .putString(KEY_ACTIVE_MODEL, model.nameWithoutExtension)
-                    .putString(KEY_ACTIVE_INFO, info)
+                    .putString(Settings.KEY_ACTIVE_MODEL, model.nameWithoutExtension)
+                    .putString(Settings.KEY_ACTIVE_INFO, info)
                     .apply()
-                supportActionBar?.subtitle = model.nameWithoutExtension
+                setModelName(model.nameWithoutExtension)
                 userInputEt.isEnabled = true
                 userInputEt.hint = getString(R.string.hint_type_message)
                 sendButton.isEnabled = true
                 hideLoad()
-                invalidateOptionsMenu()
+                updateEmptyState()
             }
         } catch (e: Exception) {
             withContext(Dispatchers.Main) {
@@ -673,7 +762,7 @@ class MainActivity : AppCompatActivity() {
         // the conversation had is gone afterwards, so force a re-prime.
         vm.onModelReset()
         startActivity(Intent(this, BenchmarkActivity::class.java).apply {
-            putExtra(BenchmarkActivity.EXTRA_MODEL, supportActionBar?.subtitle?.toString())
+            putExtra(BenchmarkActivity.EXTRA_MODEL, prefs.getString(Settings.KEY_ACTIVE_MODEL, null))
         })
     }
 
@@ -686,20 +775,20 @@ class MainActivity : AppCompatActivity() {
             when {
                 info.contains("KleidiAI active") -> {
                     setText(R.string.kleidiai_active)
-                    setBackgroundResource(R.drawable.bg_status_ready)
-                    setTextColor(getColor(R.color.ready_text))
+                    setBackgroundResource(R.drawable.bg_fill)
+                    setTextColor(Ui.bg(this@MainActivity))
                 }
                 info.contains("KleidiAI NOT used") -> {
                     setText(R.string.kleidiai_not_used)
-                    setBackgroundResource(R.drawable.bg_status_warn)
-                    setTextColor(getColor(R.color.warn_text))
+                    setBackgroundResource(R.drawable.bg_dashed)
+                    setTextColor(Ui.fg(this@MainActivity))
                 }
                 else -> visibility = View.GONE
             }
         }
         view.findViewById<TextView>(R.id.model_info_text).text = info
         AlertDialog.Builder(this)
-            .setTitle(supportActionBar?.subtitle ?: "Model info")
+            .setTitle(prefs.getString(Settings.KEY_ACTIVE_MODEL, null) ?: "Model info")
             .setView(view)
             .setPositiveButton("Close", null)
             .show()
@@ -707,10 +796,6 @@ class MainActivity : AppCompatActivity() {
 
     // Human-readable model card from the GGUF header + the runtime config we chose.
     private fun buildModelInfo(model: File, ctxUsed: Int, threads: Int, meta: GgufMetadata?): String {
-        val bytes = model.length()
-        val sizeStr =
-            if (bytes >= 1_000_000_000L) String.format("%.2f GB", bytes / 1e9)
-            else String.format("%.0f MB", bytes / 1e6)
         val params = meta?.basic?.sizeLabel
         val fileType = meta?.architecture?.fileType?.let { FileType.fromCode(it) }
         val quant = fileType?.label
@@ -723,7 +808,7 @@ class MainActivity : AppCompatActivity() {
 
         return buildString {
             appendLine("File: ${model.name}")
-            appendLine("Size on disk: $sizeStr")
+            appendLine("Size on disk: ${ModelStore.sizeLabel(model.length())}")
             params?.let { appendLine("Parameters: $it") }
             quant?.let { appendLine("Quantization: $it") }
             arch?.let { appendLine("Architecture: $it") }
@@ -767,6 +852,8 @@ class MainActivity : AppCompatActivity() {
         }.trim()
     }
 
+    // ---------- Chat ----------
+
     private fun handleUserInput() {
         val userMsg = userInputEt.text.toString().trim()
         if (userMsg.isEmpty()) return
@@ -774,6 +861,7 @@ class MainActivity : AppCompatActivity() {
         userInputEt.text = null
         userInputEt.isEnabled = false
         hideKeyboard()
+        haptic(HapticFeedbackConstants.CONFIRM)
 
         lastRenderMs = 0L
         graph.clear()
@@ -782,6 +870,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun setSendMode(generating: Boolean) {
         sendButton.setImageResource(if (generating) R.drawable.ic_stop_24 else R.drawable.outline_send_24)
+        sendButton.contentDescription = getString(if (generating) R.string.stop else R.string.send)
         sendButton.isEnabled = true
     }
 
@@ -800,23 +889,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateChips(snap: Snap) {
         chipTemp.text = if (snap.temp > 0) "%.0f°C".format(snap.temp) else "—°C"
-        chipMem.text = "%.1f GB free".format(snap.gb)
+        chipMem.text = "%.1fGB free".format(snap.gb)
     }
 
     private fun updateStatsBar(snap: Snap, s: ChatViewModel.GenStats) {
-        if (!prefs.getBoolean(KEY_SHOW_STATS, false)) {
+        if (!prefs.getBoolean(Settings.KEY_SHOW_STATS, false)) {
             statsBar.visibility = View.GONE
             return
         }
         val parts = mutableListOf<String>()
-        if (prefs.getBoolean(KEY_TOKENS, true)) parts.add("${s.tokens} tok")
-        if (prefs.getBoolean(KEY_SPEED, true)) parts.add("%.1f tok/s".format(speed(s)))
-        if (prefs.getBoolean(KEY_TTFT, true)) parts.add("TTFT ${ttftMs(s)}ms")
-        if (prefs.getBoolean(KEY_TEMP, true)) parts.add("%.1f°C".format(snap.temp))
-        if (prefs.getBoolean(KEY_POWER, true)) parts.add("%.2fW".format(snap.watts))
-        if (prefs.getBoolean(KEY_CPU, true)) parts.add("CPU %.0f%%".format(snap.cpuPercent))
-        if (prefs.getBoolean(KEY_MEMORY, true)) parts.add("%.1fGB free".format(snap.gb))
-        statsBar.text = parts.joinToString("  ·  ")
+        if (prefs.getBoolean(Settings.KEY_STAT_TOKENS, true)) parts.add("${s.tokens}tok")
+        if (prefs.getBoolean(Settings.KEY_STAT_SPEED, true)) parts.add("%.1ft/s".format(speed(s)))
+        if (prefs.getBoolean(Settings.KEY_STAT_TTFT, true)) parts.add("TTFT ${ttftMs(s)}ms")
+        if (prefs.getBoolean(Settings.KEY_STAT_TEMP, true)) parts.add("%.1f°C".format(snap.temp))
+        if (prefs.getBoolean(Settings.KEY_STAT_POWER, true)) parts.add("%.2fW".format(snap.watts))
+        if (prefs.getBoolean(Settings.KEY_STAT_CPU, true)) parts.add("CPU %.0f%%".format(snap.cpuPercent))
+        if (prefs.getBoolean(Settings.KEY_STAT_MEMORY, true)) parts.add("%.1fGB".format(snap.gb))
+        statsBar.text = parts.joinToString(" · ")
         statsBar.visibility = if (parts.isEmpty()) View.GONE else View.VISIBLE
     }
 
@@ -870,12 +959,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateEmptyState() {
         emptyState.visibility = if (vm.messages.isEmpty()) View.VISIBLE else View.GONE
-    }
-
-    private fun nightMode(mode: Int) = when (mode) {
-        1 -> AppCompatDelegate.MODE_NIGHT_NO
-        2 -> AppCompatDelegate.MODE_NIGHT_YES
-        else -> AppCompatDelegate.MODE_NIGHT_FOLLOW_SYSTEM
+        emptyHint.setText(if (isModelReady) R.string.empty_hint_ready else R.string.empty_hint_no_model)
     }
 
     private fun hideKeyboard() {
@@ -898,33 +982,5 @@ class MainActivity : AppCompatActivity() {
         private const val RENDER_INTERVAL_MS = 45L
         private const val CHIP_INTERVAL_MS = 1000L
         private const val WATTS_WINDOW = 5
-
-        private const val KEY_SHOW_STATS = "show_stats"
-        private const val KEY_SHOW_GRAPH = "show_graph"
-        private const val KEY_GRAPH_FILL = "graph_fill"
-        private const val KEY_GRAPH_SMOOTH = "graph_smooth"
-        private const val KEY_TOKENS = "stat_tokens"
-        private const val KEY_SPEED = "stat_speed"
-        private const val KEY_TTFT = "stat_ttft"
-        private const val KEY_TEMP = "stat_temp"
-        private const val KEY_POWER = "stat_power"
-        private const val KEY_CPU = "stat_cpu"
-        private const val KEY_MEMORY = "stat_memory"
-        private const val KEY_THEME = "theme"
-        private const val KEY_ACTIVE_MODEL = "active_model"
-        private const val KEY_ACTIVE_INFO = "active_model_info"
-
-        private val statItems = mapOf(
-            R.id.stat_tokens to KEY_TOKENS,
-            R.id.stat_speed to KEY_SPEED,
-            R.id.stat_ttft to KEY_TTFT,
-            R.id.stat_temp to KEY_TEMP,
-            R.id.stat_power to KEY_POWER,
-            R.id.stat_cpu to KEY_CPU,
-            R.id.stat_memory to KEY_MEMORY
-        )
-
-        // index 0 = system, 1 = light, 2 = dark
-        private val themeItems = listOf(R.id.theme_system, R.id.theme_light, R.id.theme_dark)
     }
 }
