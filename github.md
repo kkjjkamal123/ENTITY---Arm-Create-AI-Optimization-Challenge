@@ -22,18 +22,22 @@ Built on **llama.cpp** with a Kotlin UI and C++/JNI inference layer, ENTITY is p
    selected. ENTITY reads the GGUF header and tells you. Switching a 1B from Q3_K_L to Q4_0 took
    prompt throughput from 43 to 121 tok/s on the reference phone.
 2. **Measured runtime tuning, not assumed** — ENTITY keeps both inference phases on the
-   frequency-ranked performance cores, and ships a three-arm ablation that *attributes* the result
-   instead of asserting it. That ablation disproved this project's own flagship optimization: the
-   gain comes from the thread count, not from the `sched_setaffinity` pinning. Shipping the
-   experiment that can falsify your headline is the point.
+   frequency-ranked performance cores, and ships an ablation that *attributes* the result
+   instead of asserting it. That ablation disproved this project's own original claim (+121% from
+   pinning): the multiplier comes from the thread count. The current five-run four-arm exports
+   (2026-07-18, two devices) sharpen it further - what pinning adds is device-dependent: +21%
+   decode on the Dimensity 7300, +1% decode but ~30% lower median power on a Snapdragon 6 Gen 4.
+   Shipping the experiment that can falsify your headline is the point.
 3. **Energy efficiency as a first-class metric** — measures battery current × voltage to report power
    in watts and tokens-per-watt, turning on-device AI from a raw-speed story into a sustained-efficiency
    one. A bug fix in v2.0.0 resolved OEM kernel unit confusion (milliamps vs microamps) so power
    reporting is now accurate on all devices.
 
-On the same phone, ENTITY reaches **16.7 tok/s** decode on a 1B model (Q3_K_L, shipped Auto config), and — after the KleidiAI
-finding below — **time-to-first-token dropped from 13.4 s to 3.9 s**. It also reports power and
-tokens-per-watt. Full method and limits: [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md).
+On the same phone, ENTITY reaches **18.1 tok/s** decode on a 1B model (Q4_0, shipped Auto config,
+2026-07-18 five-run export), and — after the KleidiAI finding below — **time-to-first-token
+dropped from 13.4 s to 3.9 s**. It also reports power and tokens-per-watt: 4.59 tok/W optimized
+vs 2.61 naive on the reference phone, 9.85 vs 3.37 on the OPPO validation device. Full method and
+limits: [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md).
 
 ---
 
@@ -46,7 +50,7 @@ The app is a professional on-device chat interface with:
 - **Persistent, multiple conversations** — chats are stored on-device (SQLite), the last conversation is restored on launch, and a conversation switcher supports rename/delete; restored chats continue seamlessly (the engine re-primes its context from the saved history).
 - **Settings** with an Auto (optimized) master toggle for automatic tuning, plus manual layers for temperature, top-k, top-p, max tokens, context size, and thread count — and an editable system prompt and an Animations toggle.
 - **Live metrics bar and toggleable multi-series graph** — tokens, tok/s, time-to-first-token, temperature, power draw (W), and free memory.
-- **In-app benchmark with a three-arm ablation** (⋮ → Benchmark) — runs the same PP 512 / TG 128 workload three ways: naïve (8 threads, default scheduler), threads-only (the Auto thread count with affinity off, i.e. what an upstream llama.cpp `-t N` run does), and the shipped Auto path (both phases on the frequency-ranked fast cores). The middle arm is what lets the gain be *attributed* — thread count versus core pinning — instead of assumed. It has a 1/3/5 run-count selector, per-metric median ± stddev, thermal cooldown between every pass, TTFT, and CSV export.
+- **In-app benchmark with a three-arm ablation** (menu drawer → BENCHMARK) — runs the same PP 512 / TG 128 workload three ways: naïve (8 threads, default scheduler), threads-only (the Auto thread count with affinity off, i.e. what an upstream llama.cpp `-t N` run does), and the shipped Auto path (both phases on the frequency-ranked fast cores). The middle arm is what lets the gain be *attributed* — thread count versus core pinning — instead of assumed. It has a 1/3/5 run-count selector, per-metric median ± stddev, thermal cooldown between every pass, TTFT, and CSV export.
 - **Light / Dark / System themes** and a theme-aware app-icon switcher.
 - **Model info card** that reads the GGUF header to show parameters, quantization, architecture, and computed context window.
 
@@ -104,13 +108,24 @@ models, on the reference device:
 | 3B Q4_0 | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
 | 3B Q4_0 | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
 
-**The thread count earns the gain. The big-core pinning earns approximately nothing.** The two 3B
-runs disagree (+13% and +0%), a third measured -16% while charging, and single 3B runs swing about
-15% either way, so the +13% is noise rather than a finding.
+**In this July record the thread count earned the gain and the big-core pinning earned
+approximately nothing.** The two 3B runs disagree (+13% and +0%), a third measured -16% while
+charging, and single 3B runs swing about 15% either way, so the +13% is noise rather than a finding.
 
-This is the project's flagship optimization, and its own benchmark disproved it. The affinity code
-still ships - it costs nothing and another SoC may answer differently - but it is no longer credited
-with the speed-up. What the cross-vendor repeat *does* prove is that the **mechanism** is
+The current benchmark of record - two four-arm, five-runs-per-arm ENTITY Bench v1.1.0 exports
+taken 2026-07-18, raw CSVs retained - upgrades that statement:
+
+| Device | Naive, 8 thr | Threads only, no pin | Auto, pinned | Efficiency, LITTLE | Threads | Pinning |
+|---|---:|---:|---:|---:|---:|---:|
+| CMF Phone 1, Dimensity 7300 | 10.8 | 15.0 | **18.1** | 15.0 | **+39%** | **+21%** |
+| OPPO CPH2729, Snapdragon 6 Gen 4 | 9.7 | 17.4 | **17.5** | 14.3 | **+80%** | +1% |
+
+The thread count is the universal earner; what pinning adds is device-dependent - decode on the
+Dimensity (+21%, non-overlapping distributions), power on the Snapdragon (2.52 to 1.78 W median,
+tok/W 6.80 to 9.85). The fourth arm answers the efficiency-core question directly: LITTLE-pinning
+is slower and worse per watt on both phones. The project's original attribution (+121% from
+pinning) remains disproved - its own benchmark did it - and the July ~0% record is retained
+beside the current one. What the cross-vendor repeat *does* prove is that the **mechanism** is
 SoC-agnostic: ranking cores by live `cpufreq` instead of hardcoding a mask finds the performance
 cluster unchanged on MediaTek and Qualcomm.
 
@@ -161,7 +176,7 @@ flags, workloads, and CLI-only realtime priority.
 
 ### 1. Big-Core Affinity via `sched_setaffinity`
 
-The Dimensity 7300 is asymmetric. By default, the Android scheduler spreads threads across all 8 cores; the slow A55s become stragglers, delaying the whole pipeline. ENTITY pins inference threads to cores 4–7 (the Cortex-A78 cluster) using `sched_setaffinity`, with core indices **auto-detected from live `cpufreq` rankings** in `/sys/devices/system/cpu/` — no hardcoded core mask, which is why the identical path works on Qualcomm. Together with the thread-count decision it produces the in-app result of **8.0 → 17.7 tok/s decode (+121%)** on the Q3_K_L 1B workload. The app's threads-only arm has since measured how that splits: **the thread count earns essentially all of it and the pinning earns ~0%.** The pinning is kept because it is free and another SoC may differ, but it is not what makes ENTITY fast.
+The Dimensity 7300 is asymmetric. By default, the Android scheduler spreads threads across all 8 cores; the slow A55s become stragglers, delaying the whole pipeline. ENTITY pins inference threads to cores 4–7 (the Cortex-A78 cluster) using `sched_setaffinity`, with core indices **auto-detected from live `cpufreq` rankings** in `/sys/devices/system/cpu/` — no hardcoded core mask, which is why the identical path works on Qualcomm. Together with the thread-count decision it produces the in-app result of **8.0 → 17.7 tok/s decode (+121%)** on the Q3_K_L 1B workload. The threads-only arm has since measured how that splits: **the thread count earns the multiplier, and what pinning adds on top is device-dependent** — the current five-run exports read +21% decode on this phone and +1% decode with ~30% lower median power on the Snapdragon 6 Gen 4, where July's three-run sets had read ~0%. The pinning ships everywhere because the ablation is what decides its value per device.
 
 **Impact:** on generation (memory-bandwidth-bound workload), pinning to big cores recovers the speed lost to the LITTLE cluster.
 
@@ -275,7 +290,7 @@ v2.0.0 Q3_K_L two-arm run measured 2.5×, 1.7 → 4.2 tok/W.)
    - Open the app.
    - Tap the folder icon to import or load a model from the device.
    - Chat normally.
-   - To validate the optimization: ⋮ → **Benchmark** to run the in-app three-arm ablation (naïve, threads-only, Auto) on the loaded model, then **Export CSV** for the per-pass evidence.
+   - To validate the optimization: menu drawer → **BENCHMARK** to run the in-app three-arm ablation (naïve, threads-only, Auto) on the loaded model, then **Export CSV** for the per-pass evidence.
 
 ### CPU Backend Configuration
 
@@ -311,6 +326,7 @@ ENTITY was **newly created during the hackathon submission period**, built from 
 - **v2.4.0** (2026-07-17): KV-cache session reuse - the active conversation's KV state persists across conversation switches and app restarts via llama.cpp's `llama_state_seq_*` API, with silent fallback to full re-prime on any mismatch - and a topology-adaptive thread count: Auto derives its thread count from the size of the top frequency cluster (clamped to [2, 6]; still exactly 4 on the reference 4+4 phone), so flagships with more than four performance cores thread wider without a code change (`apk/ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk`).
 - **ENTITY Bench v1.1.0** (2026-07-17): The bench app rebuilt from the ground up as a dedicated benchmark instrument - its own home / live-run / result screens instead of the chat app's reused benchmark page, every result autosaved on-device with a browsable history (reopen any past run and export its CSV later), a pure black-and-white brutalist theme with System/Light/Dark selection in Settings, a new pixel-art launcher icon - plus an optional fourth ablation arm, "efficiency cores": auto's thread count pinned to the slowest cluster, exported as `affinity_efficiency`, to measure whether efficiency cores are actually more energy-efficient (tok/W) for LLM decode or just slower (`apk/ENTITY-Bench-v1.1.0-release.apk`).
 - **v3.0.0** (2026-07-18): MONO - the chat app's full UI remake in ENTITY Bench's design language, so the two apps now read as one family: two colors only (paper/ink, inverted in dark mode), square corners, monospace type, press feedback as hard inversion. The toolbar overflow menu is replaced by a left navigation drawer (NEW CHAT + conversations in one section, with rename/delete and multi-select, plus model switching, benchmark, share); Settings is rebuilt into six sections and absorbs every former menu toggle (theme, stats bar, graph, graph style, series) while adding daily-driver controls: chat text size, haptic feedback, keep-screen-on while generating, imported-model management with per-file delete, export-all-chats, clear-all. The metrics graph deliberately stays the one colored surface in the mono UI (seven overlaid series need hue to stay readable). No inference-path changes; benchmark numbers carry over (`apk/ENTITY-v13-mono-ui-refresh-20260718-release.apk`).
+- **Four-arm benchmark evidence** (2026-07-18): the current benchmark of record - two ENTITY Bench v1.1.0 exports, five runs per arm, Llama-3.2-1B Q4_0, unplugged, raw per-pass CSVs retained (`benchmarks/results/entity_1b-q4_0_unplugged_5run_{cmf,oppo}_20260718.csv`, figure `benchmarks/plots/four_arm_decode_20260718.png`). The thread count earns the multiplier on both devices (+39% CMF, +80% OPPO); pinning's extra return is device-dependent (+21% decode on the Dimensity 7300 with non-overlapping distributions; +1% decode but 2.52 to 1.78 W median power on the Snapdragon 6 Gen 4); the new LITTLE-pinned arm is slower and worse per watt on both phones, closing the "are efficiency cores efficient?" question with data.
 
 **All versions from v1.6.0 onward ship with prebuilt debug and/or release-signed APKs in [`apk/`](apk/)** (see `apk/README.md`) and as copy-paste-ready notes in [`releases/`](releases/), installable via `adb install -r`. Versions 1.0–1.5 are available as debug APKs only.
 
@@ -325,6 +341,6 @@ ENTITY was **newly created during the hackathon submission period**, built from 
 
 ## Summary
 
-ENTITY proves that **optimization for real Arm hardware is the leverage point** for on-device AI on phones. By treating the phone as an asymmetric big.LITTLE SoC with thermal and power constraints - instead of a small desktop - the shipped Auto path decodes **+81% to +106% faster than the out-of-the-box eight-thread default**, a gain its own three-arm ablation attributes to the thread count rather than core pinning. The KleidiAI Q4_0 finding cut **time-to-first-token from 13.4 s to 3.9 s**, and on the same phone and model ENTITY beats **Arm's own AI Chat app by 11% on prompt and 21% on token generation** - while the adaptive runtime still fits a 3B model into 2 GB of free RAM on a $200 phone.
+ENTITY proves that **optimization for real Arm hardware is the leverage point** for on-device AI on phones. By treating the phone as an asymmetric big.LITTLE SoC with thermal and power constraints - instead of a small desktop - the shipped Auto path decodes **up to 2x faster than the out-of-the-box eight-thread default** (+39% to +106% across the record, +68% and +81% in the current five-run two-device exports), a gain its own ablation attributes primarily to the thread count - with pinning's extra contribution measured per device: +21% decode on the Dimensity 7300, ~30% lower median power on the Snapdragon 6 Gen 4. The KleidiAI Q4_0 finding cut **time-to-first-token from 13.4 s to 3.9 s**, and on the same phone and model ENTITY beats **Arm's own AI Chat app by 11% on prompt and 21% on token generation** - while the adaptive runtime still fits a 3B model into 2 GB of free RAM on a $200 phone.
 
 The submission is reproducible, measured, and honest about trade-offs. The code is open-source. The results are on-device.

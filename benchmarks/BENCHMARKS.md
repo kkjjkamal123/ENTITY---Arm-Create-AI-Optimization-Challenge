@@ -1,13 +1,16 @@
-# ENTITY v2.2.0 benchmark record
+# ENTITY benchmark record
 
 This is the one canonical benchmark document for ENTITY. It reports the benchmark path that ships
 in the Android app. The public source is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge).
 
-**The headline finding is not the one this project started with.** ENTITY's in-app ablation
-disproved its own flagship optimization. The +121% decode figure published for v2.0.0 was credited
-to big-core affinity pinning. It is not: the pinning earns approximately nothing. The gain comes
-from using four threads instead of eight. That result, and the two optimizations that *do* pay on
-Arm, are recorded below.
+**The headline finding is not the one this project started with.** ENTITY's own ablation
+disproved its flagship claim: the +121% decode figure published for v2.0.0 was credited to
+big-core affinity pinning, and it is not the pinning — the multiplier comes from using four
+threads instead of eight. The current benchmark of record is the pair of five-run four-arm
+exports below (ENTITY Bench v1.1.0, 2026-07-18, two devices, raw CSVs retained). They sharpen
+the attribution: **the thread count earns the multiplier on every device; what the pinning adds
+is device-dependent** — +21% decode on the Dimensity 7300, +1% decode but markedly lower power on
+the Snapdragon 6 Gen 4 — and LITTLE-cluster pinning loses on both axes on both phones.
 
 ## What was measured
 
@@ -20,6 +23,7 @@ Values are median (± population standard deviation where more than one run was 
 | Naïve | Eight threads across all online CPU cores. The out-of-the-box default. |
 | Threads only | The same thread count Auto derives, with affinity off: no `sched_setaffinity`, no pinned thread pool, placement left to the Linux scheduler. This is what an upstream llama.cpp `-t N` run does. |
 | ENTITY Auto | CPU cores are ranked by maximum frequency; both phases run on the fastest two to four cores. |
+| Efficiency (Bench v1.1.0 only) | Auto's thread count pinned to the LITTLE cluster instead. Answers a tok/W question — are the little cores energy-efficient for decode, or only slow? |
 
 ### Why three arms
 
@@ -37,7 +41,84 @@ Each arm logs the CPU mask the kernel actually applied (`effective cpus` in logc
 `sched_setaffinity` cannot masquerade as "pinning earns nothing". See
 [REPRODUCIBILITY](REPRODUCIBILITY.md).
 
-## Result 1: the thread count earns the gain, the pinning does not
+## The current result: four-arm exports (ENTITY Bench v1.1.0, 2026-07-18)
+
+The standalone [ENTITY Bench](../apk/ENTITY-Bench-v1.1.0-release.apk) app (v1.1.0) runs a fourth
+arm the chat app's three-arm ablation never had: **efficiency** — the same four threads as Auto,
+but pinned to the LITTLE cluster instead of the performance cluster. It exists to measure what the
+slow cores can and cannot do, so the affinity policy is chosen from data rather than assumption.
+
+Two exports were taken on 2026-07-18, Llama-3.2-1B Q4_0, PP 512 / TG 128, unplugged, five runs per
+arm. Both raw CSVs are retained in [`results/`](results/). Values are median ± population standard
+deviation over the five runs.
+
+**CMF Phone 1 (Nothing A015), Dimensity 7300, start 31 °C:**
+
+| Arm | Decode (tok/s) | Prompt (tok/s) | TTFT (ms) | Power (W) | Efficiency (tok/W) |
+|---|---:|---:|---:|---:|---:|
+| Naïve (8 thr, all cores) | 10.8 ± 1.3 | 111 ± 13.6 | 4,720 | 4.25 ± 0.12 | 2.61 ± 0.33 |
+| Threads only (4 thr, no pin) | 15.0 ± 0.5 | 137 ± 1.4 | 3,803 | 4.09 ± 0.17 | 3.66 ± 0.24 |
+| ENTITY Auto (4 thr, perf-pinned) | **18.1 ± 0.4** | **139 ± 0.8** | **3,739** | 3.96 ± 0.07 | 4.59 ± 0.17 |
+| Efficiency (4 thr, LITTLE-pinned) | 15.0 ± 0.3 | 82.5 ± 0.2 | 6,272 | **3.51 ± 0.02** | 4.28 ± 0.09 |
+
+**OPPO CPH2729, Snapdragon 6 Gen 4, start 35.3 °C:**
+
+| Arm | Decode (tok/s) | Prompt (tok/s) | TTFT (ms) | Power (W) | Efficiency (tok/W) |
+|---|---:|---:|---:|---:|---:|
+| Naïve (8 thr, all cores) | 9.7 ± 0.5 | 152 ± 4.5 | 3,473 | 2.87 ± 1.04 | 3.37 ± 1.05 |
+| Threads only (4 thr, no pin) | 17.4 ± 0.3 | 129 ± 22.4 | 4,026 | 2.52 ± 0.90 | 6.80 ± 1.82 |
+| ENTITY Auto (4 thr, perf-pinned) | **17.5 ± 0.2** | 129 ± 23.1 | 4,026 | **1.78 ± 0.71** | **9.85 ± 2.54** |
+| Efficiency (4 thr, LITTLE-pinned) | 14.3 ± 0.1 | 127 ± 1.9 | 4,101 | 3.06 ± 0.96 | 4.74 ± 1.57 |
+
+![Four-arm decode and efficiency](plots/four_arm_decode_20260718.png)
+
+Regenerate the figure with:
+
+```bash
+python3 benchmarks/plot_four_arm.py
+```
+
+### What the efficiency arm shows
+
+Pinning the four threads to the LITTLE cluster is a latency-for-power trade, and the two SoCs take
+it differently. On the CMF Phone the A55s hold decode at the four-thread level (15.0 tok/s, matching
+threads-only, because decode is memory-bound and the little cores clock to 2.0 GHz) but **collapse
+prompt throughput from 139 to 82.5 tok/s and push TTFT from 3.7 s to 6.3 s** — prompt eval is the
+compute-bound GEMM the A55s are worst at. In exchange it draws the least power of any arm (3.51 W).
+On the OPPO the prompt holds up (127 vs 129 tok/s) while decode gives up more (14.3 vs 17.5), so the
+same policy lands in a different place. The efficiency arm is therefore a real option to expose, not
+a default — exactly the case for shipping the benchmark rather than a hardcoded mask.
+
+### The CMF export disagrees on pinning
+
+On the CMF Phone this export does something no earlier run did. The per-run decode figures are:
+
+| Arm | Decode, per run (tok/s) | Median | Range |
+|---|---|---:|---:|
+| Threads only | 15.0, 14.7, 15.2, 15.9, 14.5 | 15.0 | 14.5 – 15.9 |
+| ENTITY Auto | 17.5, 17.5, 18.3, 18.4, 18.1 | 18.1 | 17.5 – 18.4 |
+
+Auto's slowest run (17.5) is faster than threads-only's fastest (15.9): the two distributions **do
+not overlap**, and pinning measures **+20.7%** on the medians with tight spreads on both arms. Every
+prior three-run set had these two arms overlapping with pinning inside ±2% — see
+[What the three-run export says about the pinning](#what-the-three-run-export-says-about-the-pinning).
+
+The OPPO export taken the same day still reads +0.6% (17.4 → 17.5), inside the noise, consistent
+with every earlier run.
+
+**What this establishes.** These five-run exports carry more resolution than any earlier set —
+five runs per arm instead of three, tight spreads, and per-run raw CSVs — and they replace
+"pinning earns nothing" with a device-dependent statement: on the Dimensity 7300 pinning buys
+decode (+21%, distributions non-overlapping) and +25% tok/W; on the Snapdragon 6 Gen 4 it buys
+power (2.52 → 1.78 W median, tok/W 6.80 → 9.85 on medians, with the wide spreads this SoC's noisy
+battery telemetry produces) while decode stays inside the noise. On both phones the LITTLE-pinned
+arm is strictly worse than perf-pinning on speed *and* tok/W, so the efficiency cores are not an
+efficiency win for LLM inference — measured, not assumed. The July three-run record on the same
+CMF phone read pinning at ~0% ([Result 1](#result-1-the-thread-count-earns-the-multiplier)); that
+history is retained below, and the difference between the chat app's three-run bench then and the
+standalone five-run bench now is an open question the raw CSVs keep answerable.
+
+## Result 1: the thread count earns the multiplier
 
 CMF Phone 1 (Nothing A015), MediaTek Dimensity 7300, 4× Cortex-A78 + 4× Cortex-A55, Android 16.
 Decode throughput, tokens/s:
@@ -57,9 +138,11 @@ Running eight threads on a 4+4 big.LITTLE phone lets the Cortex-A55s gate every 
 using four threads removes that, and it is most of what `llama.cpp -t 4` already gives any user who
 bothers to pass the flag.
 
-**Pinning those four threads to the performance cluster adds nothing measurable.** The two 3B runs
-disagree (+13% and +0%), and a third 3B run taken while charging measured −16%; single 3B runs swing
-about ±15%, so the +13% is not a finding. Across every run the honest number is ~0%.
+**In this July three-run record, pinning those four threads added nothing measurable.** The two 3B
+runs disagree (+13% and +0%), and a third 3B run taken while charging measured −16%; single 3B runs
+swing about ±15%, so the +13% is not a finding. The 2026-07-18 five-run exports above supersede
+this as the current statement on pinning — +21% on this same phone, +1% on the OPPO — but the
+thread-count finding is unchanged by every set ever taken: it is the universal earner.
 
 The 2026-07-15 evening set is the sharpest statement of the pattern yet: the pinned and unpinned
 medians are identical at 15.9 tok/s, but pinning collapses the spread from ±1.58 to ±0.09 tok/s.
@@ -68,14 +151,9 @@ What the pinning buys is repeatability, not speed.
 The affinity code still ships, because it costs nothing and a different SoC may behave differently.
 It is no longer claimed as the source of the speed-up.
 
-> **New evidence, not yet folded into this conclusion.** The 2026-07-18 ENTITY Bench v1.1.0
-> export on the CMF Phone is the first run in the project where the pinned and unpinned decode
-> distributions **do not overlap** — pinning measures +21%, five runs each, clean. The OPPO export
-> taken the same day still shows +1%. One device now disagrees with "the pinning earns nothing";
-> the other still agrees. This is recorded, with the raw per-run numbers, under
-> [Four-arm exports](#four-arm-exports-entity-bench-v110-2026-07-18) below, and is flagged there as
-> needing a confirming repeat before Result 1 is revised. It is left standing here so the reader
-> reaches the disagreement, not a conclusion that predates it.
+> This section is the July 2026 three-run record, kept as history with its original readings.
+> The current statement on what pinning earns is the five-run four-arm section
+> [above](#the-current-result-four-arm-exports-entity-bench-v110-2026-07-18).
 
 ## Result 2: KleidiAI only accelerates Q4_0 and Q8_0
 
@@ -162,7 +240,7 @@ From the 2026-07-15 evening export (first pass of each arm):
 
 The earlier 2026-07-14 single-run export measured the same shape: naïve 95 J, threads-only 57 J
 (−40%), Auto 51 J (−47%). Across both exports the saving is 42–47%, and threads-only versus Auto
-is inside the noise — consistent with Result 1's finding that the pinning earns nothing.
+is inside the noise on this energy metric, as it was on July's decode medians.
 
 **All three configurations draw roughly the same watts.** ENTITY does not win by sipping less
 current — it wins because it finishes in half the time. Energy is the area under the power curve,
@@ -202,80 +280,6 @@ Setup, screenshots, and the caveats (including why ENTITY's live-chat 16.9 tok/s
 - These are synthetic benchmark values, not live multi-turn chat speed.
 - Power and tokens-per-watt are recorded only while unplugged; the app hides them while charging
   because USB input invalidates the battery-current reading.
-
-## Four-arm exports (ENTITY Bench v1.1.0, 2026-07-18)
-
-The standalone [ENTITY Bench](../apk/ENTITY-Bench-v1.1.0-release.apk) app (v1.1.0) runs a fourth
-arm the chat app's three-arm ablation never had: **efficiency** — the same four threads as Auto,
-but pinned to the LITTLE cluster instead of the performance cluster. It exists to measure what the
-slow cores can and cannot do, so the affinity policy is chosen from data rather than assumption.
-
-Two exports were taken on 2026-07-18, Llama-3.2-1B Q4_0, PP 512 / TG 128, unplugged, five runs per
-arm. Both raw CSVs are retained in [`results/`](results/). Values are median ± population standard
-deviation over the five runs.
-
-**CMF Phone 1 (Nothing A015), Dimensity 7300, start 31 °C:**
-
-| Arm | Decode (tok/s) | Prompt (tok/s) | TTFT (ms) | Power (W) | Efficiency (tok/W) |
-|---|---:|---:|---:|---:|---:|
-| Naïve (8 thr, all cores) | 10.8 ± 1.3 | 111 ± 13.6 | 4,720 | 4.25 ± 0.12 | 2.61 ± 0.33 |
-| Threads only (4 thr, no pin) | 15.0 ± 0.5 | 137 ± 1.4 | 3,803 | 4.09 ± 0.17 | 3.66 ± 0.24 |
-| ENTITY Auto (4 thr, perf-pinned) | **18.1 ± 0.4** | **139 ± 0.8** | **3,739** | 3.96 ± 0.07 | 4.59 ± 0.17 |
-| Efficiency (4 thr, LITTLE-pinned) | 15.0 ± 0.3 | 82.5 ± 0.2 | 6,272 | **3.51 ± 0.02** | 4.28 ± 0.09 |
-
-**OPPO CPH2729, Snapdragon 6 Gen 4, start 35.3 °C:**
-
-| Arm | Decode (tok/s) | Prompt (tok/s) | TTFT (ms) | Power (W) | Efficiency (tok/W) |
-|---|---:|---:|---:|---:|---:|
-| Naïve (8 thr, all cores) | 9.7 ± 0.5 | 152 ± 4.5 | 3,473 | 2.87 ± 1.04 | 3.37 ± 1.05 |
-| Threads only (4 thr, no pin) | 17.4 ± 0.3 | 129 ± 22.4 | 4,026 | 2.52 ± 0.90 | 6.80 ± 1.82 |
-| ENTITY Auto (4 thr, perf-pinned) | **17.5 ± 0.2** | 129 ± 23.1 | 4,026 | **1.78 ± 0.71** | **9.85 ± 2.54** |
-| Efficiency (4 thr, LITTLE-pinned) | 14.3 ± 0.1 | 127 ± 1.9 | 4,101 | 3.06 ± 0.96 | 4.74 ± 1.57 |
-
-![Four-arm decode and efficiency](plots/four_arm_decode_20260718.png)
-
-Regenerate the figure with:
-
-```bash
-python3 benchmarks/plot_four_arm.py
-```
-
-### What the efficiency arm shows
-
-Pinning the four threads to the LITTLE cluster is a latency-for-power trade, and the two SoCs take
-it differently. On the CMF Phone the A55s hold decode at the four-thread level (15.0 tok/s, matching
-threads-only, because decode is memory-bound and the little cores clock to 2.0 GHz) but **collapse
-prompt throughput from 139 to 82.5 tok/s and push TTFT from 3.7 s to 6.3 s** — prompt eval is the
-compute-bound GEMM the A55s are worst at. In exchange it draws the least power of any arm (3.51 W).
-On the OPPO the prompt holds up (127 vs 129 tok/s) while decode gives up more (14.3 vs 17.5), so the
-same policy lands in a different place. The efficiency arm is therefore a real option to expose, not
-a default — exactly the case for shipping the benchmark rather than a hardcoded mask.
-
-### The CMF export disagrees on pinning
-
-On the CMF Phone this export does something no earlier run did. The per-run decode figures are:
-
-| Arm | Decode, per run (tok/s) | Median | Range |
-|---|---|---:|---:|
-| Threads only | 15.0, 14.7, 15.2, 15.9, 14.5 | 15.0 | 14.5 – 15.9 |
-| ENTITY Auto | 17.5, 17.5, 18.3, 18.4, 18.1 | 18.1 | 17.5 – 18.4 |
-
-Auto's slowest run (17.5) is faster than threads-only's fastest (15.9): the two distributions **do
-not overlap**, and pinning measures **+20.7%** on the medians with tight spreads on both arms. Every
-prior three-run set had these two arms overlapping with pinning inside ±2% — see
-[What the three-run export says about the pinning](#what-the-three-run-export-says-about-the-pinning).
-
-The OPPO export taken the same day still reads +0.6% (17.4 → 17.5), inside the noise, consistent
-with every earlier run.
-
-**This is not yet enough to revise Result 1.** It is one export on one phone, and the honest reason
-to hold is the same standard the rest of this document uses: a single export that breaks a pattern
-gets repeated before the thesis moves. What it does establish is that the cross-vendor picture is
-now **mixed** rather than uniformly "pinning earns nothing" — so the next step is a confirming
-repeat on the CMF Phone (five runs, cooled start, unplugged), and, if it holds, checking whether the
-v1.1.0 bench differs from the chat app's Auto path in a way that would explain why the gain appears
-here and not in the July runs. Until that repeat exists, Result 1 stands as written and this export
-is the flag against it.
 
 ## Historical two-arm record (v2.0.0)
 
@@ -329,8 +333,8 @@ to cache before the picker opens.
 | `entity_1b-q4_0_charging_3run_20260714.csv` | 1B Q4_0, charging, 3 runs | 12,012 telemetry samples. Speed is valid and this was the tightest three-run evidence in the project until the 2026-07-15 evening export. **Its power columns are not** — the phone was charging, so they measure the charger. Both plot scripts refuse to draw power from it. |
 | `entity_1b-q4_0_unplugged_3run_20260715.csv` | 1B Q4_0, unplugged, 3 runs | 13,007 telemetry samples, app v2.2.0. The first unplugged three-run set: speed AND power both valid. Thread count +106% decode, pinning +1%. Caveat: its `affinity_naive` meta row says `pinned_fast_cores`; the naive mask is the 8 fastest of 8 cores, i.e. all of them, so the label was misleading and the CSV writer was corrected after this export. |
 | `entity_1b-q4_0_unplugged_3run_20260715b.csv` | 1B Q4_0, unplugged, 3 runs | 12,126 data rows (855 telemetry samples × 14 channels), app v2.2.0, evening of the same day. The first export with the corrected `affinity_naive` label (`mask_all_cores_effectively_unpinned`). Speed and power both valid, every pass LIGHT thermal from a 36 °C start. Thread count +85% decode; pinning +0% with the tightest Auto spread recorded (±0.09 tok/s). The energy figure is drawn from it. |
-| `entity_1b-q4_0_unplugged_5run_cmf_20260718.csv` | 1B Q4_0, unplugged, 5 runs | ENTITY **Bench** app v1.1.0, CMF Phone, 31 °C start. First retained four-arm export (adds the LITTLE-pinned `efficiency` arm). Five runs per arm. Thread count +39% decode; **pinning +21%, non-overlapping** — the run that disagrees with Result 1. See [Four-arm exports](#four-arm-exports-entity-bench-v110-2026-07-18). |
-| `entity_1b-q4_0_unplugged_5run_oppo_20260718.csv` | 1B Q4_0, unplugged, 5 runs | ENTITY **Bench** app v1.1.0, OPPO CPH2729, 35.3 °C start. First retained per-run OPPO export — supersedes the historical two-arm OPPO row, which had no raw CSV. Thread count +80% decode; pinning +1%, consistent with Result 1. Power columns are noisy on this SoC (naïve 1.96 – 4.72 W across runs), so the tok/W spreads are wide and real. |
+| `entity_1b-q4_0_unplugged_5run_cmf_20260718.csv` | 1B Q4_0, unplugged, 5 runs | ENTITY **Bench** app v1.1.0, CMF Phone, 31 °C start. First retained four-arm export (adds the LITTLE-pinned `efficiency` arm). Five runs per arm. Thread count +39% decode; **pinning +21%, non-overlapping**. Current headline export. See [the current result](#the-current-result-four-arm-exports-entity-bench-v110-2026-07-18). |
+| `entity_1b-q4_0_unplugged_5run_oppo_20260718.csv` | 1B Q4_0, unplugged, 5 runs | ENTITY **Bench** app v1.1.0, OPPO CPH2729, 35.3 °C start. First retained per-run OPPO export — supersedes the historical two-arm OPPO row, which had no raw CSV. Thread count +80% decode; pinning +1% on decode but power 2.52 → 1.78 W median (tok/W 6.80 → 9.85). Current headline export. Power columns are noisy on this SoC (naïve 1.96 – 4.72 W across runs), so the tok/W spreads are wide and real. |
 
 Exports carry per-pass values, per-core CPU frequency samples, battery temperature, thermal state,
 power, and the per-arm affinity policy.

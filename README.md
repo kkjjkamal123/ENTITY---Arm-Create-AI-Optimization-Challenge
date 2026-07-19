@@ -45,8 +45,8 @@ ENTITY's own ablation disproved ENTITY's flagship optimization. That is recorded
 
 | Claim | Evidence | Boundary |
 |---|---|---|
-| Auto is much faster than the out of the box default | Decode +81% to +106%, roughly 2x, over an eight thread run, on two models, on an unplugged CMF Phone 1. | One phone, two models. Not a universal multiplier. |
-| **The gain is the thread count, not the core pinning** | The threads only arm runs Auto's thread count with affinity switched off. Across twelve runs, pinning adds about **0%**: the whole gain is 8 threads to 4. The v2.0.0 claim of "+121% from big core affinity" was wrong, and this is the experiment that showed it. | A different SoC may answer differently. The affinity code still ships; it is simply no longer credited. |
+| Auto is much faster than the out of the box default | Current five-run exports (2026-07-18): decode 10.8 to 18.1 tok/s (+68%) on the CMF Phone 1 and 9.7 to 17.5 tok/s (+81%) on an OPPO Snapdragon 6 Gen 4. The July record read +81% to +106% across two models. | Two phones, 1B and 3B models. Not a universal multiplier. |
+| **The thread count earns the multiplier; what pinning adds is device dependent** | The threads only arm runs Auto's thread count with affinity switched off. The current five-run exports: on the Dimensity 7300 pinning adds **+21% decode** (distributions non overlapping); on the Snapdragon 6 Gen 4 it adds +1% decode but cuts median power 2.52 to 1.78 W (tok/W 6.80 to 9.85). July's three-run sets on the chat app's bench read pinning at ~0%, and the v2.0.0 claim of "+121% from big core affinity" was wrong either way - the ablation is the experiment that showed it. | Per-SoC behavior, not a universal rule. The July ~0% record is retained; the raw CSVs keep the difference answerable. |
 | **KleidiAI only accelerates Q4_0 and Q8_0** | Verified in Arm's kernel source. Every benchmark published before v2.1.0 used Q3_K_L, so KleidiAI never ran. Switching to Q4_0, same phone and same thread config: prompt 43 to 121 tok/s, TTFT 12.1s to 4.3s. | Decode does not improve. It is bandwidth bound and tracks bytes per weight, not kernel quality. Q4_0 is also a quality tradeoff, so ENTITY recommends rather than switches. |
 | Widening prompt processing to all cores was a regression | Prompt on 4 fast cores measures 135 tok/s; spread across all 8 it measures 86. The efficiency cores gate every GEMM. Removed in v2.1.0. | Empirical to this SoC. A tri cluster chip may prefer a wider pool, which is why the benchmark decides it, not an assumption. |
 | Efficiency is measured, rather than inferred | Each pass samples battery current and voltage; watts and tok/W appear only while unplugged. Integrated over a pass, the same 128 tokens cost 86 J naive versus 50 J optimized: 42% less battery, from finishing in 11.8 s instead of 19.9 s at the same watts. | Battery current reporting is OEM dependent. Comparative on one device, not lab grade metering. |
@@ -78,7 +78,18 @@ The benchmark runs a synthetic PP 512 / TG 128 workload on the loaded model, on 
 
 ### Where the speed up actually comes from
 
-Decode throughput, CMF Phone 1, Dimensity 7300:
+The current benchmark of record is the pair of four arm, five runs per arm ENTITY Bench v1.1.0 exports taken 2026-07-18, unplugged, raw CSVs retained. The fourth arm pins Auto's threads to the LITTLE cluster to test whether the efficiency cores are actually efficient:
+
+| Device | Naive, 8 thr | Threads only, 4 thr no pin | ENTITY Auto, 4 thr pinned | Efficiency, 4 thr LITTLE | Thread count earns | Pinning earns |
+|---|---:|---:|---:|---:|---:|---:|
+| CMF Phone 1, Dimensity 7300 | 10.8 ± 1.3 | 15.0 ± 0.5 | **18.1 ± 0.4** | 15.0 ± 0.3 | **+39%** | **+21%** |
+| OPPO CPH2729, Snapdragon 6 Gen 4 | 9.7 ± 0.5 | 17.4 ± 0.3 | **17.5 ± 0.2** | 14.3 ± 0.1 | **+80%** | +1% |
+
+![Four-arm decode and efficiency](benchmarks/plots/four_arm_decode_20260718.png)
+
+The thread count is the universal earner. What pinning adds depends on the SoC: decode on the Dimensity (+21%, the pinned and unpinned distributions do not overlap), power on the Snapdragon (2.52 to 1.78 W median, tokens per watt 6.80 to 9.85). And on both phones the LITTLE pinned arm loses on speed and on tok/W - the efficiency cores are not an efficiency win for LLM decode, which is why the affinity policy is measured per device instead of assumed.
+
+The July 2026 three arm record that first split the attribution, CMF Phone 1:
 
 | Model | Naive, 8 threads | Threads only, 4 threads no pin | ENTITY Auto, 4 threads pinned | Thread count earns | Pinning earns |
 |---|---:|---:|---:|---:|---:|
@@ -91,7 +102,7 @@ Decode throughput, CMF Phone 1, Dimensity 7300:
 
 ![Decode attribution](benchmarks/plots/decode_attribution.png)
 
-Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode step. Using four threads removes that. Pinning those four threads to the performance cluster adds nothing measurable: the two 3B runs disagree (+13% and +0%), a third measured -16% while charging, and single 3B runs swing about 15% either way. The repeat three run set makes the point sharpest: identical 15.9 tok per s medians pinned and unpinned, with the pinned arm's spread collapsing from 1.58 to 0.09, so pinning buys repeatability rather than speed. The v2.0.0 claim that +121% came from big core affinity was wrong, and ENTITY's own ablation is what proved it.
+Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode step. Using four threads removes that. In this July record the pinning added nothing measurable - identical 15.9 tok/s medians pinned and unpinned in the repeat set, with the pinned arm's spread collapsing from 1.58 to 0.09, so pinning bought repeatability rather than speed. The 2026-07-18 five run exports above are the current statement - +21% on this same phone, +1% on the OPPO - and the difference between the two records is kept as an open question in [the benchmark record](benchmarks/BENCHMARKS.md). What every set agrees on: the v2.0.0 claim that +121% came from big core affinity was wrong, and ENTITY's own ablation is what proved it.
 
 ### KleidiAI never ran
 

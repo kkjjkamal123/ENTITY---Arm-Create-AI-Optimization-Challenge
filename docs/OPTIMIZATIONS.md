@@ -187,8 +187,8 @@ llama.cpp falls back to default thread scheduling, and calls `unpin_all_cores()`
 inherited from the previous arm. Each arm then logs the mask the kernel actually applied, so a
 failed `sched_setaffinity` cannot masquerade as "pinning earns nothing".
 
-**Result, twelve runs across two models on the reference device: the thread count earns +81% to
-+106% of decode — roughly 2× — and the pinning earns approximately 0%.**
+**July record, twelve runs across two models on the reference device: the thread count earned
++81% to +106% of decode — roughly 2× — and the pinning earned approximately 0%.**
 
 | Model | Naïve (8 thr) | Threads-only (4 thr, no pin) | Auto (4 thr, pinned) | Pinning earns |
 |---|---:|---:|---:|---:|
@@ -202,14 +202,19 @@ failed `sched_setaffinity` cannot masquerade as "pinning earns nothing".
 The two 3B runs disagree, a third measured −16% while charging, and single 3B runs swing about ±15%,
 so the +13% is noise rather than a finding.
 
-**This section's optimization does not earn its headline.** Running eight threads on a 4+4 phone
-lets the A55s gate every decode step; simply using four threads removes that, and it is what any
-`llama.cpp -t 4` user already gets. The affinity code still ships — it is free, and another SoC may
-answer differently — but ENTITY no longer credits it with the speed-up.
+**The current five-run four-arm exports (ENTITY Bench v1.1.0, 2026-07-18) refine that statement.**
+On this same phone, with five runs per arm and tight spreads, pinning measures **+21% decode over
+threads-only** (15.0 → 18.1 tok/s, distributions non-overlapping) and +25% tok/W; on the OPPO
+Snapdragon 6 Gen 4 the same day, +1% decode but median power 2.52 → 1.78 W (tok/W 6.80 → 9.85).
+So the honest current statement is: **the thread count earns the multiplier everywhere; what the
+affinity adds on top is real but device-dependent** — decode on the Dimensity, power on the
+Snapdragon — and the July ~0% record above is retained beside it (see
+[the benchmark record](../benchmarks/BENCHMARKS.md)). Either way the original +121% attribution
+was wrong, and running eight threads on a 4+4 phone letting the A55s gate every decode step is
+still the dominant effect; four threads is what any `llama.cpp -t 4` user already gets.
 
-The *mechanism* remains SoC-agnostic and is proven so: ranking cores by `cpufreq` rather than
+The *mechanism* is SoC-agnostic and proven so: ranking cores by `cpufreq` rather than
 hardcoding a mask finds the performance cluster unchanged across a MediaTek and a Qualcomm layout.
-What is disproven is the attribution, not the portability.
 
 ## 2. Universal Arm Support via Runtime CPU Backend Dispatch
 
@@ -488,7 +493,7 @@ A pass over the JNI boundary closed off several longstanding failure/leak modes:
 
 | # | Optimization | Implemented in | Verified via |
 |---|---|---|---|
-| 1 | Big-core affinity | `ai_chat.cpp: build_fast_cpu_set/pin_to_fast_cores`, ablation switch `g_pin_cores` | three-arm ablation, 6 runs: **earns ~0%**. The thread count earns the gain. |
+| 1 | Big-core affinity | `ai_chat.cpp: build_fast_cpu_set/pin_to_fast_cores`, ablation switch `g_pin_cores` | ablation: thread count earns the multiplier; pinning adds **+21% decode (CMF) / +1% but lower power (OPPO)** in the current five-run exports, ~0% in July's three-run sets. |
 | 2 | Runtime CPU backend dispatch (7 variants) | `lib/build.gradle.kts (ALL_VARIANTS=ON)`, `CMakeLists.txt` | runtime selection; cross-device validation |
 | 3 | Adaptive context | `MainActivity.adaptiveContext`, `ai_chat.cpp: init_context` | manual load test, 3B on 2GB free |
 | 4 | Quantization guidance (Q4_0) | model selection + `InfoActivity` | device-specific guidance |

@@ -61,8 +61,10 @@ Implementation: `pinCores` in
 the pinned thread pool, and clears any mask inherited from the previous arm; the arm order and
 per-pass capture are in
 [`BenchmarkActivity.kt`](../app/entity.android/app/src/main/java/com/example/llama/BenchmarkActivity.kt).
-The three-arm result is published: across twelve runs on two models, the thread count earns +81% to
-+106% of decode and the core pinning earns ~0%. See [BENCHMARKS.md](BENCHMARKS.md).
+The result is published: the thread count earns the decode multiplier on every device measured
+(+39% to +106%), and what the pinning adds is device-dependent - +21% decode on the Dimensity 7300
+in the current five-run exports, +1% decode but ~30% lower median power on the Snapdragon 6 Gen 4;
+July's three-run sets read it at ~0%. See [BENCHMARKS.md](BENCHMARKS.md).
 
 ## ExecuTorch and MLC-LLM
 

@@ -68,17 +68,18 @@ naive and auto differ in two variables at once, thread count and core placement,
 - naive to threads only isolates the thread count
 - threads only to auto isolates the core pinning
 
-The result page prints that split as its headline. On the reference phone, this experiment is what disproved ENTITY's own "+121% from big core affinity" claim:
+The result page prints that split as its headline. The current benchmark of record is this app's own output: two four arm, five runs per arm exports taken 2026-07-18 (Llama 3.2 1B Q4_0, unplugged, raw CSVs in [`benchmarks/results/`](../../benchmarks/results/)):
 
-| Model | Naive, 8 threads | Threads only, no pin | Auto, pinned | Thread count earns | Pinning earns |
-|---|---:|---:|---:|---:|---:|
-| Llama 3.2 1B Q4_0, 3 runs | 7.7 ± 0.78 | 15.9 ± 0.22 | 16.0 ± 2.1 | **+106%** | +1% |
-| Llama 3.2 1B Q4_0, 3 runs (repeat) | 8.6 ± 0.82 | 15.9 ± 1.58 | 15.9 ± 0.09 | **+85%** | **+0%** |
-| Llama 3.2 3B Q4_0, 1 run | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
+| Device | Naive, 8 thr | Threads only, no pin | Auto, pinned | Efficiency, LITTLE | Thread count earns | Pinning earns |
+|---|---:|---:|---:|---:|---:|---:|
+| CMF Phone 1, Dimensity 7300 | 10.8 ± 1.3 | 15.0 ± 0.5 | **18.1 ± 0.4** | 15.0 ± 0.3 | **+39%** | **+21%** |
+| OPPO CPH2729, Snapdragon 6 Gen 4 | 9.7 ± 0.5 | 17.4 ± 0.3 | **17.5 ± 0.2** | 14.3 ± 0.1 | **+80%** | +1% |
 
-![Decode attribution](../../benchmarks/plots/decode_attribution.png)
+![Four-arm decode and efficiency](../../benchmarks/plots/four_arm_decode_20260718.png)
 
-An optional fourth arm, **efficiency cores**, inverts auto's placement to the slowest cluster. Read its tok/W delta, not its decode delta: it asks whether the little cores are energy efficient, not whether they are fast. Its passes export with the `affinity_efficiency` label.
+The thread count earns the multiplier on both devices. What pinning adds is device dependent: decode on the Dimensity (+21%, non overlapping distributions), power on the Snapdragon (2.52 to 1.78 W median, tok/W 6.80 to 9.85). This same ablation, in its earlier three arm form, is what disproved ENTITY's own "+121% from big core affinity" claim - the July sets read pinning at ~0% and are retained in [the benchmark record](../../benchmarks/BENCHMARKS.md).
+
+The optional fourth arm, **efficiency cores**, inverts auto's placement to the slowest cluster and exports with the `affinity_efficiency` label. Measured on both phones it answers its tok/W question with a no: LITTLE pinning is slower *and* worse per watt than the pinned performance cores (and on the CMF it collapses prompt speed 139 to 82.5 tok/s), so the efficiency cores are not an efficiency win for LLM inference.
 
 ## Sustained mode
 

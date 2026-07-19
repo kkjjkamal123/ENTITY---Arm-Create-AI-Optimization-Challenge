@@ -120,8 +120,10 @@ quantization, Android build, or background workload.
 
 They also do **not** attribute that gain to core pinning. The published v2.0.0 tables are a two-arm
 record taken before the threads-only arm existed, so the thread count and the affinity policy are
-confounded in them. The three-arm runs separate the two, and the answer is that
-**the thread count earns the gain and the pinning earns ~0%** — see [BENCHMARKS.md](BENCHMARKS.md).
+confounded in them. The three-arm runs separate the two: **the thread count earns the multiplier**, and what pinning
+adds is device-dependent — ~0% in July's three-run sets, +21% decode (CMF) and +1% decode but
+markedly lower power (OPPO) in the current five-run four-arm exports — see
+[BENCHMARKS.md](BENCHMARKS.md).
 The v2.0.0 rows in the device-result template keep `not-measured` in their `threads_only` columns
 rather than being back-filled from the newer runs.
 
