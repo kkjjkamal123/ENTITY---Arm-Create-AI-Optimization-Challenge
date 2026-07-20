@@ -9,6 +9,26 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [3.0.1] — 2026-07-20
+
+**Performance fix: in-chat decode speed with live metrics visible.** With the metrics graph (or
+stats bar) shown, chat decode dropped from ~18 to ~14 tok/s on the reference phone. Cause: the
+metrics pipeline ran once per generated token on the main thread — three binder IPCs per token
+(battery intent, current draw, memory info) plus a full seven-series graph redraw — and that work
+competed with the four decode threads pinned to the big cores. The graph's colors were innocent;
+the per-token sampling cadence was the cost.
+
+### Fixed
+
+- **Live metrics now sample on a fixed 500 ms clock instead of per token.** Battery/memory
+  reads and graph redraws drop from ~18/s to 2/s during generation, returning in-chat decode
+  to benchmark-level speed with the graph visible. Engine, thread derivation and pinning are
+  untouched — standalone bench numbers were never affected.
+- The metrics graph window is now time-based: 120 samples × 500 ms ≈ the last 60 seconds,
+  instead of the last 120 tokens.
+- Final stats bar / header chips refresh once at generation end, so the displayed tok/s is
+  exact rather than up to half a second stale.
+
 ## [3.0.0] — 2026-07-18
 
 **MONO: full UI remake in the ENTITY Bench design language.** Every screen rebuilt from scratch
@@ -656,6 +676,7 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 3.0.1 | `ENTITY-v14-metrics-sampling-fix-20260720-release.apk` (release-signed, ~10.3 MB) |
 | 3.0.0 | `ENTITY-v13-mono-ui-refresh-20260718-release.apk` (release-signed, ~10.3 MB) |
 | 2.4.0 | `ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk` (release-signed, ~10.3 MB) |
 | 2.3.0 | `ENTITY-v11-ui-polish-20260715-release.apk` (release-signed, ~10.3 MB) |

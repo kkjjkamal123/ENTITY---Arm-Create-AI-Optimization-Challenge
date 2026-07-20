@@ -4,7 +4,8 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-v13-mono-ui-refresh-20260718-release.apk` | **3.0.0** (current) | release-signed | 10.3 MB |
+| `ENTITY-v14-metrics-sampling-fix-20260720-release.apk` | **3.0.1** (current) | release-signed | 10.3 MB |
+| `ENTITY-v13-mono-ui-refresh-20260718-release.apk` | 3.0.0 | release-signed | 10.3 MB |
 | `ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk` | 2.4.0 | release-signed | 10.3 MB |
 | `ENTITY-v11-ui-polish-20260715-release.apk` | 2.3.0 | release-signed | 10.3 MB |
 | `ENTITY-v10-sustained-thermal-20260715-release.apk` | 2.2.0 | release-signed | 10.3 MB |
@@ -43,7 +44,7 @@ from v1.0.0.
 
 ## Start here
 
-**Recommended**: `ENTITY-v13-mono-ui-refresh-20260718-release.apk` is the current release (v3.0.0), release-signed. It ships the full MONO UI remake (the ENTITY Bench two-color design language, left navigation drawer, expanded Settings) on top of v2.4.0's inference path: 7 Arm CPU backend variants with automatic runtime selection, KV-cache session reuse, and a topology-derived thread count.
+**Recommended**: `ENTITY-v14-metrics-sampling-fix-20260720-release.apk` is the current release (v3.0.1), release-signed. It fixes the in-chat decode slowdown when the live metrics graph is visible (metrics now sample on a fixed 500 ms clock instead of once per token) on top of v3.0.0's MONO UI remake and v2.4.0's inference path: 7 Arm CPU backend variants with automatic runtime selection, KV-cache session reuse, and a topology-derived thread count.
 
 ## Installation
 

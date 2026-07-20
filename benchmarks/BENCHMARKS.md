@@ -118,6 +118,14 @@ CMF phone read pinning at ~0% ([Result 1](#result-1-the-thread-count-earns-the-m
 history is retained below, and the difference between the chat app's three-run bench then and the
 standalone five-run bench now is an open question the raw CSVs keep answerable.
 
+*Update (v3.0.1, 2026-07-20):* part of that difference now has a mechanism. Through chat app
+v3.0.0, any generation with the live metrics graph or stats bar visible paid a per-token
+main-thread tax — three binder IPCs (battery intent, current draw, memory info) plus a
+seven-series graph redraw per token — competing with the decode threads pinned to the big cores;
+measured in-chat cost was ~18 → ~14 tok/s on the CMF. The standalone bench app never had this
+path, which is one reason its numbers ran higher than in-chat readings. v3.0.1 samples metrics on
+a fixed 500 ms clock, closing most of that gap.
+
 ## Result 1: the thread count earns the multiplier
 
 CMF Phone 1 (Nothing A015), MediaTek Dimensity 7300, 4× Cortex-A78 + 4× Cortex-A55, Android 16.

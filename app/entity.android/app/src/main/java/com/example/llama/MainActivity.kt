@@ -86,6 +86,7 @@ class MainActivity : AppCompatActivity() {
     // View-only render throttles (safe to reset across config changes).
     private var lastRenderMs = 0L
     private var lastChipMs = 0L
+    private var lastSampleMs = 0L
     private var lastProcessCpuMs = 0L
     private var lastProcessCpuWallMs = 0L
 
@@ -345,7 +346,11 @@ class MainActivity : AppCompatActivity() {
                 messageAdapter.notifyItemChanged(last, MessageAdapter.PAYLOAD_DONE)
                 messagesRv.scrollToPosition(last)
             }
-            if (lastPhase == ChatViewModel.GenPhase.GENERATING) haptic(HapticFeedbackConstants.CONTEXT_CLICK)
+            if (lastPhase == ChatViewModel.GenPhase.GENERATING) {
+                haptic(HapticFeedbackConstants.CONTEXT_CLICK)
+                // Sampled stats can lag by up to SAMPLE_INTERVAL_MS; settle on exact finals.
+                refreshStatsBar()
+            }
         }
         lastPhase = phase
     }
@@ -372,10 +377,16 @@ class MainActivity : AppCompatActivity() {
             messagesRv.scrollToPosition(last)
         }
 
+        // Metrics run on a fixed clock, never per token: snapMetrics() costs three
+        // binder IPCs and addSample() a full graph redraw, and per-token they steal
+        // big-core time from the pinned decode threads (measured 18 -> 14 tok/s
+        // with the graph visible).
+        if (now - lastSampleMs < SAMPLE_INTERVAL_MS) return
         val statsVisible = prefs.getBoolean(Settings.KEY_SHOW_STATS, false)
         val graphVisible = graph.visibility == View.VISIBLE
         val chipsDue = now - lastChipMs >= CHIP_INTERVAL_MS
         if (!statsVisible && !graphVisible && !chipsDue) return
+        lastSampleMs = now
         val snap = snapMetrics()
         if (chipsDue) { updateChips(snap); lastChipMs = now }
         if (statsVisible) updateStatsBar(snap, s)
@@ -981,6 +992,7 @@ class MainActivity : AppCompatActivity() {
     companion object {
         private const val RENDER_INTERVAL_MS = 45L
         private const val CHIP_INTERVAL_MS = 1000L
+        private const val SAMPLE_INTERVAL_MS = 500L
         private const val WATTS_WINDOW = 5
     }
 }
