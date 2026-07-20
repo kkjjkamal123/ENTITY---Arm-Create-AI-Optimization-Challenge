@@ -100,6 +100,25 @@ data class BenchResult(
     // efficiency arm rides alongside and never enters this list.
     val ablationArms get() = listOfNotNull(naive, threadsOnly, optimized)
 
+    // Sweep arms are keyed sweep_t<N>_pinned / sweep_t<N>_nopin, in the order run.
+    val sweepArms get() = arms.filter { it.key.startsWith("sweep_t") }
+
+    // The width Auto derives on the device this result came from, recomputed from the
+    // recorded clocks so a saved result stays readable when opened on another phone.
+    // The rule is a ratio against the fastest core, so MHz works where kHz is expected.
+    val autoThreads get() = DeviceInfo.topClusterCoreCount(maxFreqsMhz.map { it.toLong() })
+
+    // The width and placement that measured fastest on this device. Decode, not prompt:
+    // decode is what a chat user waits on token by token.
+    fun bestSweepArm(): Arm? =
+        sweepArms.maxByOrNull { stat(it.passes.map { p -> p.tg }).median }
+
+    // The row matching what Auto would pick, so the table can say whether the shipped
+    // policy won or lost on this phone.
+    fun sweepArmFor(threads: Int, pinned: Boolean): Arm? = sweepArms.firstOrNull {
+        it.threads == threads && it.pinned == pinned
+    }
+
     val powerValid get() = !charging &&
         arms.all { a -> stat(a.passes.map { it.watts }).n > 0 }
 
@@ -167,6 +186,7 @@ data class BenchResult(
     companion object {
         const val TYPE_ABLATION = "ablation"
         const val TYPE_SUSTAINED = "sustained"
+        const val TYPE_SWEEP = "sweep"
 
         fun fromJson(o: JSONObject): BenchResult {
             fun ints(a: JSONArray?) = (0 until (a?.length() ?: 0)).map { a!!.getInt(it) }

@@ -57,7 +57,11 @@ class ResultActivity : AppCompatActivity() {
             SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US).format(Date(r.ts))
         findViewById<TextView>(R.id.result_context).text =
             "${r.model} · ${r.deviceManufacturer} ${r.deviceModel} · app v${r.appVersion}"
-        if (r.type == BenchResult.TYPE_SUSTAINED) renderSustained(r) else renderAblation(r)
+        when (r.type) {
+            BenchResult.TYPE_SUSTAINED -> renderSustained(r)
+            BenchResult.TYPE_SWEEP -> renderSweep(r)
+            else -> renderAblation(r)
+        }
     }
 
     // ---- ablation ----
@@ -217,6 +221,68 @@ class ResultActivity : AppCompatActivity() {
             "accumulate inside a block. Both arms start their block from the same cooled baseline, so pass 1 is comparable " +
             "across arms, but this is a single session: run it more than once, and swap which arm goes first, before " +
             "trusting the direction of any gap. n=1 per pass - read the trend across passes, not any single one."
+    }
+
+    // ---- sweep ----
+
+    private fun renderSweep(r: BenchResult) {
+        val arms = r.sweepArms
+        if (arms.isEmpty()) return
+        val best = r.bestSweepArm() ?: return
+        val bestTg = stat(best.passes.map { it.tg }).median
+        // What Auto would have picked on this phone: its derived width, pinned.
+        val shipped = r.sweepArmFor(r.autoThreads, pinned = true)
+        val shippedTg = shipped?.let { stat(it.passes.map { p -> p.tg }).median } ?: 0.0
+
+        findViewById<TextView>(R.id.headline).text =
+            "BEST: ${best.threads} THREADS\n${if (best.pinned) "PINNED" else "NO PIN"}"
+        findViewById<TextView>(R.id.headline_sub).text = when {
+            shipped == null -> "${BenchExport.fmt(bestTg)} tok/s decode measured across ${arms.size} configurations."
+            best.key == shipped.key ->
+                "Auto already picks this: ${r.autoThreads} threads pinned is the fastest of the " +
+                "${arms.size} configurations measured, at ${BenchExport.fmt(bestTg)} tok/s decode."
+            else ->
+                "Auto picks ${r.autoThreads} threads pinned (${BenchExport.fmt(shippedTg)} tok/s), but " +
+                "${best.threads} threads ${if (best.pinned) "pinned" else "unpinned"} measured " +
+                "${BenchExport.signed((bestTg / shippedTg - 1) * 100)} faster at ${BenchExport.fmt(bestTg)} tok/s. " +
+                "Set threads manually in the chat app to use it."
+        }
+
+        val bars = findViewById<LinearLayout>(R.id.result_bars)
+        bars.removeAllViews()
+        // One bar per width showing that width's better placement, so the chart stays
+        // readable and the winner is always on it even when it is an unpinned arm.
+        val mx = arms.maxOf { stat(it.passes.map { p -> p.tg }).median }.coerceAtLeast(0.001)
+        for ((threads, group) in arms.groupBy { it.threads }.toSortedMap()) {
+            val top = group.maxByOrNull { stat(it.passes.map { p -> p.tg }).median } ?: continue
+            Ui.bar(this, bars, "${threads}t ${if (top.pinned) "pin" else "free"}",
+                stat(top.passes.map { it.tg }).median, mx, emphasize = top.key == best.key)
+        }
+
+        val table = findViewById<LinearLayout>(R.id.table)
+        table.removeAllViews()
+        addRow(table, "THR", "PLACE", "DECODE", "PROMPT", "tok/W", header = true)
+        for (a in arms) {
+            val tg = stat(a.passes.map { it.tg })
+            val pp = stat(a.passes.map { it.pp })
+            val eff = stat(a.passes.map { it.tokPerW })
+            addRow(table,
+                "${a.threads}",
+                if (a.pinned) "pinned" else "no pin",
+                BenchExport.cellStat(tg),
+                BenchExport.cellStat(pp),
+                if (r.powerValid) BenchExport.cellStat(eff) else "-",
+                emphasize = a.key == best.key)
+        }
+
+        findViewById<TextView>(R.id.notes).text =
+            "Every thread width this device can use, each one pinned to that many of its fastest cores and again " +
+            "left to the scheduler. ${r.runsPerArm} runs per configuration, median shown, full cooldown before " +
+            "every pass. Pinning an explicit width masks to exactly that many fast cores, so a pinned/no-pin pair " +
+            "at one width isolates placement while the column isolates width. Best is chosen on decode, which is " +
+            "what a chat user waits on token by token - if you care more about a long first prompt, read the " +
+            "prompt column instead, and if you care about battery, read tok/W. One device, one model, one " +
+            "quantization: the answer here is this phone's, not a universal one."
     }
 
     // ---- table plumbing ----

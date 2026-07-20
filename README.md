@@ -10,7 +10,7 @@
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
-![Release](https://img.shields.io/badge/release-v3.0.1-orange)
+![Release](https://img.shields.io/badge/release-v3.0.2-orange)
 ![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
 
 </div>
@@ -146,19 +146,19 @@ Time to first token, the latency a user feels on a long prompt, drops 3.4 times.
 
 ### Against the competition
 
-Same phone, same `Llama-3.2-1B-Instruct-Q4_0`, same PP 512 / TG 128 workload, all three apps' own benchmark screens:
+Same phone, same `Llama-3.2-1B-Instruct-Q4_0`, same PP 512 / TG 128 workload, all three apps' own benchmark screens. All three re-measured in one session on 2026-07-20, five runs each, 30 minute cooldown between apps:
 
 | App | Prompt | Token generation | Threads |
 |---|---:|---:|---|
-| PocketPal AI | 86.4 tok per s | 10.9 tok per s | 6 |
-| Arm AI Chat (Arm's own app) | 120 tok per s | 12.9 tok per s | not reported |
-| **ENTITY** | **133 tok per s** | **15.6 tok per s** | 4, pinned |
+| PocketPal AI | 88.32 tok per s | 13.9 tok per s | 6 |
+| Arm AI Chat (Arm's own app) | 121 tok per s | 12.4 tok per s | not reported |
+| **ENTITY** | **128 tok per s** | **18.2 tok per s** | 4, pinned |
 
 ![Competitor comparison](benchmarks/competitor-comparison/three_app_comparison.png)
 
-ENTITY beats Arm's own reference app on Arm's own silicon by 11% on prompt and 21% on token generation, and PocketPal by 54% and 43%. PocketPal runs six threads and comes last, which is the same failure ENTITY's ablation measures in its naive arm: on a 4+4 phone the fifth and sixth threads land on Cortex A55s and every step waits on them. A competitor being slower for exactly the reason the ablation predicts is the strongest confirmation the finding has.
+Against Arm's own reference app, on Arm's own silicon: 6% on prompt and **47% on token generation**. Against PocketPal: 45% and 31%. Decode is where the thread count policy acts and where the margin is; the prompt column is close because all three apps run Q4_0 and reach the same KleidiAI kernels.
 
-ENTITY's decode is the median of four runs with the full range published, not its best, because the other two apps report three repetition results. Even ENTITY's worst run beats Arm's app. Full setup, screenshots and caveats: [competitor comparison](benchmarks/competitor-comparison/README.md).
+The same three apps were measured on 2026-07-14 and the repeat did not agree with it. PocketPal and Arm swapped places on decode, and ENTITY's prompt margin over Arm narrowed from 11% to 6%. Both sessions are published with their dates, because PocketPal's decode swinging about 27% between sessions on identical hardware, while Arm's held within about 4%, is exactly why a figure from one session must never be paired with a figure from another. Full setup, both sessions, screenshots and caveats: [competitor comparison](benchmarks/competitor-comparison/README.md).
 
 TTFT here is derived from prompt evaluation plus one decode step. It is not a live chat first token measurement. Full method, the historical two arm v2.0.0 record, and every limit: [benchmarks](benchmarks/BENCHMARKS.md).
 
@@ -171,7 +171,7 @@ Ninety seconds from clone to chatting, on any arm64 phone with Android 13+:
 ```bash
 git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
 cd ENTITY---Arm-Create-AI-Optimization-Challenge
-adb install -r apk/ENTITY-v14-metrics-sampling-fix-20260720-release.apk
+adb install -r apk/ENTITY-v15-benchmark-thread-derivation-20260720-release.apk
 ```
 
 Then on the phone:

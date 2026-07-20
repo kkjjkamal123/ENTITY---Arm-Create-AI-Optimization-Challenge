@@ -5,15 +5,18 @@
 
 Writes competitor-comparison/three_app_comparison.png.
 
-Every number here is read off the three apps' own benchmark screens, which are kept
-beside this script as PNGs. ENTITY's decode is shown as the RANGE across four runs
-rather than its best, because the other two apps report 3-repetition results and
-comparing our best against their medians would not be a fair test. ENTITY's worst
-run still wins, which is the point worth making.
+Every number here is read off the three apps' own benchmark screens. The current
+session is 2026-07-20: all three apps re-measured on the same day, 5 runs each,
+30-minute cooldown between apps, identical model file and PP512/TG128 workload.
+Medians only - no app's best run is set against another's median.
 
-ENTITY's live-chat readout (16.9 tok/s) is deliberately NOT used: the other two
-figures are synthetic PP512/TG128 benchmarks, and a chat measurement is not the
-same quantity.
+The 2026-07-14 session is retained in SESSION_JULY below rather than overwritten,
+because the two disagree in ways worth publishing: PocketPal and Arm swapped
+places on decode, and ENTITY's prompt margin narrowed while its decode margin
+widened. See competitor-comparison/README.md.
+
+ENTITY's live-chat readout is deliberately NOT used: the other two figures are
+synthetic PP512/TG128 benchmarks, and a chat measurement is not the same quantity.
 """
 
 from __future__ import annotations
@@ -32,14 +35,19 @@ INK = "#0b0b0b"
 INK_MUTED = "#52514e"
 
 # Validated categorical slots: red / yellow / blue.
+# (label, colour, prompt tok/s, decode tok/s, decode sd if the app reports one)
 APPS = [
-    ("PocketPal AI\n6 threads", "#e34948", 86.4, 10.9, None),
-    ("Arm AI Chat\n(Arm's own app)", "#eda100", 120.0, 12.9, 0.08),
-    ("ENTITY\n4 threads, pinned", "#2a78d6", 133.0, 14.7, None),
+    ("PocketPal AI\n6 threads", "#e34948", 88.32, 13.9, None),
+    ("Arm AI Chat\n(Arm's own app)", "#eda100", 121.0, 12.4, 0.0751),
+    ("ENTITY\n4 threads, pinned", "#2a78d6", 128.0, 18.2, None),
 ]
 
-# ENTITY decode across every benchmark run on this model: worst still beats Arm.
-ENTITY_DECODE_RUNS = [14.4, 14.7, 15.6, 16.4]
+# Retained, not plotted: the 2026-07-14 session on the same phone and model file.
+SESSION_JULY = [
+    ("PocketPal AI", 86.4, 10.9),
+    ("Arm AI Chat", 120.0, 12.9),
+    ("ENTITY", 133.0, 15.6),
+]
 
 
 def style(axis, title, ylabel):
@@ -72,44 +80,38 @@ def main():
                 f"{value:.0f}", ha="center", va="bottom", fontsize=11, fontweight="bold", color=INK)
     style(ax, "Prompt processing (pp 512)", "tokens / s")
 
-    # Decode, with ENTITY's full run range drawn as an error bar so nothing is cherry-picked.
+    # Decode. Error bars are drawn only where the app itself reports a spread.
     ax = axes[1]
     ax.set_facecolor(SURFACE)
-    lo, hi = min(ENTITY_DECODE_RUNS), max(ENTITY_DECODE_RUNS)
-    med = sorted(ENTITY_DECODE_RUNS)[len(ENTITY_DECODE_RUNS) // 2]
-    values = [decode[0], decode[1], med]
-    err = [[0, 0, med - lo], [0, 0, hi - med]]
-    drawn = ax.bar(labels, values, 0.55, color=colours, zorder=3,
-                   yerr=err, capsize=6, ecolor=INK)
-    ax.set_ylim(0, hi * 1.34)
-    # ENTITY's label must clear the top of its error bar, not sit inside it.
-    tops = [values[0], values[1], hi]
-    for rect, value, top in zip(drawn, values, tops):
-        ax.text(rect.get_x() + rect.get_width() / 2, top + hi * 0.03,
+    sds = [a[4] or 0.0 for a in APPS]
+    drawn = ax.bar(labels, decode, 0.55, color=colours, zorder=3,
+                   yerr=sds, capsize=6, ecolor=INK)
+    top = max(decode)
+    ax.set_ylim(0, top * 1.30)
+    for rect, value in zip(drawn, decode):
+        ax.text(rect.get_x() + rect.get_width() / 2, rect.get_height() + top * 0.03,
                 f"{value:.1f}", ha="center", va="bottom", fontsize=11, fontweight="bold", color=INK)
-    ax.text(2, hi * 1.19, f"median of 4 runs\nrange {lo}-{hi}",
-            ha="center", fontsize=7.5, color=INK_MUTED)
+    ax.text(2, top * 1.16, "median of 5 runs", ha="center", fontsize=7.5, color=INK_MUTED)
     style(ax, "Token generation (tg 128)", "tokens / s")
 
-    fig.suptitle("Same phone, same Llama-3.2-1B-Q4_0, same PP 512 / TG 128 workload",
+    fig.suptitle("Same phone, same Llama-3.2-1B-Q4_0, same PP 512 / TG 128 workload, 2026-07-20",
                  fontsize=12.5, fontweight="bold", color=INK, x=0.05, ha="left", y=0.965)
     vs_arm_pp = (prompt[2] / prompt[1] - 1) * 100
-    vs_arm_tg = (med / decode[1] - 1) * 100
+    vs_arm_tg = (decode[2] / decode[1] - 1) * 100
     vs_pp_pp = (prompt[2] / prompt[0] - 1) * 100
-    vs_pp_tg = (med / decode[0] - 1) * 100
-    worst_vs_arm = (lo / decode[1] - 1) * 100
+    vs_pp_tg = (decode[2] / decode[0] - 1) * 100
     fig.text(0.05, 0.075,
-             f"ENTITY beats Arm's own reference app on Arm's own silicon: {vs_arm_pp:+.0f}% prompt, "
+             f"Against Arm's own reference app, on Arm's own silicon: {vs_arm_pp:+.0f}% prompt, "
              f"{vs_arm_tg:+.0f}% token generation. Against PocketPal: {vs_pp_pp:+.0f}% prompt, "
              f"{vs_pp_tg:+.0f}% token generation.",
              fontsize=9, color=INK)
     fig.text(0.05, 0.040,
-             "PocketPal runs 6 threads and comes last: on a 4+4 big.LITTLE chip, threads 5 and 6 land on "
-             "Cortex-A55s and every step waits on them.",
+             "Decode is where the thread-count policy acts, and where the margin is. Prompt is close because all "
+             "three apps run Q4_0 and reach the same KleidiAI kernels.",
              fontsize=8, color=INK_MUTED)
     fig.text(0.05, 0.012,
-             "ENTITY's decode is the median of four runs with its full range shown, not its best - even the "
-             f"worst run beats Arm by {worst_vs_arm:+.0f}%.",
+             "All three are medians of 5 runs, one session, 30-minute cooldown between apps. Error bar shown "
+             "where the app reports a spread.",
              fontsize=8, color=INK_MUTED)
     fig.subplots_adjust(left=0.07, right=0.98, top=0.84, bottom=0.25, wspace=0.22)
     fig.savefig(OUT / "three_app_comparison.png", dpi=180, facecolor=SURFACE)

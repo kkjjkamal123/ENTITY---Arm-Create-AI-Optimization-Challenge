@@ -126,6 +126,47 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
         }
     }
 
+    fun sweepThreadCounts(): List<Int> = DeviceInfo.sweepThreadCounts(maxFreqsKhz)
+
+    /**
+     * Every thread width, each one both pinned and scheduler-placed. The ablation asks
+     * "does the shipped policy beat the default"; this asks the harder question the
+     * ablation cannot - "is the shipped policy the best this phone can do", and it
+     * answers it per device instead of from a table that ages with every new SoC.
+     *
+     * Pinning an explicit thread count masks to exactly that many of the fastest cores,
+     * so each row is a width AND its placement, and the pinned/no-pin pair at a fixed
+     * width isolates placement the same way threads-only -> auto does.
+     */
+    suspend fun runSweep(modelName: String, nRuns: Int): BenchResult {
+        val charging = isCharging()
+        val baselineC = readTempC()
+        val startThermal = powerManager.currentThermalStatus
+        val coolTargetC = coolTarget(baselineC)
+        val counts = sweepThreadCounts()
+        progressDone = 0
+        progressTotal = 1 + counts.size * 2 * nRuns
+        try {
+            status("warming up (discarded pass)")
+            engine.applyConfig(activeCtx, THREADS_AUTO, TEMP, TOP_K, TOP_P)
+            engine.bench(64, 16, PL, 1)   // discarded - pages in weights, warms caches
+            tick()
+
+            val arms = ArrayList<Arm>()
+            for (t in counts) {
+                arms += runArm("$t threads, pinned", "sweep_t${t}_pinned", t, true, nRuns, coolTargetC)
+                arms += runArm("$t threads, no pin", "sweep_t${t}_nopin", t, false, nRuns, coolTargetC)
+            }
+            if (arms.any { a -> stat(a.passes.map { it.tg }).n == 0 }) {
+                error("Engine returned no timing - try again.")
+            }
+            return result(BenchResult.TYPE_SWEEP, modelName, charging, baselineC, startThermal,
+                runsPerArm = nRuns, durationMin = 0, arms = arms)
+        } finally {
+            restoreConfig()
+        }
+    }
+
     suspend fun runSustained(modelName: String, durationMs: Long): BenchResult {
         val charging = isCharging()
         val baselineC = readTempC()

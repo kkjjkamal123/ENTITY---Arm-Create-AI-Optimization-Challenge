@@ -20,6 +20,7 @@ object ResultStore {
         val naiveTg: Double,
         val threadsTg: Double,
         val autoTg: Double,
+        val best: String = "",     // sweep only: the winning configuration
     ) {
         val deltaPct get() = if (naiveTg > 0) (autoTg / naiveTg - 1) * 100 else 0.0
     }
@@ -40,7 +41,11 @@ object ResultStore {
             put("charging", r.charging)
             put("naive", stat(r.naive?.passes?.map { it.tg } ?: emptyList()).median)
             put("threads", stat(r.threadsOnly?.passes?.map { it.tg } ?: emptyList()).median)
-            put("auto", stat(r.optimized?.passes?.map { it.tg } ?: emptyList()).median)
+            // A sweep has no naive/threads-only/optimized arms, so its headline number is
+            // the fastest configuration it found; the list shows that instead of a delta.
+            val bestSweep = if (r.type == BenchResult.TYPE_SWEEP) r.bestSweepArm() else null
+            put("auto", stat((bestSweep ?: r.optimized)?.passes?.map { it.tg } ?: emptyList()).median)
+            put("best", bestSweep?.label ?: "")
         }
         indexFile(ctx).appendText(line.toString() + "\n")
         return f
@@ -66,6 +71,7 @@ object ResultStore {
                         naiveTg = o.optDouble("naive", 0.0),
                         threadsTg = o.optDouble("threads", 0.0),
                         autoTg = o.optDouble("auto", 0.0),
+                        best = o.optString("best", ""),
                     )
                 }
                 .sortedByDescending { it.ts }

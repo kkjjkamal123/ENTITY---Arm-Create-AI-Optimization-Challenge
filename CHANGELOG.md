@@ -9,6 +9,34 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [3.0.2] — 2026-07-20
+
+**The in-app benchmark derived its thread count from a stale rule, and a flagship exposed it.**
+v2.4.0 moved Auto's generation thread count to a topology rule — the cores whose
+`cpuinfo_max_freq` sits within 10% of the fastest — and raised the clamp from 4 to 6. The native
+engine was changed. The benchmark screen's copy of that rule was not: it kept computing
+`online cores − 2`, which returns the same 4 on a 4+4 phone only because the old clamp happened to
+be 4. On a 2+6 flagship (Galaxy S26 Ultra: 6× 3.628 GHz + 2× 4.742 GHz) the native side derives
+**2** threads while the benchmark's copy returned **6**.
+
+**Chat and inference speed are unaffected.** The stale rule lived only in `BenchmarkActivity`;
+real generation always went through `init_context()` in `ai_chat.cpp`, which has been correct
+since v2.4.0. This changes what the benchmark measures and reports, not how the app runs.
+
+### Fixed
+
+- **The benchmark's threads-only arm now holds the thread count at Auto's real value.** It
+  delegates to `DeviceOptimizer.topClusterCoreCount()` — the same top-frequency-cluster rule the
+  native side and the standalone Bench app already use — instead of restating it. On any device
+  where the two disagreed, naive → threads-only → Auto was changing two variables between the
+  second and third arm, which is the exact attribution error the three-arm design exists to
+  prevent. Unaffected on 4+4 devices, where both rules returned 4.
+- **Exported CSV metadata now reports the thread count the engine actually used.**
+  `threads_optimized` was written from the stale mirror, so an export could claim 6 threads for a
+  run that executed on 2.
+- Added the 2+6 flagship case to `DeviceOptimizerTest`, the topology the v2.4.0 notes flagged as
+  expected but untested.
+
 ## [3.0.1] — 2026-07-20
 
 **Performance fix: in-chat decode speed with live metrics visible.** With the metrics graph (or

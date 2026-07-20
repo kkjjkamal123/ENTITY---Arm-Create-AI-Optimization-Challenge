@@ -23,7 +23,7 @@ Values are median (± population standard deviation where more than one run was 
 | Naïve | Eight threads across all online CPU cores. The out-of-the-box default. |
 | Threads only | The same thread count Auto derives, with affinity off: no `sched_setaffinity`, no pinned thread pool, placement left to the Linux scheduler. This is what an upstream llama.cpp `-t N` run does. |
 | ENTITY Auto | CPU cores are ranked by maximum frequency; both phases run on the fastest two to four cores. |
-| Efficiency (Bench v1.1.0 only) | Auto's thread count pinned to the LITTLE cluster instead. Answers a tok/W question — are the little cores energy-efficient for decode, or only slow? |
+| Efficiency (Bench only) | Auto's thread count pinned to the LITTLE cluster instead. Answers a tok/W question — are the little cores energy-efficient for decode, or only slow? |
 
 ### Why three arms
 
@@ -43,8 +43,8 @@ Each arm logs the CPU mask the kernel actually applied (`effective cpus` in logc
 
 ## The current result: four-arm exports (ENTITY Bench v1.1.0, 2026-07-18)
 
-The standalone [ENTITY Bench](../apk/ENTITY-Bench-v1.1.0-release.apk) app (v1.1.0) runs a fourth
-arm the chat app's three-arm ablation never had: **efficiency** — the same four threads as Auto,
+The standalone [ENTITY Bench](../apk/ENTITY-Bench-v1.2.0-release.apk) app runs a fourth
+arm the chat app's three-arm ablation never had (these exports were taken with v1.1.0): **efficiency** — the same four threads as Auto,
 but pinned to the LITTLE cluster instead of the performance cluster. It exists to measure what the
 slow cores can and cannot do, so the affinity policy is chosen from data rather than assumption.
 
@@ -267,14 +267,29 @@ rather than the workload's.
 ## Against other apps
 
 ENTITY was measured against Arm's own AI Chat and PocketPal AI on the same phone, the same GGUF and
-the same PP 512 / TG 128 workload: **prompt 133 vs 120 vs 86.4 tok/s, token generation 15.6 vs 12.9
-vs 10.9 tok/s.** ENTITY beats Arm's own reference app on Arm's own silicon.
+the same PP 512 / TG 128 workload. The current session is 2026-07-20: all three apps re-measured the
+same day, five runs each, 30-minute cooldown between apps.
 
-PocketPal runs 6 threads and comes last, which is the same failure this document's naive arm
-measures — the fifth and sixth threads land on Cortex-A55s and every step waits on them.
+| App | Prompt (pp 512) | Token generation (tg 128) | Threads |
+|---|---:|---:|---|
+| PocketPal AI | 88.32 tok/s | 13.9 tok/s | 6 |
+| Arm AI Chat (Arm's own app) | 121 ± 2.99 tok/s | 12.4 ± 0.0751 tok/s | not reported |
+| **ENTITY** | **128 tok/s** | **18.2 tok/s** | 4, pinned |
 
-Setup, screenshots, and the caveats (including why ENTITY's live-chat 16.9 tok/s is *not* used):
-[competitor-comparison/](competitor-comparison/README.md).
+**Against Arm's own reference app, on Arm's own silicon: +6% prompt, +47% token generation.**
+Against PocketPal: +45% prompt, +31% token generation. Decode is where the thread-count policy acts
+and where the margin is; the prompt column is close because all three apps run Q4_0 and therefore
+all three reach the same KleidiAI kernels.
+
+The July 2026-07-14 session is retained beside it, and the two disagree in ways worth publishing:
+PocketPal and Arm swapped places on decode (Arm led 12.9 to 10.9 in July; PocketPal leads 13.9 to
+12.4 now), ENTITY's prompt margin over Arm narrowed from +11% to +6%, and its decode margin widened
+from +21% to +47%. PocketPal's decode swung about 27% between sessions on identical hardware while
+Arm's held within about 4%, and that swing is what flipped the ranking — which is the argument for
+never pairing a figure from one session with a figure from another.
+
+Setup, both sessions, screenshots, and the caveats (including why ENTITY's live-chat readout is
+*not* used): [competitor-comparison/](competitor-comparison/README.md).
 
 ## Interpretation and limits
 
@@ -305,6 +320,29 @@ nothing in them can be credited to core pinning.
 What the cross-vendor repeat *does* prove is that the **mechanism** is SoC-agnostic: ranking cores
 by live `cpufreq` rather than hardcoding a mask finds the performance cluster unchanged on MediaTek
 and Qualcomm. What it does not prove is that the pinning is what produced the gain.
+
+## Open: is the derived thread count the best one?
+
+Every result on this page compares the shipped policy against the phone's default. None of them
+asks whether the shipped policy is the *best configuration that phone can run*, because every arm
+uses one thread width — the size of the top frequency cluster.
+
+That rule cannot be right everywhere, and the reason is not subtle. It reads clock frequency, and
+clock frequency does not distinguish a slow core from a narrow one:
+
+| Device | Second-tier clock vs top | Right answer |
+|---|---|---|
+| CMF Phone 1 | Cortex-A55 @ 2000 vs A78 @ 2500 = **80%** | exclude — an A55 is roughly a third of an A78's throughput |
+| Galaxy S26 Ultra | mid @ 3628 vs prime @ 4742 = **76%** | a different case entirely — both are performance-class |
+
+Nearly identical ratios, and no frequency threshold separates them. Encoding a table of core part
+numbers would age with every new SoC, so **ENTITY Bench v1.2.0 adds a thread sweep** instead: every
+width the device can use, each pinned to that many of its fastest cores and again scheduler-placed,
+with the winning configuration named. A pinned/no-pin pair at one width isolates placement while the
+column isolates width.
+
+No sweep results are published yet. When they are, they belong here, and they are what should decide
+whether the derivation rule changes — not an argument from topology.
 
 ## Reproduce
 
@@ -379,7 +417,7 @@ to it, and the pinned arm's three passes span just 0.2 tok/s.
 ## Contribute a device result
 
 The easiest path is the standalone [ENTITY Bench](../app/entity.bench.android/README.md) APK
-([`apk/ENTITY-Bench-v1.1.0-release.apk`](../apk/ENTITY-Bench-v1.1.0-release.apk)). It is a dedicated
+([`apk/ENTITY-Bench-v1.2.0-release.apk`](../apk/ENTITY-Bench-v1.2.0-release.apk)). It is a dedicated
 benchmark app with no chat: you import a GGUF via the file picker, run the same three-arm ablation on an
 unplugged, cooled phone, and tap **Export CSV** on the result page. Every result is autosaved on the
 device, so the CSV can also be exported later from the app's history. There is nothing to set up in the

@@ -5,6 +5,8 @@ the matching APK filename, an intro paragraph, and Added/Changed/Fixed bullets f
 
 | File | Version | APK |
 |---|---|---|
+| [`RELEASE-Bench-v1.2.0.md`](RELEASE-Bench-v1.2.0.md) | Bench 1.2.0 | `ENTITY-Bench-v1.2.0-release.apk` (release) |
+| [`RELEASE-v3.0.2.md`](RELEASE-v3.0.2.md) | 3.0.2 | `ENTITY-v15-benchmark-thread-derivation-20260720-release.apk` (release) |
 | [`RELEASE-v3.0.1.md`](RELEASE-v3.0.1.md) | 3.0.1 | `ENTITY-v14-metrics-sampling-fix-20260720-release.apk` (release) |
 | [`RELEASE-v3.0.0.md`](RELEASE-v3.0.0.md) | 3.0.0 | `ENTITY-v13-mono-ui-refresh-20260718-release.apk` (release) |
 | [`RELEASE-Bench-v1.1.0.md`](RELEASE-Bench-v1.1.0.md) | Bench 1.1.0 | `ENTITY-Bench-v1.1.0-release.apk` (release) |

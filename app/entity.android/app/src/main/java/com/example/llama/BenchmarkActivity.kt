@@ -409,10 +409,11 @@ class BenchmarkActivity : AppCompatActivity() {
         return Config(label, key, genThreads, pinCores, runs)
     }
 
-    // Generation threads the native side derives in auto mode — mirrors init_context()
-    // in ai_chat.cpp: online cores minus headroom, clamped to the fast-core range.
-    private fun autoGenThreads() = (Runtime.getRuntime().availableProcessors() - THREAD_HEADROOM)
-        .coerceIn(DeviceOptimizer.MIN_THREADS, DeviceOptimizer.MAX_THREADS)
+    // Generation threads the native side derives in auto mode. Delegates to the same
+    // top-frequency-cluster rule as top_cluster_core_count() in ai_chat.cpp rather than
+    // restating it: the two counts drifted apart once already, when MAX_THREADS went 4→6
+    // and a 2+6 flagship started deriving 2 natively while this returned 6.
+    private fun autoGenThreads() = DeviceOptimizer.topClusterCoreCount(maxFreqsKhz)
 
     private suspend fun cooldown(prefix: String, targetC: Double) {
         val start = SystemClock.elapsedRealtime()
@@ -962,12 +963,10 @@ class BenchmarkActivity : AppCompatActivity() {
         private const val TG = 128
         private const val PL = 1
         private const val NR = 1
-        // 0 = auto: the engine picks the generation threads, pins them to the fastest
-        // cores and widens prompt processing to all cores — the shipped configuration.
+        // 0 = auto: the engine derives the generation thread count from the top frequency
+        // cluster and pins both phases to those cores — the shipped configuration.
         private const val OPT_THREADS_AUTO = 0
         private const val NAIVE_THREADS = 8
-        // ai_chat.cpp N_THREADS_HEADROOM
-        private const val THREAD_HEADROOM = 2
         private const val MIN_PAUSE_MS = 15_000L
         private const val MAX_COOLDOWN_MS = 90_000L
         // Sustained thermal test: back-to-back passes for the selected duration, with

@@ -13,14 +13,14 @@
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
-![Release](https://img.shields.io/badge/release-v1.1.0-orange)
+![Release](https://img.shields.io/badge/release-v1.2.0-orange)
 ![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
 
 </div>
 
 ## Navigation
 
-[Home](../../README.md) · [Evidence](../../benchmarks/REPRODUCIBILITY.md) · [Benchmarks](../../benchmarks/BENCHMARKS.md) · [Optimization](../../docs/OPTIMIZATIONS.md) · [Release notes](../../releases/RELEASE-Bench-v1.1.0.md) · [FAQ](../../docs/FAQ.md) · [Contributing](../../docs/CONTRIBUTING.md) · [License](../../LICENSE)
+[Home](../../README.md) · [Evidence](../../benchmarks/REPRODUCIBILITY.md) · [Benchmarks](../../benchmarks/BENCHMARKS.md) · [Optimization](../../docs/OPTIMIZATIONS.md) · [Release notes](../../releases/RELEASE-Bench-v1.2.0.md) · [FAQ](../../docs/FAQ.md) · [Contributing](../../docs/CONTRIBUTING.md) · [License](../../LICENSE)
 
 ## What ENTITY Bench is
 
@@ -41,6 +41,7 @@ The workload is llama.cpp's synthetic bench (PP 512 / TG 128) on whatever model 
 | The mask is logged | Each arm records the CPU affinity the kernel actually applied, plus per core clocks during the pass, so a failed pin cannot pass as "pinning earns nothing". |
 | Efficiency core arm | An optional fourth arm pins auto's thread count to the slowest cluster. It answers a tok/W question: are the little cores actually more energy efficient for decode, or only slower? |
 | Sustained mode | 2 / 5 / 10 minutes of back to back passes with no cooldown, threads only vs auto, to see who throttles first once the SoC is hot. |
+| Thread sweep | Every thread width the device can use, each one pinned and again scheduler placed, with the winning configuration named. The ablation asks whether the shipped policy beats the phone's default; the sweep asks whether it is the best that phone can do - and answers per device, because clock frequency alone cannot tell a slow core from a narrow one. |
 | Nothing leaves the phone | No network, no accounts. Results live in app private storage until you export or delete them. |
 
 ## Screenshots
@@ -81,6 +82,21 @@ The thread count earns the multiplier on both devices. What pinning adds is devi
 
 The optional fourth arm, **efficiency cores**, inverts auto's placement to the slowest cluster and exports with the `affinity_efficiency` label. Measured on both phones it answers its tok/W question with a no: LITTLE pinning is slower *and* worse per watt than the pinned performance cores (and on the CMF it collapses prompt speed 139 to 82.5 tok/s), so the efficiency cores are not an efficiency win for LLM inference.
 
+## Thread sweep
+
+The ablation answers whether the shipped policy beats the phone's default. It cannot answer whether the shipped policy is the *best that phone can do*, because every arm runs one thread width. The sweep runs them all - 2 / 4 / 6 / 8 capped at the core count, plus whatever auto derives - each width pinned to that many of its fastest cores and again left to the scheduler, then names the configuration that won.
+
+That matters because the thread count is derived from clock frequency, and clock frequency cannot distinguish a slow core from a narrow one:
+
+| Device | Second tier vs top clock | Right answer |
+|---|---|---|
+| CMF Phone 1 | Cortex A55 @ 2000 vs A78 @ 2500 = **80%** | exclude - an A55 is roughly a third of an A78's throughput |
+| Galaxy S26 Ultra | mid @ 3628 vs prime @ 4742 = **76%** | different case entirely - both are performance class |
+
+Nearly identical ratios, and no frequency threshold separates them. Rather than ship a table of core part numbers that ages with every new SoC, the app measures the device in front of it. A pinned/no pin pair at one width isolates placement while the column isolates width, so a sweep is a two dimensional ablation rather than a single line through one.
+
+Best is chosen on decode, which is what a chat user waits on token by token; the prompt and tok/W columns are printed beside it and are allowed to disagree. A sweep is widths x 2 placements x runs, each with a full cooldown, so the app states the pass count and rough duration before it starts.
+
 ## Sustained mode
 
 The controlled benchmark cools back to baseline before every pass by design, so it cannot see what happens under accumulated heat. Sustained mode runs back to back passes for a selectable 2 / 5 / 10 minutes per arm with only a 2 s gap, threads only vs auto, both blocks starting from the same cooled baseline. If pinning only pays off once the little cores have heated up and started throttling, this is where it shows. Read the trend across passes, not any single one.
@@ -94,7 +110,8 @@ The controlled benchmark cools back to baseline before every pass by design, so 
 5. Every result autosaved with history; any past run reopens as a full result page.
 6. Result page: headline attribution, decode bars, the full metric table (prompt, decode, derived TTFT, power, tok/W, app CPU, per cluster clocks, RAM floor, temperatures, peak thermal status), methodology notes, Copy, Export CSV, Delete.
 7. Raw per pass CSV export with device fingerprint, app version, thermal record, 150 ms telemetry samples, per core clock traces and the applied CPU mask per arm. Row keys are unchanged from v1.0.0, so existing analysis scripts keep working.
-8. Pure black and white theme with System / Light / Dark selection in Settings.
+8. Thread sweep mode: every usable thread width, pinned and scheduler placed, with the winning configuration named and a run length estimate before it starts.
+9. Pure black and white theme with System / Light / Dark selection in Settings.
 
 ## Run a valid benchmark
 
@@ -123,7 +140,7 @@ Ninety seconds from clone to a saved result, on any arm64 phone with Android 13+
 ```bash
 git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
 cd ENTITY---Arm-Create-AI-Optimization-Challenge
-adb install -r apk/ENTITY-Bench-v1.1.0-release.apk
+adb install -r apk/ENTITY-Bench-v1.2.0-release.apk
 ```
 
 Then on the phone:
@@ -152,7 +169,7 @@ The APK lands at `app/build/outputs/apk/release/app-release.apk`. Without a `key
 2. [Reproducibility](../../benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
 3. [Optimizations](../../docs/OPTIMIZATIONS.md): source level explanation of each runtime decision the arms test.
 4. [Which GGUF quant actually reaches KleidiAI](../../docs/KLEIDIAI-QUANTS.md): the two types Arm's kernels accelerate, and what the rest cost.
-5. [Release notes for v1.1.0](../../releases/RELEASE-Bench-v1.1.0.md): what the rebuild changed and what it deliberately kept.
+5. [Release notes for v1.2.0](../../releases/RELEASE-Bench-v1.2.0.md): what the rebuild changed and what it deliberately kept.
 6. [ENTITY chat app](../../README.md): the assistant these optimizations ship in.
 
 ## License

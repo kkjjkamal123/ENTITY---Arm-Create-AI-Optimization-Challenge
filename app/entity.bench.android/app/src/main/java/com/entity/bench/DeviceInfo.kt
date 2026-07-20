@@ -14,6 +14,18 @@ object DeviceInfo {
     // [MIN_THREADS, MAX_THREADS]. Mirrors top_cluster_core_count() in ai_chat.cpp. On a
     // 4+4 big.LITTLE phone the little cores fall below the 10% threshold, so exactly the
     // four performance cores count. Falls back to half the cores when cpufreq is unreadable.
+    // Thread widths worth sweeping on this device: 2/4/6/8 capped at the core count,
+    // plus whatever Auto derives, so the shipped policy always appears as a row in the
+    // table it is being judged against. One definition, so the pre-run estimate on the
+    // home screen and the run itself cannot drift apart.
+    fun sweepThreadCounts(maxFreqsKhz: List<Long>): List<Int> {
+        val ncpu = maxFreqsKhz.size.coerceAtLeast(2)
+        return (listOf(2, 4, 6, 8) + topClusterCoreCount(maxFreqsKhz))
+            .filter { it in 2..ncpu }
+            .distinct()
+            .sorted()
+    }
+
     fun topClusterCoreCount(maxFreqsKhz: List<Long>): Int {
         val top = maxFreqsKhz.maxOrNull() ?: 0L
         if (top <= 0L) return (maxFreqsKhz.size / 2).coerceAtLeast(1).coerceIn(MIN_THREADS, MAX_THREADS)

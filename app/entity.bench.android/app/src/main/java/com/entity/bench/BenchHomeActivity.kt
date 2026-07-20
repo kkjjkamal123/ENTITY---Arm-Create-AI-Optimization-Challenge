@@ -68,6 +68,7 @@ class BenchHomeActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.mode_ablation).setOnClickListener { setMode(Prefs.MODE_ABLATION) }
         findViewById<TextView>(R.id.mode_sustained).setOnClickListener { setMode(Prefs.MODE_SUSTAINED) }
+        findViewById<TextView>(R.id.mode_sweep).setOnClickListener { setMode(Prefs.MODE_SWEEP) }
         for ((id, n) in listOf(R.id.runs_1 to 1, R.id.runs_3 to 3, R.id.runs_5 to 5)) {
             findViewById<TextView>(id).setOnClickListener {
                 runs = n
@@ -113,12 +114,23 @@ class BenchHomeActivity : AppCompatActivity() {
 
     private fun styleConfig() {
         val ablation = mode == Prefs.MODE_ABLATION
+        val sustained = mode == Prefs.MODE_SUSTAINED
+        val sweep = mode == Prefs.MODE_SWEEP
         Ui.seg(this, findViewById(R.id.mode_ablation), ablation)
-        Ui.seg(this, findViewById(R.id.mode_sustained), !ablation)
-        findViewById<View>(R.id.group_ablation).visibility = if (ablation) View.VISIBLE else View.GONE
-        findViewById<View>(R.id.group_sustained).visibility = if (ablation) View.GONE else View.VISIBLE
+        Ui.seg(this, findViewById(R.id.mode_sustained), sustained)
+        Ui.seg(this, findViewById(R.id.mode_sweep), sweep)
+        // The sweep reuses the runs-per-config selector; only the efficiency arm is
+        // ablation-only, so the group shows for both and its checkbox hides for a sweep.
+        findViewById<View>(R.id.group_ablation).visibility = if (sustained) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.group_sustained).visibility = if (sustained) View.VISIBLE else View.GONE
+        findViewById<View>(R.id.eff_arm_box).visibility = if (ablation) View.VISIBLE else View.GONE
         findViewById<TextView>(R.id.workload_note).setText(
-            if (ablation) R.string.workload else R.string.workload_sustained)
+            when {
+                sustained -> R.string.workload_sustained
+                sweep -> R.string.workload_sweep
+                else -> R.string.workload
+            }
+        )
 
         for ((id, n) in listOf(R.id.runs_1 to 1, R.id.runs_3 to 3, R.id.runs_5 to 5)) {
             Ui.seg(this, findViewById(id), n == runs)
@@ -260,13 +272,35 @@ class BenchHomeActivity : AppCompatActivity() {
 
     private fun onRun() {
         val model = selectedModel ?: run { showModelPicker(); return }
-        val i = Intent(this, RunActivity::class.java)
-            .putExtra(RunActivity.EXTRA_MODEL_PATH, model.path)
-            .putExtra(RunActivity.EXTRA_MODE, mode)
-            .putExtra(RunActivity.EXTRA_RUNS, runs)
-            .putExtra(RunActivity.EXTRA_DURATION_MIN, durationMin)
-            .putExtra(RunActivity.EXTRA_EFF_ARM, effArm)
-        startActivity(i)
+        val start = {
+            startActivity(
+                Intent(this, RunActivity::class.java)
+                    .putExtra(RunActivity.EXTRA_MODEL_PATH, model.path)
+                    .putExtra(RunActivity.EXTRA_MODE, mode)
+                    .putExtra(RunActivity.EXTRA_RUNS, runs)
+                    .putExtra(RunActivity.EXTRA_DURATION_MIN, durationMin)
+                    .putExtra(RunActivity.EXTRA_EFF_ARM, effArm)
+            )
+        }
+        // A sweep is every width times both placements times the run count, each with a
+        // full cooldown. That is a long unattended session, so say so before starting it
+        // rather than let someone discover it twenty minutes in.
+        if (mode == Prefs.MODE_SWEEP) {
+            val counts = DeviceInfo.sweepThreadCounts(DeviceInfo.maxFreqsKhz())
+            val passes = counts.size * 2 * runs
+            AlertDialog.Builder(this)
+                .setMessage(
+                    "Sweep: ${counts.joinToString(", ")} threads, each pinned and unpinned, " +
+                    "$runs run${if (runs == 1) "" else "s"} each.\n\n" +
+                    "$passes passes with a cooldown before every one - budget roughly " +
+                    "${passes * 75 / 60} minutes. Keep the phone unplugged, still and cool."
+                )
+                .setPositiveButton(R.string.run_cta) { _, _ -> start() }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+        } else {
+            start()
+        }
     }
 
     // ---- last result and history ----
@@ -295,6 +329,11 @@ class BenchHomeActivity : AppCompatActivity() {
             val mx = maxOf(last.threadsTg, last.autoTg, 0.001)
             Ui.bar(this, bars, "threads", last.threadsTg, mx, emphasize = false)
             Ui.bar(this, bars, "auto", last.autoTg, mx, emphasize = true)
+        } else if (last.type == BenchResult.TYPE_SWEEP) {
+            findViewById<TextView>(R.id.result_meta).text = "${last.runs}-run sweep"
+            headline.text = last.best.ifEmpty { "THREAD SWEEP" }.uppercase()
+            sub.text = "Fastest configuration measured on this device - open the full result for every row."
+            Ui.bar(this, bars, "best", last.autoTg, maxOf(last.autoTg, 0.001), emphasize = true)
         } else {
             findViewById<TextView>(R.id.result_meta).text = "${last.runs}-run median"
             val threadsPct = if (last.naiveTg > 0) (last.threadsTg / last.naiveTg - 1) * 100 else 0.0
@@ -352,7 +391,11 @@ class BenchHomeActivity : AppCompatActivity() {
             ellipsize = android.text.TextUtils.TruncateAt.MIDDLE
         })
         val rel = DateUtils.getRelativeTimeSpanString(e.ts, System.currentTimeMillis(), DateUtils.MINUTE_IN_MILLIS)
-        val what = if (e.type == BenchResult.TYPE_SUSTAINED) "${e.durationMin} min sustained" else "${e.runs} runs"
+        val what = when (e.type) {
+            BenchResult.TYPE_SUSTAINED -> "${e.durationMin} min sustained"
+            BenchResult.TYPE_SWEEP -> "${e.runs}-run sweep"
+            else -> "${e.runs} runs"
+        }
         left.addView(TextView(this).apply {
             text = "$what · ${if (e.charging) "charging" else "unplugged"} · $rel"
             textSize = 10f
@@ -361,7 +404,11 @@ class BenchHomeActivity : AppCompatActivity() {
         })
         row.addView(left)
         row.addView(TextView(this).apply {
-            text = if (e.type == BenchResult.TYPE_SUSTAINED) "SUST" else BenchExport.signed(e.deltaPct)
+            text = when (e.type) {
+                BenchResult.TYPE_SUSTAINED -> "SUST"
+                BenchResult.TYPE_SWEEP -> BenchExport.fmt(e.autoTg)
+                else -> BenchExport.signed(e.deltaPct)
+            }
             textSize = 14f
             typeface = android.graphics.Typeface.create(android.graphics.Typeface.MONOSPACE, android.graphics.Typeface.BOLD)
             setTextColor(getColor(R.color.mono_fg))

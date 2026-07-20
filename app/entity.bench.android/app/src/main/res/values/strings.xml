@@ -16,11 +16,13 @@
     <string name="cfg_label">CONFIG</string>
     <string name="mode_ablation">3-ARM</string>
     <string name="mode_sustained">SUSTAINED</string>
+    <string name="mode_sweep">SWEEP</string>
     <string name="runs_label">RUNS PER ARM</string>
     <string name="duration_label">DURATION (MIN)</string>
     <string name="efficiency_arm">+ efficiency-core arm (tok/W of the little cores)</string>
     <string name="workload">PP 512 / TG 128 · cooldown before every pass</string>
     <string name="workload_sustained">PP 512 / TG 128 back-to-back · heat is the point</string>
+    <string name="workload_sweep">PP 512 / TG 128 · every thread width, pinned and not</string>
     <string name="run_cta">RUN BENCHMARK</string>
     <string name="last_result">LAST RESULT</string>
     <string name="open_full_results">OPEN FULL RESULT</string>

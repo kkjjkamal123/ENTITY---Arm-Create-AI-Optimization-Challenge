@@ -101,10 +101,13 @@ class RunActivity : AppCompatActivity() {
                     }
                     runOnUiThread { statusTv.text = "loading ${model.nameWithoutExtension}" }
                     runner.loadModel(model)
-                    if (mode == Prefs.MODE_SUSTAINED) {
-                        runner.runSustained(model.nameWithoutExtension, durationMin * 60_000L)
-                    } else {
-                        runner.runAblation(model.nameWithoutExtension, nRuns, effArm)
+                    when (mode) {
+                        Prefs.MODE_SUSTAINED ->
+                            runner.runSustained(model.nameWithoutExtension, durationMin * 60_000L)
+                        Prefs.MODE_SWEEP ->
+                            runner.runSweep(model.nameWithoutExtension, nRuns)
+                        else ->
+                            runner.runAblation(model.nameWithoutExtension, nRuns, effArm)
                     }
                 }
             }

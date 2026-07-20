@@ -10,7 +10,7 @@ object Prefs {
     const val KEY_THEME = "theme"            // THEME_SYSTEM | THEME_LIGHT | THEME_DARK
     const val KEY_MODEL = "last_model"
     const val KEY_RUNS = "runs"
-    const val KEY_MODE = "mode"              // MODE_ABLATION | MODE_SUSTAINED
+    const val KEY_MODE = "mode"              // MODE_ABLATION | MODE_SUSTAINED | MODE_SWEEP
     const val KEY_DURATION = "duration_min"
     const val KEY_EFF_ARM = "efficiency_arm"
 
@@ -20,6 +20,7 @@ object Prefs {
 
     const val MODE_ABLATION = 0
     const val MODE_SUSTAINED = 1
+    const val MODE_SWEEP = 2
 
     fun get(ctx: Context): SharedPreferences = ctx.getSharedPreferences(NAME, Context.MODE_PRIVATE)
 

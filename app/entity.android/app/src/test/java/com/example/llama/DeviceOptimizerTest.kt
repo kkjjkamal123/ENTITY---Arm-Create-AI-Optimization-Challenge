@@ -51,6 +51,15 @@ class DeviceOptimizerTest {
         assertEquals(6, DeviceOptimizer.topClusterCoreCount(listOf(3200000L, 3200000L, 3200000L, 3200000L, 3200000L, 3200000L, 2000000L, 2000000L)))
         // Uniform cores: all within 10%, clamped to MAX.
         assertEquals(6, DeviceOptimizer.topClusterCoreCount(List(8) { 2000000L }))
+        // Galaxy S26 Ultra: 2x 4.742 GHz prime + 6x 3.628 GHz. 3.628 is below the 4.268
+        // threshold, so only the two prime cores count. Measured on SM-S948B, 2026-07-20 —
+        // the case that exposed the benchmark's stale thread-count mirror.
+        assertEquals(
+            2,
+            DeviceOptimizer.topClusterCoreCount(
+                listOf(3628000L, 3628000L, 3628000L, 3628000L, 3628000L, 3628000L, 4742000L, 4742000L)
+            )
+        )
     }
 
     @Test

@@ -28,7 +28,7 @@ The app has been measured on:
 
 Native code reads cpuinfo maximum frequency for every CPU, sorts the cores, and selects the fastest
 generation set. In Auto mode the generation thread count is online cores minus two clamped to the
-range two through four. The selected set is passed to sched_setaffinity.
+range two through four. The selected set is passed to sched_setaffinity().
 
 Both inference phases run on that fast core set.
 

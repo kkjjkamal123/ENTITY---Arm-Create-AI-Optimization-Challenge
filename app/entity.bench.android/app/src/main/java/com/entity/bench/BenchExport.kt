@@ -14,6 +14,7 @@ object BenchExport {
         val w = CsvWriter(this)
         appendLine("config,run_index,metric,value,unit")
         w.row("meta", "", "app", "ENTITY Bench", "")
+        w.row("meta", "", "benchmark_type", r.type, "")
         w.row("meta", "", "app_version", r.appVersion, "")
         w.row("meta", "", "app_version_code", r.appVersionCode.toString(), "")
         w.row("meta", "", "benchmark_completed_at_epoch_ms", r.ts.toString(), "ms")
@@ -53,6 +54,7 @@ object BenchExport {
         val w = CsvWriter(this)
         appendLine("config,run_index,metric,value,unit")
         w.row("meta", "", "app", "ENTITY Bench", "")
+        w.row("meta", "", "benchmark_type", r.type, "")
         w.row("meta", "", "app_version", r.appVersion, "")
         w.row("meta", "", "test", "sustained_no_cooldown", "")
         w.row("meta", "", "benchmark_completed_at_epoch_ms", r.ts.toString(), "ms")
@@ -150,8 +152,39 @@ object BenchExport {
 
     // ---- plain-text summary for the clipboard ----
 
-    fun copyText(r: BenchResult): String =
-        if (r.type == BenchResult.TYPE_SUSTAINED) sustainedText(r) else ablationText(r)
+    fun copyText(r: BenchResult): String = when (r.type) {
+        BenchResult.TYPE_SUSTAINED -> sustainedText(r)
+        BenchResult.TYPE_SWEEP -> sweepText(r)
+        else -> ablationText(r)
+    }
+
+    private fun sweepText(r: BenchResult): String = buildString {
+        val arms = r.sweepArms
+        val best = r.bestSweepArm()
+        appendLine("ENTITY Bench ${r.appVersion} - ${r.model}")
+        appendLine("${r.deviceManufacturer} ${r.deviceModel} - Android ${r.androidRelease}")
+        appendLine("Thread sweep, ${r.runsPerArm} runs per configuration, PP ${BenchRunner.PP} / TG ${BenchRunner.TG}")
+        appendLine("CPU max clocks: ${r.maxFreqsMhz.joinToString(" ")} MHz")
+        appendLine("Auto derives ${r.autoThreads} threads on this device")
+        appendLine()
+        appendLine("threads  placement  decode t/s  prompt t/s  tok/W")
+        for (a in arms) {
+            val tg = stat(a.passes.map { it.tg })
+            val pp = stat(a.passes.map { it.pp })
+            val eff = stat(a.passes.map { it.tokPerW })
+            val mark = if (a.key == best?.key) "  <- best decode" else ""
+            appendLine(
+                "%-8d %-10s %-11s %-11s %s%s".format(
+                    a.threads,
+                    if (a.pinned) "pinned" else "no pin",
+                    fmt(tg.median), fmt(pp.median),
+                    if (r.powerValid) fmt(eff.median) else "-",
+                    mark,
+                )
+            )
+        }
+        if (!r.powerValid) appendLine("\nPower not recorded: the phone was charging.")
+    }
 
     private fun ablationText(r: BenchResult): String {
         val arms = r.ablationArms
