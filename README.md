@@ -68,7 +68,7 @@ This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has t
 
 ---
 
-## Screenshots (Version <= 2.4.0)
+## Screenshots (Version <= 2.4.0) :
 
 | Chat | Benchmark | Settings |
 |---|---|---|
@@ -76,7 +76,7 @@ This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has t
 
 ---
 
-## Screenshots (Version >= 3.0.0)
+## Screenshots (Version >= 3.0.0) :
 
 | Chat | Benchmark | Settings |
 |---|---|---|
