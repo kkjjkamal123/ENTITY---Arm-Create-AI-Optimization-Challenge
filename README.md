@@ -66,17 +66,23 @@ This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has t
 8. Light, dark and system themes plus a theme aware app icon.
 9. GGUF model information including parameters, quantization, architecture and running context.
 
-## Screenshots
+---
 
-| Chat | Benchmark | Settings | (Version <= 2.4.0)
+## Screenshots (Version <= 2.4.0)
+
+| Chat | Benchmark | Settings |
 |---|---|---|
 | ![Chat](screenshots/Entity%20Chat/Chat.png) | ![Benchmark](screenshots/Entity%20Chat/Benchmark.png) | ![Settings](screenshots/Entity%20Chat/Settings.png) |
 
+---
 
-| Chat | Benchmark | Settings | (Version >= 3.0.0)
+## Screenshots (Version >= 3.0.0)
+
+| Chat | Benchmark | Settings |
 |---|---|---|
 | ![Chat](screenshots/Entity%20Chat/ChatN.png) | ![Benchmark](screenshots/Entity%20Chat/BenchmarkN.png) | ![Settings](screenshots/Entity%20Chat/SettingsN.png) |
 
+---
 
 ## Current in app benchmark
 
