@@ -6,4 +6,5 @@
         android:color="@color/mono_fg"
         android:dashWidth="4dp"
         android:dashGap="3dp" />
+    <corners android:radius="@dimen/mono_radius" />
 </shape>

@@ -5,5 +5,6 @@
     <shape android:shape="rectangle">
         <solid android:color="@color/mono_bg" />
         <stroke android:width="2dp" android:color="@color/mono_fg" />
+        <corners android:radius="@dimen/mono_radius" />
     </shape>
 </inset>

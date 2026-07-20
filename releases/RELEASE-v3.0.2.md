@@ -15,6 +15,16 @@ against an Auto arm running two, and the exported CSV recorded the wrong number 
 generation always went through `init_context()` in `ai_chat.cpp`, correct since v2.4.0. This changes
 what the benchmark measures and reports, not how the app runs.
 
+## Changed
+
+- **Rounded corners across the interface.** Sections, cards, chat bubbles, buttons, dialogs and
+  the progress track now share a single 10 dp radius (`@dimen/mono_radius`), replacing v3.0.0's
+  hard square corners. One value drives every surface, so a pressed control keeps the same
+  silhouette as the box it inverts from, and the radius is tunable in one place. Everything else
+  about MONO is unchanged: two colors, monospace type, uppercase section labels, press feedback as
+  a hard color inversion, and the metrics graph as the one colored surface. The hairline rules
+  between regions stay square — they are 2 dp lines, not surfaces.
+
 ## Fixed
 
 - **The threads-only arm now holds the thread count at Auto's real value.** It delegates to

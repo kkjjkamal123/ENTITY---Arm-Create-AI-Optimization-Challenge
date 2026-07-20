@@ -52,7 +52,7 @@ from v1.0.0.
 
 ## Start here
 
-**Recommended**: `ENTITY-v15-benchmark-thread-derivation-20260720-release.apk` is the current release (v3.0.2), release-signed. It corrects the in-app benchmark's generation thread count, which restated the topology rule instead of using it and so diverged from the engine on devices with more than four performance cores; chat speed is unchanged. On top of v3.0.1's fixed-interval metrics sampling, v3.0.0's MONO UI remake, and v2.4.0's inference path: 7 Arm CPU backend variants with automatic runtime selection, KV-cache session reuse, and a topology-derived thread count.
+**Recommended**: `ENTITY-v15-benchmark-thread-derivation-20260720-release.apk` is the current release (v3.0.2), release-signed. It rounds every MONO surface to a single 10 dp radius — sections, cards, chat bubbles, buttons and dialogs — and corrects the in-app benchmark's generation thread count, which restated the topology rule instead of using it and so diverged from the engine on devices with more than four performance cores; chat speed is unchanged. On top of v3.0.1's fixed-interval metrics sampling, v3.0.0's MONO UI remake, and v2.4.0's inference path: 7 Arm CPU backend variants with automatic runtime selection, KV-cache session reuse, and a topology-derived thread count.
 
 ## Installation
 

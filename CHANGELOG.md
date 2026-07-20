@@ -23,6 +23,15 @@ be 4. On a 2+6 flagship (Galaxy S26 Ultra: 6× 3.628 GHz + 2× 4.742 GHz) the na
 real generation always went through `init_context()` in `ai_chat.cpp`, which has been correct
 since v2.4.0. This changes what the benchmark measures and reports, not how the app runs.
 
+### Changed
+
+- **Rounded corners across the interface.** Sections, cards, chat bubbles, buttons, dialogs and
+  the progress track now share a single 10 dp radius (`@dimen/mono_radius`), replacing v3.0.0's
+  hard square corners. One radius for every surface, so a pressed control keeps the same
+  silhouette as the box it inverts from. Everything else about MONO is unchanged: two colors,
+  monospace type, uppercase section labels, and press feedback as a hard color inversion. The
+  hairline rules between regions stay square — they are 2 dp lines, not surfaces.
+
 ### Fixed
 
 - **The benchmark's threads-only arm now holds the thread count at Auto's real value.** It
