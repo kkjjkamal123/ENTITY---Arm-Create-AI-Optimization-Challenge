@@ -80,7 +80,7 @@ This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has t
 
 | Chat | Benchmark | Settings |
 |---|---|---|
-| ![Chat](screenshots/Entity%20Chat/ChatN.png) | ![Benchmark](screenshots/Entity%20Chat/BenchmarkN.png) | ![Settings](screenshots/Entity%20Chat/SettingsN.png) |
+| ![ChatN](screenshots/Entity%20Chat/ChatN.png) | ![BenchmarkN](screenshots/Entity%20Chat/BenchmarkN.png) | ![SettingsN](screenshots/Entity%20Chat/SettingsN.png) |
 
 ---
 
