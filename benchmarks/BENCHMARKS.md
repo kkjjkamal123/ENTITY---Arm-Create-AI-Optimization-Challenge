@@ -175,11 +175,13 @@ loaded at startup.
 Same phone, same 512-token prompt, same four-thread unpinned configuration — only the quantization
 differs:
 
-| | Q3_K_L (KleidiAI cannot run) | Q4_0 (KleidiAI runs) | Change |
+| | Q3_K_L (no Arm fast path) | Q4_0 (Arm fast path) | Change |
 |---|---:|---:|---:|
 | Prompt throughput | 42.7 tok/s | **121 tok/s** | **+183%** |
 | Derived TTFT (512-token prompt) | 12,050 ms | **4,299 ms** | **−64%** |
 | Decode throughput | 16.9 tok/s | 14.7 tok/s | −13% |
+
+This isolates the **quantization**, not KleidiAI specifically: moving to Q4_0 switches on both KleidiAI's kernels and ggml's Arm repack path at once, and the split between them has not been measured on this phone. Independent measurements suggest the KleidiAI flag adds little at Q4_0 (its clear win is at Q8_0). See [what this does not attribute](../docs/KLEIDIAI-QUANTS.md#what-this-measures-and-what-it-does-not-attribute).
 
 ![KleidiAI](plots/kleidiai_prompt_ttft.png)
 

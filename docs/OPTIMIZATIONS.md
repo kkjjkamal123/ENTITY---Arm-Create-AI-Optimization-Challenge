@@ -304,11 +304,13 @@ user their model was Arm-accelerated when it provably was not.
 Measured on the CMF Phone 1 — same phone, same 512-token prompt, same four-thread unpinned
 configuration, the *only* difference being the quantization:
 
-| | Q3_K_L (733 MB, generic ggml) | Q4_0 (773 MB, KleidiAI) | Change |
+| | Q3_K_L (733 MB, no Arm fast path) | Q4_0 (773 MB, Arm fast path) | Change |
 |---|---:|---:|---:|
 | Prompt throughput | 42.7 tok/s | **121 tok/s** | **+183%** |
 | Derived TTFT (512-token prompt) | 12,050 ms | **4,299 ms** | **−64%** |
 | Decode throughput | 16.9 tok/s | 14.7 tok/s | −13% |
+
+This isolates the **quantization**, not KleidiAI specifically: moving to Q4_0 switches on both KleidiAI's kernels and ggml's Arm repack path at once, and the split between them has not been measured on this phone. Independent measurements suggest the KleidiAI flag adds little at Q4_0 (its clear win is at Q8_0). See [what this does not attribute](KLEIDIAI-QUANTS.md#what-this-measures-and-what-it-does-not-attribute).
 
 The split between the two phases is exactly what the hardware predicts, which is why it is
 believable rather than a fluke:

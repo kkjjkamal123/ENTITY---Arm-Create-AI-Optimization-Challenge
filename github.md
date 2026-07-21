@@ -20,7 +20,10 @@ Built on **llama.cpp** with a Kotlin UI and C++/JNI inference layer, ENTITY is p
    enough, and this is the finding ENTITY is proudest of: **KleidiAI has kernels for Q4_0 and Q8_0
    only.** Load any other quantization and Arm's kernels never execute, whatever backend was
    selected. ENTITY reads the GGUF header and tells you. Switching a 1B from Q3_K_L to Q4_0 took
-   prompt throughput from 43 to 121 tok/s on the reference phone.
+   prompt throughput from 43 to 121 tok/s on the reference phone - a quantization-level result,
+   not an attribution to KleidiAI alone (Q4_0 also enables ggml's Arm repack path; the split is
+   deliberately not claimed - see `docs/KLEIDIAI-QUANTS.md`). The upstream warning that makes the
+   silent fallback visible was **merged into llama.cpp on 2026-07-21**.
 2. **Measured runtime tuning, not assumed** — ENTITY keeps both inference phases on the
    frequency-ranked performance cores, and ships an ablation that *attributes* the result
    instead of asserting it. That ablation disproved this project's own original claim (+121% from
@@ -142,11 +145,13 @@ matter which of the seven backend variants loaded. **Every benchmark ENTITY publ
 used Q3_K_L, so KleidiAI never executed once.** Same phone, same 512-token prompt, same four-thread
 unpinned config, only the quantization differs:
 
-| | Q3_K_L (KleidiAI cannot run) | Q4_0 (KleidiAI runs) | Change |
+| | Q3_K_L (no Arm fast path) | Q4_0 (Arm fast path) | Change |
 |---|---:|---:|---:|
 | Prompt throughput | 42.7 tok/s | **121 tok/s** | **+183%** |
 | Time to first token | 12,050 ms | **4,299 ms** | **-64%** |
 | Decode throughput | 16.9 tok/s | 14.7 tok/s | -13% |
+
+This isolates the **quantization**, not KleidiAI specifically: moving to Q4_0 switches on both KleidiAI's kernels and ggml's Arm repack path at once, and the split between them has not been measured on this phone. Independent measurements suggest the KleidiAI flag adds little at Q4_0 (its clear win is at Q8_0). See [what this does not attribute](docs/KLEIDIAI-QUANTS.md#what-this-measures-and-what-it-does-not-attribute).
 
 Prompt eval is a compute-bound GEMM, which is what KleidiAI is built for. Decode is
 memory-bandwidth-bound - it tracks bytes-per-weight, not kernel quality - so it does not improve;
@@ -154,7 +159,7 @@ Q4_0 is ~6% more bytes and lands slightly slower. ENTITY now reads the GGUF head
 user whether their model can reach Arm's kernels, rather than printing "KleidiAI" regardless. The
 silent fallback itself was fixed upstream from this project in
 [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701), which adds the one-time
-warning and is approved and awaiting merge (see *Upstream contribution* below), and the finding is
+warning and was **merged on 2026-07-21** (see *Upstream contribution* below), and the finding is
 written up as a standalone guide in [`docs/KLEIDIAI-QUANTS.md`](docs/KLEIDIAI-QUANTS.md).
 
 **2. Widening prompt processing to all cores was a regression.** Auto used to give prompt eval every
@@ -361,7 +366,8 @@ Review history, because the review is the interesting part:
 | 2026-07-17 | Moved to `get_tensor_traits()`, which runs per node of a graph actually being computed (`bdf117f`). The original buffer-type guard was dropped as unreachable: unsupported weight types are never placed in the KleidiAI buffer type in the first place. |
 | 2026-07-20 | `chaxu01`: the wording overclaimed. Returning `nullptr` means KleidiAI declined the op, not that a generic CPU fallback ran - another backend may still take it. |
 | 2026-07-20 | Reworded to claim only what the call site can know (`29beb26`): `kleidiai: no kernel for tensor type Q3_K, not accelerated by KleidiAI (kernels available for Q4_0 and Q8_0)`, with a note that it can fire during graph planning. |
-| 2026-07-21 | **Approved by `chaxu01` and by `taronaeo`.** Open and awaiting merge at the time of writing. |
+| 2026-07-21 | Approved by `chaxu01`, then by `taronaeo` and `am17an`. |
+| 2026-07-21 | **Merged** by `taronaeo` as commit `fb0e6b6`. The warning now ships to every llama.cpp user. |
 
 Both rounds of review were narrowing an over-broad claim to what the code can actually prove -
 the same discipline the three-arm ablation exists to enforce in this repo, applied by someone else

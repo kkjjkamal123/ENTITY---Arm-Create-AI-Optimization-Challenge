@@ -32,7 +32,7 @@ Shipping an armv8.2+dotprod+KleidiAI backend does nothing for a model the librar
 
 The fallback is silent: no warning, nothing in logcat. (An upstream patch adding a one-time warning
 was contributed from this project in [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701),
-approved 2026-07-21 and awaiting merge.) So a
+merged upstream 2026-07-21 as commit `fb0e6b6`.) So a
 benchmark on a K-quant can run for months while every person involved believes KleidiAI is doing
 the work, and it never executed once.
 
@@ -41,7 +41,7 @@ the work, and it never executed once.
 CMF Phone 1, MediaTek Dimensity 7300, Llama-3.2-1B, PP512, same four-thread unpinned config. The
 only variable is the quantization.
 
-| | Q3_K_L (733 MB, generic ggml) | Q4_0 (773 MB, KleidiAI) | Change |
+| | Q3_K_L (733 MB, no Arm fast path) | Q4_0 (773 MB, Arm fast path) | Change |
 |---|---:|---:|---:|
 | Prompt throughput | 42.7 tok/s | **121 tok/s** | **+183%** |
 | Derived TTFT (512-token prompt) | 12,050 ms | **4,299 ms** | **-64%** |
@@ -58,8 +58,38 @@ predicts, which is why it is believable rather than a fluke.
   773 MB against Q3_K_L's 733 MB, about 6% more bytes, and it lands about 6-13% slower. A better
   kernel cannot help a workload that is waiting on DRAM.
 
-So the honest framing is not "Q4_0 is faster." It is: Q4_0 is what lets Arm's kernels run at all,
-which buys you time-to-first-token, and costs you a little decode.
+So the honest framing is not "Q4_0 is faster." It is: Q4_0 is what lets Arm's fast paths run at
+all, which buys you time-to-first-token, and costs you a little decode.
+
+## What this measures, and what it does not attribute
+
+This experiment changes the quantization and measures the result. It does **not** isolate KleidiAI,
+and the number above should not be read as "KleidiAI is worth +183%."
+
+Moving from Q3_K_L to Q4_0 switches on **two** Arm optimizations at once:
+
+1. KleidiAI's dotprod/i8mm matmul kernels, which exist only for Q4_0 and Q8_0, and
+2. ggml's own Arm **repack** path (`ggml-cpu/arch/arm/repack.cpp`), which re-blocks Q4_0 weights
+   into layouts the Arm dot-product instructions consume efficiently - and which is compiled in
+   whether or not KleidiAI is.
+
+Separating them needs a different experiment: hold the quantization at Q4_0 and build with
+`GGML_CPU_KLEIDIAI` **ON** versus **OFF**. That experiment has not been run on this phone yet, so
+this project does not claim the split.
+
+Two independent measurements suggest the KleidiAI flag contributes little **at Q4_0**:
+
+- [PocketTune](https://github.com/ayanbag/PocketTune) measured a KleidiAI build against an
+  Arm-arch-flags build on a Pixel 7a at Q4_0: 138.4 vs 143.5 tok/s prefill - the KleidiAI build
+  slightly *slower*.
+- [KleidiBench](https://github.com/yannan000/kleidibench) measured ~1.0x at Q4_0 across 13 models
+  on Neoverse N2, and found KleidiAI's real prefill win at **Q8_0 (1.73x)**.
+
+Both are consistent with the structural claim this page is really about, which is unchanged and
+verified in Arm's kernel source: **a K-quant reaches neither path, and nothing tells you.** They
+just mean the +183% above is most likely the repack path and KleidiAI *together*, with the split
+still unmeasured here. The advice to users does not change: if your model is not Q4_0 or Q8_0, you
+are leaving Arm's fast paths on the table.
 
 ## How to check and fix your own app
 

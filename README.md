@@ -118,15 +118,17 @@ Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode st
 
 ### KleidiAI never ran
 
-Arm's KleidiAI ships matmul kernels for Q4_0 and Q8_0 only. Every other quantization, including the whole K quant family, falls back to generic ggml no matter which backend variant loaded. Every benchmark published before v2.1.0 used Q3_K_L, so Arm's kernels never executed. The fallback is silent; a one-time upstream warning is contributed in [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701) (approved by the KleidiAI backend maintainer and a second reviewer on 2026-07-21, awaiting merge), and the full write-up is in [Which GGUF quant actually reaches KleidiAI](docs/KLEIDIAI-QUANTS.md).
+Arm's KleidiAI ships matmul kernels for Q4_0 and Q8_0 only. Every other quantization, including the whole K quant family, falls back to generic ggml no matter which backend variant loaded. Every benchmark published before v2.1.0 used Q3_K_L, so Arm's kernels never executed. The fallback is silent; a one-time upstream warning is contributed in [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701) (**merged upstream 2026-07-21**, commit `fb0e6b6`), and the full write-up is in [Which GGUF quant actually reaches KleidiAI](docs/KLEIDIAI-QUANTS.md).
 
 Same phone, same 512 token prompt, same four thread unpinned config. Only the quantization differs:
 
-| | Q3_K_L, KleidiAI cannot run | Q4_0, KleidiAI runs | Change |
+| | Q3_K_L, no Arm fast path | Q4_0, Arm fast path | Change |
 |---|---:|---:|---:|
 | Prompt throughput | 42.7 tok per s | **121 tok per s** | **+183%** |
 | Time to first token | 12050 ms | **4299 ms** | **-64%** |
 | Decode throughput | 16.9 tok per s | 14.7 tok per s | -13% |
+
+This isolates the **quantization**, not KleidiAI specifically: moving to Q4_0 switches on both KleidiAI's kernels and ggml's Arm repack path at once, and the split between them has not been measured on this phone. Independent measurements suggest the KleidiAI flag adds little at Q4_0 (its clear win is at Q8_0). See [what this does not attribute](docs/KLEIDIAI-QUANTS.md#what-this-measures-and-what-it-does-not-attribute).
 
 ![KleidiAI](benchmarks/plots/kleidiai_prompt_ttft.png)
 
