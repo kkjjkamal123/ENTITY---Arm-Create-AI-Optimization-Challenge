@@ -9,6 +9,7 @@
         <item name="android:textColorPrimary">@color/mono_fg</item>
         <item name="android:textColorSecondary">@color/mono_fg</item>
         <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textColorHint">@color/mono_fg</item>
         <item name="android:fontFamily">monospace</item>
         <item name="android:statusBarColor">@color/mono_bg</item>
         <item name="android:navigationBarColor">@color/mono_bg</item>

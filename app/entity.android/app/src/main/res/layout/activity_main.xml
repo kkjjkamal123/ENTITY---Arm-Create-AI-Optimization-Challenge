@@ -468,6 +468,15 @@
                     android:text="@string/drawer_share" />
             </LinearLayout>
 
+            <TextView
+                android:id="@+id/btn_bench_history"
+                style="@style/Entity.ButtonOutline"
+                android:layout_marginTop="6dp"
+                android:paddingTop="9dp"
+                android:paddingBottom="9dp"
+                android:textSize="10sp"
+                android:text="@string/drawer_bench_history" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

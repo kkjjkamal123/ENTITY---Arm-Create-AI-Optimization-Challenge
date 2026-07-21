@@ -50,7 +50,7 @@ The app is a professional on-device chat interface with:
 - **Persistent, multiple conversations** — chats are stored on-device (SQLite), the last conversation is restored on launch, and a conversation switcher supports rename/delete; restored chats continue seamlessly (the engine re-primes its context from the saved history).
 - **Settings** with an Auto (optimized) master toggle for automatic tuning, plus manual layers for temperature, top-k, top-p, max tokens, context size, and thread count — and an editable system prompt and an Animations toggle.
 - **Live metrics bar and toggleable multi-series graph** — tokens, tok/s, time-to-first-token, temperature, power draw (W), and free memory.
-- **In-app benchmark with a three-arm ablation** (menu drawer → BENCHMARK) — runs the same PP 512 / TG 128 workload three ways: naïve (8 threads, default scheduler), threads-only (the Auto thread count with affinity off, i.e. what an upstream llama.cpp `-t N` run does), and the shipped Auto path (both phases on the frequency-ranked fast cores). The middle arm is what lets the gain be *attributed* — thread count versus core pinning — instead of assumed. It has a 1/3/5 run-count selector, per-metric median ± stddev, thermal cooldown between every pass, TTFT, and CSV export.
+- **In-app benchmark with a three-arm ablation** (menu drawer → BENCHMARK) — runs the same PP 512 / TG 128 workload three ways: naïve (8 threads, default scheduler), threads-only (the Auto thread count with affinity off, i.e. what an upstream llama.cpp `-t N` run does), and the shipped Auto path (both phases on the frequency-ranked fast cores). The middle arm is what lets the gain be *attributed* — thread count versus core pinning — instead of assumed. It has a 1/3/5 run-count selector, per-metric median ± stddev, thermal cooldown between every pass, TTFT, and CSV export. Every finished run is autosaved on the phone (v3.1.0), with a history screen to reopen, copy, re-export or delete any past run.
 - **Light / Dark / System themes** and a theme-aware app-icon switcher.
 - **Model info card** that reads the GGUF header to show parameters, quantization, architecture, and computed context window.
 
@@ -152,9 +152,10 @@ Prompt eval is a compute-bound GEMM, which is what KleidiAI is built for. Decode
 memory-bandwidth-bound - it tracks bytes-per-weight, not kernel quality - so it does not improve;
 Q4_0 is ~6% more bytes and lands slightly slower. ENTITY now reads the GGUF header and tells the
 user whether their model can reach Arm's kernels, rather than printing "KleidiAI" regardless. The
-silent fallback itself is proposed for a one-time upstream warning in
-[llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701), and the finding is written
-up as a standalone guide in [`docs/KLEIDIAI-QUANTS.md`](docs/KLEIDIAI-QUANTS.md).
+silent fallback itself was fixed upstream from this project in
+[llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701), which adds the one-time
+warning and is approved and awaiting merge (see *Upstream contribution* below), and the finding is
+written up as a standalone guide in [`docs/KLEIDIAI-QUANTS.md`](docs/KLEIDIAI-QUANTS.md).
 
 **2. Widening prompt processing to all cores was a regression.** Auto used to give prompt eval every
 online core, assuming a compute-bound phase wants all the hardware. An A55 is about a third of an
@@ -333,9 +334,38 @@ ENTITY was **newly created during the hackathon submission period**, built from 
 - **v3.0.1** (2026-07-20): performance fix - in-chat decode fell from ~18 to ~14 tok/s whenever the live metrics graph (or stats bar) was visible, because the metrics pipeline ran per generated token on the main thread (three binder IPCs + a seven-series graph redraw per token) and competed with the decode threads pinned to the big cores. Metrics now sample on a fixed 500 ms clock (graph window becomes time-based: ~60 s), restoring benchmark-level in-chat decode. Engine, thread derivation and pinning untouched (`apk/ENTITY-v14-metrics-sampling-fix-20260720-release.apk`).
 
 - **v3.0.3** (2026-07-20): chat now measures whether the phone is keeping up instead of assuming it can - streaming a reply rebuilds the message's `StaticLayout` on every repaint (full text measurement and line-breaking on the main thread, competing with the pinned decode threads), and previous versions repainted on a fixed clock regardless of whether frames were landing. A live frame-interval measurement (`Choreographer`, generating only) now drives the repaint and telemetry-sample interval directly: a phone holding its refresh rate stays at the floor, one measurably missing frames backs off, and the metrics graph sheds anti-aliasing/fill/smoothing under the same signal. Also fixes auto-scroll fighting a reader scrolled up to re-read, a noisy CPU% reading from too-short a measurement window, and a graph rendering artifact where early-session samples jammed against the right edge instead of filling from the left. No inference-path, thread-derivation or pinning changes; every published CMF and OPPO result carries over (`apk/ENTITY-v16-ui-perf-20260720-release.apk`).
+- **v3.1.0** (2026-07-21): **benchmark history in the chat app.** The in-app benchmark could produce a result and lose it - navigating away, or the system reclaiming the activity behind the file picker, left nothing behind, and the only way to keep a run was to export its CSV in that moment. Both the three-arm ablation and the sustained thermal test now write two files the instant they finish (the same per-pass CSV the export button builds, and the same summary the COPY button emits) plus one line in an `index.jsonl` the list reads, with a history screen reachable from the drawer and from the benchmark screen: newest first, tap to reopen, long-press to delete, copy or re-export any past run, delete-all. Re-exporting an old run is a file copy, so it cannot hit the empty-file failure the live export had to be hardened against in v2.1.0 - there is no in-memory result left to lose. Also fixes back buttons across Settings/About/Benchmark/History, which were ~31 dp tall and announced as "less than" to TalkBack. No inference-path changes (`apk/ENTITY-v17-bench-history-20260721-release.apk`).
+- **ENTITY Bench v1.2.1** (2026-07-21): UI-only pass with no measurement changes, so v1.2.0 and v1.2.1 exports stay directly comparable. The bench app had drifted from the chat app's design language in one very visible way - every MONO surface was still hard-square while the chat app moved to a single 10 dp radius in v3.0.2 - so the two now share one `mono_radius` again. "NO KLEIDIAI" no longer renders as a solid inverted pill: solid inversion is this design's strongest emphasis, and painting the negative state with it made a model that cannot reach Arm's kernels look endorsed; it is now a dashed outline, matching how the chat app's model info card already distinguished the two. Importing a first model shows the same explanatory dialog the chat app does instead of a bare one-row list, the home screen says so rather than ending after the config card when no results exist, and back buttons meet the 48 dp touch-target minimum (`apk/ENTITY-Bench-v1.2.1-release.apk`).
 - **Four-arm benchmark evidence** (2026-07-18): the current benchmark of record - two ENTITY Bench v1.1.0 exports, five runs per arm, Llama-3.2-1B Q4_0, unplugged, raw per-pass CSVs retained (`benchmarks/results/entity_1b-q4_0_unplugged_5run_{cmf,oppo}_20260718.csv`, figure `benchmarks/plots/four_arm_decode_20260718.png`). The thread count earns the multiplier on both devices (+39% CMF, +80% OPPO); pinning's extra return is device-dependent (+21% decode on the Dimensity 7300 with non-overlapping distributions; +1% decode but 2.52 to 1.78 W median power on the Snapdragon 6 Gen 4); the new LITTLE-pinned arm is slower and worse per watt on both phones, closing the "are efficiency cores efficient?" question with data.
 
 **All versions from v1.6.0 onward ship with prebuilt debug and/or release-signed APKs in [`apk/`](apk/)** (see `apk/README.md`) and as copy-paste-ready notes in [`releases/`](releases/), installable via `adb install -r`. Versions 1.0–1.5 are available as debug APKs only.
+
+---
+
+## Upstream contribution
+
+The KleidiAI finding did not stop at this app. The silent fallback that made every pre-v2.1.0
+benchmark here measure generic kernels while believing it measured Arm's is a problem for anyone
+building on ggml, so the fix was proposed upstream rather than kept as a local workaround.
+
+**[llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701) - "kleidiai : warn once
+when a weight type has no KleidiAI kernel."** One-time `GGML_LOG_WARN` when a quantized weight type
+has no KleidiAI kernel, so the fallback announces itself instead of being invisible.
+
+Review history, because the review is the interesting part:
+
+| Date | Event |
+|---|---|
+| 2026-07-15 | Opened against `ggml-org/llama.cpp` (branch `kleidiai-fallback-warning`). |
+| 2026-07-16 | `chaxu01` (Arm, KleidiAI backend maintainer): the warning sat in `supports_op()`, a capability query called speculatively during load and scheduling - it would fire on probes that never execute and burn the one-shot flag before a real fallback. |
+| 2026-07-17 | Moved to `get_tensor_traits()`, which runs per node of a graph actually being computed (`bdf117f`). The original buffer-type guard was dropped as unreachable: unsupported weight types are never placed in the KleidiAI buffer type in the first place. |
+| 2026-07-20 | `chaxu01`: the wording overclaimed. Returning `nullptr` means KleidiAI declined the op, not that a generic CPU fallback ran - another backend may still take it. |
+| 2026-07-20 | Reworded to claim only what the call site can know (`29beb26`): `kleidiai: no kernel for tensor type Q3_K, not accelerated by KleidiAI (kernels available for Q4_0 and Q8_0)`, with a note that it can fire during graph planning. |
+| 2026-07-21 | **Approved by `chaxu01` and by `taronaeo`.** Open and awaiting merge at the time of writing. |
+
+Both rounds of review were narrowing an over-broad claim to what the code can actually prove -
+the same discipline the three-arm ablation exists to enforce in this repo, applied by someone else
+to this project's own patch.
 
 ---
 

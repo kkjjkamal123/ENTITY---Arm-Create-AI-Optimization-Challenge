@@ -13,6 +13,8 @@
     <string name="model_import">Import from device…</string>
     <string name="model_importing">importing…</string>
     <string name="model_picker_title">Select a model</string>
+    <string name="model_add_title">Add a model</string>
+    <string name="model_add_body">No models yet. Import a .gguf file from your storage - ENTITY Bench copies it in for you. No file-manager copying needed.</string>
     <string name="cfg_label">CONFIG</string>
     <string name="mode_ablation">3-ARM</string>
     <string name="mode_sustained">SUSTAINED</string>
@@ -28,7 +30,8 @@
     <string name="open_full_results">OPEN FULL RESULT</string>
     <string name="history_label">HISTORY</string>
     <string name="history_all">ALL RESULTS</string>
-    <string name="home_footer">v1.1.0 · arm64 · no network · results stay on this phone</string>
+    <string name="results_none">No results yet - run a benchmark and it is saved here automatically.</string>
+    <string name="home_footer">arm64 · no network · results stay on this phone</string>
 
     <!-- Run -->
     <string name="run_title">RUNNING</string>
@@ -58,4 +61,6 @@
     <string name="about_body">ENTITY Bench runs one job: a controlled CPU benchmark for local LLMs.\n\nWorkload: llama-bench PP 512 / TG 128 on the model you pick, with a thermal cooldown before every pass.\n\n3-ARM mode is an ablation. naive = 8 threads across all cores. threads-only = the tuned thread count with core pinning off (an upstream llama.cpp -t N run). auto = the tuned count pinned to the performance cores. The middle arm splits the gain between thread count and pinning.\n\nSUSTAINED mode runs threads-only vs auto back-to-back with no cooldown, so you see who throttles first.\n\nPower and tok/W need the phone UNPLUGGED - they are hidden while charging.\n\nEvery result is saved on the device and exportable as raw per-pass CSV. No network, no accounts, nothing leaves the phone.</string>
     <string name="ok">OK</string>
     <string name="cancel">Cancel</string>
+
+    <string name="back">Back</string>
 </resources>

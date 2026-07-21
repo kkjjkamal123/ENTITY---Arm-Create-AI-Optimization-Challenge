@@ -193,6 +193,17 @@ class BenchHomeActivity : AppCompatActivity() {
 
     private fun showModelPicker() {
         val models = scanModels()
+        // Nothing imported yet: explain what a .gguf is doing here rather than showing a
+        // one-row list, which is what the chat app does in the same situation.
+        if (models.isEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.model_add_title)
+                .setMessage(R.string.model_add_body)
+                .setPositiveButton(R.string.model_import) { _, _ -> getContent.launch(arrayOf("*/*")) }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
+            return
+        }
         val labels = models.map {
             val b = it.length()
             val size = if (b >= 1_000_000_000L) "%.2f GB".format(b / 1e9) else "%.0f MB".format(b / 1e6)
@@ -263,7 +274,15 @@ class BenchHomeActivity : AppCompatActivity() {
             val ft = FileType.fromCode(meta?.architecture?.fileType)
             withContext(Dispatchers.Main) {
                 kleidiTv.visibility = View.VISIBLE
-                kleidiTv.text = if (ft.kleidiAiAccelerated) "KLEIDIAI" else "NO KLEIDIAI"
+                val accelerated = ft.kleidiAiAccelerated
+                kleidiTv.text = if (accelerated) "KLEIDIAI" else "NO KLEIDIAI"
+                // Solid inversion is the design's emphasis, so it has to mean "reaching
+                // Arm's kernels". Painting the negative state the same way read as a
+                // badge for a model that is not accelerated at all.
+                kleidiTv.setBackgroundResource(
+                    if (accelerated) R.drawable.bg_fill else R.drawable.bg_dashed
+                )
+                kleidiTv.setTextColor(getColor(if (accelerated) R.color.mono_bg else R.color.mono_fg))
             }
         }
     }
@@ -309,6 +328,8 @@ class BenchHomeActivity : AppCompatActivity() {
         val entries = ResultStore.summaries(this)
         val resultCard = findViewById<View>(R.id.card_result)
         val historyCard = findViewById<View>(R.id.card_history)
+        findViewById<View>(R.id.results_none).visibility =
+            if (entries.isEmpty()) View.VISIBLE else View.GONE
         if (entries.isEmpty()) {
             resultCard.visibility = View.GONE
             historyCard.visibility = View.GONE

@@ -230,6 +230,10 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.closeDrawer(GravityCompat.START)
             shareChat()
         }
+        findViewById<TextView>(R.id.btn_bench_history).setOnClickListener {
+            drawerLayout.closeDrawer(GravityCompat.START)
+            startActivity(Intent(this, BenchHistoryActivity::class.java))
+        }
         findViewById<TextView>(R.id.btn_settings).setOnClickListener {
             drawerLayout.closeDrawer(GravityCompat.START)
             startActivity(Intent(this, SettingsActivity::class.java))

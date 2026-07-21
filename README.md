@@ -10,7 +10,7 @@
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
-![Release](https://img.shields.io/badge/release-v3.0.3-orange)
+![Release](https://img.shields.io/badge/release-v3.1.0-orange)
 ![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
 
 </div>
@@ -62,7 +62,7 @@ This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has t
 4. Persistent local conversations with restore, rename, switch and delete actions.
 5. Auto mode plus manual controls for temperature, top k, top p, completion length, context and threads.
 6. Live statistics and a selectable graph for token count, token rate, TTFT, temperature, power, app CPU utilization and free memory.
-7. In app benchmark with a three arm ablation (naive, threads only, Auto), three run median, population standard deviation, thermal cooldown, decode attribution and CSV export.
+7. In app benchmark with a three arm ablation (naive, threads only, Auto), three run median, population standard deviation, thermal cooldown, decode attribution and CSV export. Every finished run is saved on the phone automatically, with a history screen to reopen, copy, re-export or delete any past run.
 8. Light, dark and system themes plus a theme aware app icon.
 9. GGUF model information including parameters, quantization, architecture and running context.
 
@@ -118,7 +118,7 @@ Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode st
 
 ### KleidiAI never ran
 
-Arm's KleidiAI ships matmul kernels for Q4_0 and Q8_0 only. Every other quantization, including the whole K quant family, falls back to generic ggml no matter which backend variant loaded. Every benchmark published before v2.1.0 used Q3_K_L, so Arm's kernels never executed. The fallback is silent; a one-time upstream warning is proposed in [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701), and the full write-up is in [Which GGUF quant actually reaches KleidiAI](docs/KLEIDIAI-QUANTS.md).
+Arm's KleidiAI ships matmul kernels for Q4_0 and Q8_0 only. Every other quantization, including the whole K quant family, falls back to generic ggml no matter which backend variant loaded. Every benchmark published before v2.1.0 used Q3_K_L, so Arm's kernels never executed. The fallback is silent; a one-time upstream warning is contributed in [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701) (approved by the KleidiAI backend maintainer and a second reviewer on 2026-07-21, awaiting merge), and the full write-up is in [Which GGUF quant actually reaches KleidiAI](docs/KLEIDIAI-QUANTS.md).
 
 Same phone, same 512 token prompt, same four thread unpinned config. Only the quantization differs:
 
@@ -171,7 +171,7 @@ Ninety seconds from clone to chatting, on any arm64 phone with Android 13+:
 ```bash
 git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
 cd ENTITY---Arm-Create-AI-Optimization-Challenge
-adb install -r apk/ENTITY-v16-ui-perf-20260720-release.apk
+adb install -r apk/ENTITY-v17-bench-history-20260721-release.apk
 ```
 
 Then on the phone:

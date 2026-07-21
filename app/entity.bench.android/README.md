@@ -13,14 +13,14 @@
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
-![Release](https://img.shields.io/badge/release-v1.2.0-orange)
+![Release](https://img.shields.io/badge/release-v1.2.1-orange)
 ![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
 
 </div>
 
 ## Navigation
 
-[Home](../../README.md) · [Evidence](../../benchmarks/REPRODUCIBILITY.md) · [Benchmarks](../../benchmarks/BENCHMARKS.md) · [Optimization](../../docs/OPTIMIZATIONS.md) · [Release notes](../../releases/RELEASE-Bench-v1.2.0.md) · [FAQ](../../docs/FAQ.md) · [Contributing](../../docs/CONTRIBUTING.md) · [License](../../LICENSE)
+[Home](../../README.md) · [Evidence](../../benchmarks/REPRODUCIBILITY.md) · [Benchmarks](../../benchmarks/BENCHMARKS.md) · [Optimization](../../docs/OPTIMIZATIONS.md) · [Release notes](../../releases/RELEASE-Bench-v1.2.1.md) · [FAQ](../../docs/FAQ.md) · [Contributing](../../docs/CONTRIBUTING.md) · [License](../../LICENSE)
 
 ## What ENTITY Bench is
 
@@ -140,7 +140,7 @@ Ninety seconds from clone to a saved result, on any arm64 phone with Android 13+
 ```bash
 git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
 cd ENTITY---Arm-Create-AI-Optimization-Challenge
-adb install -r apk/ENTITY-Bench-v1.2.0-release.apk
+adb install -r apk/ENTITY-Bench-v1.2.1-release.apk
 ```
 
 Then on the phone:
@@ -169,7 +169,7 @@ The APK lands at `app/build/outputs/apk/release/app-release.apk`. Without a `key
 2. [Reproducibility](../../benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
 3. [Optimizations](../../docs/OPTIMIZATIONS.md): source level explanation of each runtime decision the arms test.
 4. [Which GGUF quant actually reaches KleidiAI](../../docs/KLEIDIAI-QUANTS.md): the two types Arm's kernels accelerate, and what the rest cost.
-5. [Release notes for v1.2.0](../../releases/RELEASE-Bench-v1.2.0.md): what the rebuild changed and what it deliberately kept.
+5. [Release notes for v1.2.1](../../releases/RELEASE-Bench-v1.2.1.md) and [v1.2.0](../../releases/RELEASE-Bench-v1.2.0.md): what each release changed and what it deliberately kept.
 6. [ENTITY chat app](../../README.md): the assistant these optimizations ship in.
 
 ## License

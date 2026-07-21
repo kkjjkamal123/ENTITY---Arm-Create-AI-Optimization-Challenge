@@ -4,7 +4,8 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-v16-ui-perf-20260720-release.apk` | **3.0.3** (current) | release-signed | 10.3 MB |
+| `ENTITY-v17-bench-history-20260721-release.apk` | **3.1.0** (current) | release-signed | 10.4 MB |
+| `ENTITY-v16-ui-perf-20260720-release.apk` | 3.0.3 | release-signed | 10.3 MB |
 | `ENTITY-v15-benchmark-thread-derivation-20260720-release.apk` | 3.0.2 | release-signed | 10.3 MB |
 | `ENTITY-v14-metrics-sampling-fix-20260720-release.apk` | 3.0.1 | release-signed | 10.3 MB |
 | `ENTITY-v13-mono-ui-refresh-20260718-release.apk` | 3.0.0 | release-signed | 10.3 MB |
@@ -32,9 +33,16 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-Bench-v1.2.0-release.apk` | **1.2.0** (current) | release-signed | 10.2 MB |
+| `ENTITY-Bench-v1.2.1-release.apk` | **1.2.1** (current) | release-signed | 10.2 MB |
+| `ENTITY-Bench-v1.2.0-release.apk` | 1.2.0 | release-signed | 10.2 MB |
 | `ENTITY-Bench-v1.1.0-release.apk` | 1.1.0 | release-signed | 9.7 MB |
 | `ENTITY-Bench-v1.0.0-release.apk` | 1.0.0 | release-signed | 9.9 MB |
+
+v1.2.1 is a UI-only pass with no measurement changes, so its exports stay directly comparable with
+v1.2.0's: the bench app now shares the chat app's single 10 dp corner radius instead of staying
+hard-square, "NO KLEIDIAI" is no longer painted as a solid inverted pill (solid inversion is this
+design's emphasis, and the negative state was wearing it), importing a first model explains itself
+the way the chat app does, and back buttons meet the 48 dp touch-target minimum.
 
 v1.2.0 adds a **thread sweep**: every thread width the device can use, each one pinned to that many
 of its fastest cores and again left to the scheduler, with the winning configuration named. The
@@ -53,7 +61,7 @@ from v1.0.0.
 
 ## Start here
 
-**Recommended**: `ENTITY-v16-ui-perf-20260720-release.apk` is the current release (v3.0.3), release-signed. Streaming repaint and telemetry sampling now back off automatically on a phone measurably missing frames while generating (measured via a live `Choreographer` frame-interval, not text length or device tier), and the metrics graph sheds anti-aliasing/fill/smoothing under the same signal; also fixes auto-scroll fighting a reader scrolled up, a noisy CPU% reading on short intervals, and an early-session graph rendering artifact. No inference-path changes. On top of v3.0.2's rounded corners and benchmark thread-count fix, v3.0.1's fixed-interval metrics sampling, v3.0.0's MONO UI remake, and v2.4.0's inference path: 7 Arm CPU backend variants with automatic runtime selection, KV-cache session reuse, and a topology-derived thread count.
+**Recommended**: `ENTITY-v17-bench-history-20260721-release.apk` is the current release (v3.1.0), release-signed. Every benchmark the app finishes is now saved on the phone automatically - the three-arm ablation and the sustained thermal test both write their per-pass CSV and summary the moment they complete - with a history screen (drawer → BENCHMARK HISTORY, or from the benchmark screen) to reopen, copy, re-export or delete any past run. Back buttons also now meet the 48 dp touch-target minimum and announce properly to TalkBack. No inference-path changes. On top of v3.0.3's frame-aware streaming repaint, v3.0.2's rounded corners and benchmark thread-count fix, v3.0.1's fixed-interval metrics sampling, v3.0.0's MONO UI remake, and v2.4.0's inference path: 7 Arm CPU backend variants with automatic runtime selection, KV-cache session reuse, and a topology-derived thread count.
 
 ## Installation
 

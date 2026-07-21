@@ -31,7 +31,8 @@ which CPU backend variant loaded at startup, and regardless of building with `GG
 Shipping an armv8.2+dotprod+KleidiAI backend does nothing for a model the library has no kernel for.
 
 The fallback is silent: no warning, nothing in logcat. (An upstream patch adding a one-time warning
-is proposed in [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701).) So a
+was contributed from this project in [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701),
+approved 2026-07-21 and awaiting merge.) So a
 benchmark on a K-quant can run for months while every person involved believes KleidiAI is doing
 the work, and it never executed once.
 

@@ -400,6 +400,22 @@
                 android:text="@string/run_cta" />
         </LinearLayout>
 
+        <!-- Shown until the first run exists, so the home screen never just stops
+             after the config card on a cold open. -->
+        <TextView
+            android:id="@+id/results_none"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_dashed"
+            android:padding="16dp"
+            android:gravity="center"
+            android:text="@string/results_none"
+            android:textColor="@color/mono_fg"
+            android:textSize="11sp"
+            android:lineSpacingMultiplier="1.4"
+            android:visibility="gone" />
+
         <!-- Last result -->
         <LinearLayout
             android:id="@+id/card_result"

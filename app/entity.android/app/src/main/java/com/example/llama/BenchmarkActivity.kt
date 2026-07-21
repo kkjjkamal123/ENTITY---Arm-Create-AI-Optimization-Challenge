@@ -207,6 +207,9 @@ class BenchmarkActivity : AppCompatActivity() {
 
         runBtn.setOnClickListener { runBenchmark() }
         sustainedBtn.setOnClickListener { runSustainedBenchmark() }
+        findViewById<View>(R.id.btn_history).setOnClickListener {
+            startActivity(Intent(this, BenchHistoryActivity::class.java))
+        }
         copyBtn.setOnClickListener { copyResult() }
         exportBtn.setOnClickListener { exportCsv() }
         exportBtn.isEnabled = false
@@ -642,6 +645,30 @@ class BenchmarkActivity : AppCompatActivity() {
             appendLine("*derived: PP$PP prompt eval + one decode step")
             appendLine("†prompt row is not an isolated ablation: only auto widens PP to all cores")
         }.trim()
+
+        autosave(BenchHistory.TYPE_ABLATION, n, 0, r.charging, naiveTg, optTg) { buildCsv(r) }
+    }
+
+    // Written the moment the run finishes, before the user can navigate away or the
+    // system can kill this activity behind the file picker. A failure here must never
+    // take the result off the screen, so it only toasts.
+    private fun autosave(
+        type: String,
+        runs: Int,
+        durationMin: Int,
+        charging: Boolean,
+        naiveTg: Double,
+        autoTg: Double,
+        csv: () -> String,
+    ) {
+        val text = lastResultText ?: return
+        val ok = runCatching {
+            BenchHistory.save(
+                this, type, modelTv.text.toString(), runs, durationMin, charging,
+                naiveTg, autoTg, csv(), text,
+            )
+        }.getOrDefault(false)
+        if (!ok) Toast.makeText(this, R.string.bench_save_failed, Toast.LENGTH_SHORT).show()
     }
 
     // Threads-only vs Auto, back-to-back, no cooldown inside a block. If pinning only
@@ -693,6 +720,13 @@ class BenchmarkActivity : AppCompatActivity() {
             appendLine("threads-only thermal: " + r.threadsOnly.runs.joinToString("  ") { thermalLabel(it.peakThermalStatus) })
             appendLine("auto        thermal: " + r.opt.runs.joinToString("  ") { thermalLabel(it.peakThermalStatus) })
         }.trim()
+
+        // No naive arm here, so the list shows the sustained decode trend instead of a
+        // delta over naive - naiveTg stays 0 and the row renders "SUST".
+        autosave(
+            BenchHistory.TYPE_SUSTAINED, passCount, r.durationMin, isCharging(),
+            0.0, stat(optTg).median,
+        ) { buildSustainedCsv(r) }
     }
 
     private fun cells(s: List<Stat>) = s.map { cellStat(it) }.toTypedArray()

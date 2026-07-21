@@ -63,6 +63,11 @@
             android:name=".BenchmarkActivity"
             android:exported="false"
             android:parentActivityName=".MainActivity" />
+
+        <activity
+            android:name=".BenchHistoryActivity"
+            android:exported="false"
+            android:parentActivityName=".BenchmarkActivity" />
     </application>
 
 </manifest>

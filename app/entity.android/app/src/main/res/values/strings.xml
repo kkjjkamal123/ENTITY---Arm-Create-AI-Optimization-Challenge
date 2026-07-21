@@ -22,6 +22,7 @@
     <string name="drawer_tools">TOOLS</string>
     <string name="drawer_benchmark">BENCHMARK</string>
     <string name="drawer_share">SHARE CHAT</string>
+    <string name="drawer_bench_history">BENCHMARK HISTORY</string>
     <string name="drawer_settings">SETTINGS</string>
     <string name="drawer_about">ABOUT</string>
     <string name="conv_untitled">Untitled</string>
@@ -129,4 +130,21 @@
     <string name="bench_runs_label">RUNS PER CONFIG</string>
     <string name="bench_duration_label">SUSTAINED DURATION (MIN)</string>
     <string name="bench_workload">PP 512 / TG 128 · cooldown before every pass</string>
+    <string name="bench_history">HISTORY</string>
+    <string name="bench_save_failed">Could not save this run to history</string>
+
+    <!-- Benchmark history -->
+    <string name="history_title">HISTORY</string>
+    <string name="history_empty">No saved benchmarks yet.\nEvery run you finish is kept here automatically.</string>
+    <string name="history_delete">DELETE THIS RUN</string>
+    <string name="history_delete_confirm">Delete this saved benchmark? The CSV kept on the phone goes with it.</string>
+    <string name="history_clear">DELETE ALL SAVED RUNS</string>
+    <string name="history_clear_confirm">Delete every saved benchmark on this phone? This cannot be undone.</string>
+    <string name="history_deleted">Deleted</string>
+    <string name="history_load_failed">That saved run could not be read</string>
+    <string name="history_sustained_tag">SUST</string>
+    <string name="history_delta_caption">decode vs naïve</string>
+    <string name="history_sustained_caption">no cooldown</string>
+
+    <string name="back">Back</string>
 </resources>

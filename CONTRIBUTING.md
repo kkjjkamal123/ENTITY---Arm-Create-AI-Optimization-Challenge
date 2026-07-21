@@ -1,6 +1,6 @@
 # CONTRIBUTING
 
-How to pick this project up and keep going with it. Read [`ARCHITECTURE.md`](ARCHITECTURE.md) first
+How to pick this project up and keep going with it. Read [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) first
 if you haven't — this file assumes you know the shape of the codebase.
 
 ## Repo layout
@@ -21,7 +21,7 @@ github.md                hackathon submission write-up
 ```
 
 The app **only** builds from inside a llama.cpp checkout (`examples/entity.android/`) — see
-[`BUILD.md`](BUILD.md) before touching the native layer.
+[`BUILD.md`](docs/BUILD.md) before touching the native layer.
 
 ## Coding conventions observed in this codebase
 
@@ -112,7 +112,7 @@ mean ± stddev for a reason; phone thermal state and background load both move t
 
 - **Stripped release build.** The APKs in `apk/` are all debug builds (~100 MB, symbols not
   stripped). Producing and publishing a `assembleRelease` build (see
-  [`BUILD.md`](BUILD.md#3-build)) would give a materially smaller download — good first PR.
+  [`BUILD.md`](docs/BUILD.md#3-build)) would give a materially smaller download — good first PR.
 - **System-prompt / KV-cache reuse across turns.** `processSystemPrompt` currently re-decodes the
   system prompt into the KV cache once per conversation, which is correct, but there's no
   persistence across app restarts or model switches. Caching/reusing a warmed KV state (or at
@@ -122,11 +122,11 @@ mean ± stddev for a reason; phone thermal state and background load both move t
   save/restore (`llama_state_*` APIs) can skip redundant prefix work.
 - **More devices.** `build_fast_cpu_set()` is already SoC-agnostic (ranks by live `cpufreq`), but
   the compiled backend (`GGML_CPU_ARM_ARCH`) is not — see
-  [`BUILD.md`](BUILD.md#device-specific-configuration-adapting-ggml_cpu_arm_arch). Validating on a
+  [`BUILD.md`](docs/BUILD.md#device-specific-configuration-adapting-ggml_cpu_arm_arch). Validating on a
   second big.LITTLE SoC (different vendor/core mix) would be strong evidence the approach
   generalizes, not just tunes to one phone.
 - **Realtime priority, done safely.** See
-  [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md#5-big-core-pinning-under-contention--app-vs-cli-read-this-one-carefully)
+  [`OPTIMIZATIONS.md`](docs/OPTIMIZATIONS.md#5-big-core-pinning-under-contention--app-vs-cli-read-this-one-carefully)
   for why the app doesn't currently request `SCHED_RR`. If you want to explore it, gate it behind
   an explicit user opt-in and a short burst (not the whole generation), and test across multiple
   OEM skins — some restrict realtime scheduling for non-system UIDs.
@@ -139,11 +139,11 @@ mean ± stddev for a reason; phone thermal state and background load both move t
 
 ## Where to look before asking
 
-- Native behavior questions → [`ARCHITECTURE.md`](ARCHITECTURE.md) and read `ai_chat.cpp` directly;
+- Native behavior questions → [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) and read `ai_chat.cpp` directly;
   it's ~680 lines and single-file.
-- "Is X actually true about the app?" → [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md) is written to be
+- "Is X actually true about the app?" → [`OPTIMIZATIONS.md`](docs/OPTIMIZATIONS.md) is written to be
   checkable against the source; if a doc and the code disagree, the code wins — please file an
   issue/PR fixing the doc.
-- Build/toolchain issues → [`BUILD.md`](BUILD.md#common-build-issues).
+- Build/toolchain issues → [`BUILD.md`](docs/BUILD.md#common-build-issues).
 - What changed and when → `CHANGELOG.md` (per-version, with a "File comparison" section per
   release showing exactly which files moved).

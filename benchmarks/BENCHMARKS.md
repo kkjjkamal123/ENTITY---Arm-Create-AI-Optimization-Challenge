@@ -43,7 +43,7 @@ Each arm logs the CPU mask the kernel actually applied (`effective cpus` in logc
 
 ## The current result: four-arm exports (ENTITY Bench v1.1.0, 2026-07-18)
 
-The standalone [ENTITY Bench](../apk/ENTITY-Bench-v1.2.0-release.apk) app runs a fourth
+The standalone [ENTITY Bench](../apk/ENTITY-Bench-v1.2.1-release.apk) app runs a fourth
 arm the chat app's three-arm ablation never had (these exports were taken with v1.1.0): **efficiency** — the same four threads as Auto,
 but pinned to the LITTLE cluster instead of the performance cluster. It exists to measure what the
 slow cores can and cannot do, so the affinity policy is chosen from data rather than assumption.
@@ -417,11 +417,14 @@ to it, and the pinned arm's three passes span just 0.2 tok/s.
 ## Contribute a device result
 
 The easiest path is the standalone [ENTITY Bench](../app/entity.bench.android/README.md) APK
-([`apk/ENTITY-Bench-v1.2.0-release.apk`](../apk/ENTITY-Bench-v1.2.0-release.apk)). It is a dedicated
+([`apk/ENTITY-Bench-v1.2.1-release.apk`](../apk/ENTITY-Bench-v1.2.1-release.apk)). It is a dedicated
 benchmark app with no chat: you import a GGUF via the file picker, run the same three-arm ablation on an
 unplugged, cooled phone, and tap **Export CSV** on the result page. Every result is autosaved on the
 device, so the CSV can also be exported later from the app's history. There is nothing to set up in the
 chat app and no model to import twice.
+
+The chat app's own benchmark keeps a history too as of v3.1.0, so a run made there can be re-exported
+later instead of only at the moment it finishes.
 
 Use [device-result-template.csv](device-result-template.csv) for a result from another arm64 Android
 phone, and commit the raw exported CSV beside it. Keep the model, quantization, app version,

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- One radius for every MONO surface, matching the chat app so the two read as one
+         family. Sections, buttons and dialogs share it, so a pressed control keeps the
+         same silhouette as the box it inverts from. -->
+    <dimen name="mono_radius">10dp</dimen>
+</resources>
