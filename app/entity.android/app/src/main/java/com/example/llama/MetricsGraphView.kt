@@ -65,6 +65,22 @@ class MetricsGraphView @JvmOverloads constructor(
     private var fillEnabled = false
     private var smoothEnabled = false
 
+    // Set when the phone is measurably not keeping up. Anti-aliasing, the area fill and
+    // curve smoothing are the expensive parts of this view, and they are what gets given
+    // up first so the cycles go to decode instead. A phone that holds its frame rate is
+    // never put in this mode and never loses the nicer rendering.
+    private var strained = false
+
+    fun setStrained(value: Boolean) {
+        if (strained == value) return
+        strained = value
+        linePaint.isAntiAlias = !value
+        fillPaint.isAntiAlias = !value
+        gridPaint.isAntiAlias = !value
+        textPaint.isAntiAlias = !value
+        invalidate()
+    }
+
     fun setStyle(fill: Boolean, smooth: Boolean) {
         if (fillEnabled != fill || smoothEnabled != smooth) {
             fillEnabled = fill
@@ -147,10 +163,15 @@ class MetricsGraphView @JvmOverloads constructor(
             canvas.drawLine(padX, y, w - padX, y, gridPaint)
         }
 
-        val stepX = (w - 2 * padX) / (cap - 1).toFloat()
+        // Spread whatever samples exist across the full width instead of pinning them to
+        // 120 fixed slots. Anchoring to the buffer capacity drew the first minute of a
+        // session as a spike jammed against the right edge, which read as a broken chart
+        // rather than a filling one.
+        val filled = active.maxOfOrNull { it.values.size } ?: return
+        val stepX = (w - 2 * padX) / (filled - 1).coerceAtLeast(1).toFloat()
         val fancy = Anim.enabled(context)
-        val useFill = fillEnabled && fancy
-        val useSmooth = smoothEnabled && fancy
+        val useFill = fillEnabled && fancy && !strained
+        val useSmooth = smoothEnabled && fancy && !strained
         for (s in active) {
             val n = s.values.size
             if (n < 2) continue
@@ -162,7 +183,7 @@ class MetricsGraphView @JvmOverloads constructor(
             }
             val range = if (mx - mn < 1e-6f) 1f else mx - mn
             path.reset()
-            var idx = cap - n
+            var idx = filled - n
             var first = true
             var firstX = 0f
             var px = 0f

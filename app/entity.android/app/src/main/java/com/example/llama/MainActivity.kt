@@ -89,6 +89,18 @@ class MainActivity : AppCompatActivity() {
     private var lastSampleMs = 0L
     private var lastProcessCpuMs = 0L
     private var lastProcessCpuWallMs = 0L
+    // Last CPU% actually measured over a long enough window. snapMetrics() is called
+    // from three places on three different cadences (the 500 ms sampler, the chips,
+    // and refreshStatsBar at generation end); if each one consumed the accumulator it
+    // would measure over whatever sliver of time happened to separate two callers and
+    // they would disagree wildly. Only a window of at least CPU_WINDOW_MIN_MS advances
+    // the baseline; everything else reads this value.
+    private var lastCpuPercent = 0.0
+
+    // Main-thread frame health while generating; drives renderInterval().
+    private var frameIntervalMs = 0.0
+    private var lastFrameNs = 0L
+    private var frameCallback: android.view.Choreographer.FrameCallback? = null
 
     // Rolling window to smooth the noisy instantaneous battery-current reading.
     private val wattsWindow = ArrayDeque<Double>()
@@ -333,6 +345,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun onGenPhase(phase: ChatViewModel.GenPhase) {
         val generating = phase != ChatViewModel.GenPhase.IDLE
+        if (generating) startFrameWatch() else stopFrameWatch()
         setSendMode(generating)
         userInputEt.isEnabled = isModelReady && !generating
         keepScreenOn(generating && prefs.getBoolean(Settings.KEY_KEEP_ON, Settings.DEF_KEEP_ON))
@@ -371,17 +384,21 @@ class MainActivity : AppCompatActivity() {
         val now = SystemClock.elapsedRealtime()
 
         val last = vm.messages.size - 1
-        if (last >= 0 && !vm.messages[last].isUser && now - lastRenderMs >= RENDER_INTERVAL_MS) {
+        if (last >= 0 && !vm.messages[last].isUser && now - lastRenderMs >= renderInterval()) {
             lastRenderMs = now
+            // Follow the stream only while the reader is already at the bottom. Scrolling
+            // unconditionally fights anyone who scrolled up to re-read, and it forces a
+            // layout pass on every tick even when the tail is off-screen.
+            val atBottom = !messagesRv.canScrollVertically(1)
             messageAdapter.notifyItemChanged(last, MessageAdapter.PAYLOAD_TEXT)
-            messagesRv.scrollToPosition(last)
+            if (atBottom) messagesRv.scrollToPosition(last)
         }
 
         // Metrics run on a fixed clock, never per token: snapMetrics() costs three
         // binder IPCs and addSample() a full graph redraw, and per-token they steal
         // big-core time from the pinned decode threads (measured 18 -> 14 tok/s
         // with the graph visible).
-        if (now - lastSampleMs < SAMPLE_INTERVAL_MS) return
+        if (now - lastSampleMs < sampleInterval()) return
         val statsVisible = prefs.getBoolean(Settings.KEY_SHOW_STATS, false)
         val graphVisible = graph.visibility == View.VISIBLE
         val chipsDue = now - lastChipMs >= CHIP_INTERVAL_MS
@@ -391,6 +408,7 @@ class MainActivity : AppCompatActivity() {
         if (chipsDue) { updateChips(snap); lastChipMs = now }
         if (statsVisible) updateStatsBar(snap, s)
         if (graphVisible) {
+            graph.setStrained(strained())
             graph.addSample(
                 s.tokens.toFloat(), speed(s).toFloat(), ttftMs(s).toFloat(),
                 snap.temp.toFloat(), snap.watts.toFloat(), snap.cpuPercent.toFloat(), snap.gb.toFloat()
@@ -899,7 +917,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateChips(snap: Snap) {
-        chipTemp.text = if (snap.temp > 0) "%.0f°C".format(snap.temp) else "—°C"
+        chipTemp.text = if (snap.temp > 0) "%.0f°C".format(snap.temp) else "-°C"
         chipMem.text = "%.1fGB free".format(snap.gb)
     }
 
@@ -930,6 +948,66 @@ class MainActivity : AppCompatActivity() {
         if (s.firstTokenMs == 0L) 0L else s.firstTokenMs - s.startMs
 
     // One battery read per tick, shared by the stats bar and the graph.
+    // How fast to repaint the streaming reply. Setting text on a growing message rebuilds
+    // the whole StaticLayout - measuring and line-breaking every character again, on the
+    // main thread, while the decode threads are pinned to the same cores - and that cost
+    // grows with the reply.
+    //
+    // The pace is derived from measurement, not from the length of the text and not from a
+    // device tier. Text length is only a proxy for cost, and it is a bad one: the same
+    // 5,000 characters that stall a budget phone are nothing to a flagship, so backing off
+    // by length would slow down hardware that was keeping up perfectly well. What actually
+    // matters is whether this phone is still hitting its frames, so that is what is
+    // measured. A device that never drops one runs at the floor interval forever and is
+    // never penalised for someone else's slow hardware.
+    private fun renderInterval(): Long {
+        val frame = frameIntervalMs
+        if (frame <= 0.0 || frame <= FRAME_BUDGET_MS) return RENDER_INTERVAL_MS
+        return (RENDER_INTERVAL_MS * (frame / FRAME_BUDGET_MS)).toLong()
+            .coerceIn(RENDER_INTERVAL_MS, RENDER_INTERVAL_MAX_MS)
+    }
+
+    // True once this phone is measurably behind: frames are landing slower than 30 a
+    // second while generating. Everything decorative is shed at this point - graph
+    // anti-aliasing, the area fill, curve smoothing - and the telemetry sampler halves
+    // its rate, so the cycles go to decode instead of to the picture of decode.
+    private fun strained() = frameIntervalMs > FRAME_STRAINED_MS
+
+    private fun sampleInterval() =
+        if (strained()) SAMPLE_INTERVAL_SLOW_MS else SAMPLE_INTERVAL_MS
+
+    // Rolling mean of the interval between rendered frames, sampled only while generating.
+    // At 120 Hz a healthy phone reports ~8 ms and at 60 Hz ~17 ms; congestion shows up here
+    // as the interval stretching, whatever the cause.
+    private fun startFrameWatch() {
+        if (frameCallback != null) return
+        lastFrameNs = 0L
+        frameIntervalMs = 0.0
+        val cb = object : android.view.Choreographer.FrameCallback {
+            override fun doFrame(frameTimeNanos: Long) {
+                if (frameCallback !== this) return
+                if (lastFrameNs != 0L) {
+                    val dt = (frameTimeNanos - lastFrameNs) / 1_000_000.0
+                    // A still screen produces no frames at all, so a long gap means idle
+                    // rather than congestion. Ignore those instead of reading them as jank.
+                    if (dt in 0.0..FRAME_GAP_IDLE_MS) {
+                        frameIntervalMs =
+                            if (frameIntervalMs == 0.0) dt else frameIntervalMs * 0.8 + dt * 0.2
+                    }
+                }
+                lastFrameNs = frameTimeNanos
+                android.view.Choreographer.getInstance().postFrameCallback(this)
+            }
+        }
+        frameCallback = cb
+        android.view.Choreographer.getInstance().postFrameCallback(cb)
+    }
+
+    private fun stopFrameWatch() {
+        frameCallback?.let { android.view.Choreographer.getInstance().removeFrameCallback(it) }
+        frameCallback = null
+    }
+
     private fun snapMetrics(): Snap {
         val intent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val tenths = intent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1) ?: -1
@@ -951,14 +1029,16 @@ class MainActivity : AppCompatActivity() {
         val now = SystemClock.elapsedRealtime()
         val cpuMs = android.os.Process.getElapsedCpuTime()
         val elapsedMs = now - lastProcessCpuWallMs
-        val cpuPercent = if (lastProcessCpuWallMs > 0L && elapsedMs > 0L) {
-            (cpuMs - lastProcessCpuMs).coerceAtLeast(0L) * 100.0 / elapsedMs
-        } else {
-            0.0
+        if (lastProcessCpuWallMs == 0L) {
+            // First call establishes the baseline; there is no interval to divide by yet.
+            lastProcessCpuWallMs = now
+            lastProcessCpuMs = cpuMs
+        } else if (elapsedMs >= CPU_WINDOW_MIN_MS) {
+            lastCpuPercent = (cpuMs - lastProcessCpuMs).coerceAtLeast(0L) * 100.0 / elapsedMs
+            lastProcessCpuWallMs = now
+            lastProcessCpuMs = cpuMs
         }
-        lastProcessCpuWallMs = now
-        lastProcessCpuMs = cpuMs
-        return Snap(temp, watts, cpuPercent, gb)
+        return Snap(temp, watts, lastCpuPercent, gb)
     }
 
     private fun availableGb(): Double {
@@ -994,5 +1074,20 @@ class MainActivity : AppCompatActivity() {
         private const val CHIP_INTERVAL_MS = 1000L
         private const val SAMPLE_INTERVAL_MS = 500L
         private const val WATTS_WINDOW = 5
+        // Shortest interval a process-CPU reading is measured over. Below this the delta
+        // is dominated by scheduling noise and reads as a nonsense percentage.
+        private const val CPU_WINDOW_MIN_MS = 400L
+        // Slowest streaming repaint allowed, reached only on a phone that is already
+        // missing frames. Still four repaints a second, which reads as streaming.
+        private const val RENDER_INTERVAL_MAX_MS = 250L
+        // A frame interval at or under this counts as keeping up. 20 ms is just past the
+        // 60 Hz period, so a 60 Hz phone holding its refresh rate and any faster panel
+        // both sit inside it and never back off.
+        private const val FRAME_BUDGET_MS = 20.0
+        // Longer than this is an idle screen producing no frames, not a slow one.
+        private const val FRAME_GAP_IDLE_MS = 200.0
+        // Past this the phone is under 30 fps and decoration starts getting shed.
+        private const val FRAME_STRAINED_MS = 33.0
+        private const val SAMPLE_INTERVAL_SLOW_MS = 1000L
     }
 }

@@ -4,7 +4,8 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-v15-benchmark-thread-derivation-20260720-release.apk` | **3.0.2** (current) | release-signed | 10.3 MB |
+| `ENTITY-v16-ui-perf-20260720-release.apk` | **3.0.3** (current) | release-signed | 10.3 MB |
+| `ENTITY-v15-benchmark-thread-derivation-20260720-release.apk` | 3.0.2 | release-signed | 10.3 MB |
 | `ENTITY-v14-metrics-sampling-fix-20260720-release.apk` | 3.0.1 | release-signed | 10.3 MB |
 | `ENTITY-v13-mono-ui-refresh-20260718-release.apk` | 3.0.0 | release-signed | 10.3 MB |
 | `ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk` | 2.4.0 | release-signed | 10.3 MB |
@@ -52,7 +53,7 @@ from v1.0.0.
 
 ## Start here
 
-**Recommended**: `ENTITY-v15-benchmark-thread-derivation-20260720-release.apk` is the current release (v3.0.2), release-signed. It rounds every MONO surface to a single 10 dp radius — sections, cards, chat bubbles, buttons and dialogs — and corrects the in-app benchmark's generation thread count, which restated the topology rule instead of using it and so diverged from the engine on devices with more than four performance cores; chat speed is unchanged. On top of v3.0.1's fixed-interval metrics sampling, v3.0.0's MONO UI remake, and v2.4.0's inference path: 7 Arm CPU backend variants with automatic runtime selection, KV-cache session reuse, and a topology-derived thread count.
+**Recommended**: `ENTITY-v16-ui-perf-20260720-release.apk` is the current release (v3.0.3), release-signed. Streaming repaint and telemetry sampling now back off automatically on a phone measurably missing frames while generating (measured via a live `Choreographer` frame-interval, not text length or device tier), and the metrics graph sheds anti-aliasing/fill/smoothing under the same signal; also fixes auto-scroll fighting a reader scrolled up, a noisy CPU% reading on short intervals, and an early-session graph rendering artifact. No inference-path changes. On top of v3.0.2's rounded corners and benchmark thread-count fix, v3.0.1's fixed-interval metrics sampling, v3.0.0's MONO UI remake, and v2.4.0's inference path: 7 Arm CPU backend variants with automatic runtime selection, KV-cache session reuse, and a topology-derived thread count.
 
 ## Installation
 

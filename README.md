@@ -10,7 +10,7 @@
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
-![Release](https://img.shields.io/badge/release-v3.0.2-orange)
+![Release](https://img.shields.io/badge/release-v3.0.3-orange)
 ![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
 
 </div>
@@ -171,7 +171,7 @@ Ninety seconds from clone to chatting, on any arm64 phone with Android 13+:
 ```bash
 git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
 cd ENTITY---Arm-Create-AI-Optimization-Challenge
-adb install -r apk/ENTITY-v15-benchmark-thread-derivation-20260720-release.apk
+adb install -r apk/ENTITY-v16-ui-perf-20260720-release.apk
 ```
 
 Then on the phone:

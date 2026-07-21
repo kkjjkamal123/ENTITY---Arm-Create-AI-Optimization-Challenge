@@ -3,12 +3,12 @@
     <string name="home_sub">on-device LLM chat</string>
 
     <!-- Header / chat -->
-    <string name="no_model">NO MODEL — tap to load one</string>
+    <string name="no_model">NO MODEL - tap to load one</string>
     <string name="hint_pick_model">Select a model to start</string>
     <string name="hint_type_message">Message ENTITY…</string>
     <string name="priming_context">Preparing conversation…</string>
     <string name="empty_tagline">fully offline · on-device AI</string>
-    <string name="empty_hint_no_model">TAP THE MENU AND PICK A MODEL\nany .gguf works — import it once, it stays</string>
+    <string name="empty_hint_no_model">TAP THE MENU AND PICK A MODEL\nany .gguf works - import it once, it stays</string>
     <string name="empty_hint_ready">MODEL READY\nsend a message to begin</string>
     <string name="send">Send</string>
     <string name="stop">Stop</string>
@@ -31,7 +31,7 @@
     <string name="model_picker_title">Select a model</string>
     <string name="model_import">Import from device…</string>
     <string name="model_add_title">Add a model</string>
-    <string name="model_add_body">No models yet. Import a .gguf file from your storage — ENTITY copies it in for you. No file-manager copying needed.</string>
+    <string name="model_add_body">No models yet. Import a .gguf file from your storage - ENTITY copies it in for you. No file-manager copying needed.</string>
 
     <!-- Settings -->
     <string name="settings_title">SETTINGS</string>
@@ -48,7 +48,7 @@
     <string name="settings_anim">Animations</string>
     <string name="settings_anim_desc">Fade-in messages and the typing indicator. Off = fully static.</string>
     <string name="settings_icon">App icon</string>
-    <string name="icon_auto">Auto — match phone theme</string>
+    <string name="icon_auto">Auto - match phone theme</string>
     <string name="icon_black">Black background</string>
     <string name="icon_white">White background</string>
 
@@ -56,7 +56,7 @@
     <string name="settings_show_stats">Stats bar</string>
     <string name="settings_show_stats_desc">One line under the header: tokens, speed, TTFT, temperature, power, CPU, memory.</string>
     <string name="settings_show_graph">Metrics graph</string>
-    <string name="settings_show_graph_desc">Live colour line graph while generating — the one colour surface in the app.</string>
+    <string name="settings_show_graph_desc">Live colour line graph while generating - the one colour surface in the app.</string>
     <string name="graph_style_label">GRAPH STYLE</string>
     <string name="graph_fill">Fill area</string>
     <string name="graph_smooth">Smooth lines</string>
@@ -99,7 +99,7 @@
     <string name="settings_clear_desc">Deletes every chat on this phone. Models stay.</string>
     <string name="settings_clear_confirm">Delete ALL conversations? This cannot be undone. Imported models are not touched.</string>
     <string name="models_none">No models imported yet.</string>
-    <string name="model_active_block">This model is currently loaded — switch models first, then delete it.</string>
+    <string name="model_active_block">This model is currently loaded - switch models first, then delete it.</string>
     <string name="model_delete_confirm">Delete %1$s (%2$s)? You would need to import it again.</string>
 
     <string name="about_title">ABOUT</string>

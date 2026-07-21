@@ -299,7 +299,7 @@ class BenchmarkActivity : AppCompatActivity() {
             val opt = runConfig("Optimized", "optimized", OPT_THREADS_AUTO, true, nRuns, ctx, v, coolTargetC)
 
             if (listOf(naive, threadsOnly, opt).any { stat(it.runs.map { p -> p.tg }).n == 0 }) {
-                error("Engine returned no timing — try again.")
+                error("Engine returned no timing - try again.")
             }
             return Result(naive, threadsOnly, opt, charging, baselineC, benchmarkStartThermalStatus)
         } finally {
@@ -359,7 +359,7 @@ class BenchmarkActivity : AppCompatActivity() {
                 runSustainedConfig("Threads only", "threads_only", autoGenThreads(), false, ctx, v, coolTargetC, durationMs)
             val opt = runSustainedConfig("Optimized", "optimized", OPT_THREADS_AUTO, true, ctx, v, coolTargetC, durationMs)
             if (threadsOnly.runs.isEmpty() || opt.runs.isEmpty()) {
-                error("Engine returned no timing — try again.")
+                error("Engine returned no timing - try again.")
             }
             return SustainedResult(threadsOnly, opt, (durationMs / 60_000L).toInt())
         } finally {

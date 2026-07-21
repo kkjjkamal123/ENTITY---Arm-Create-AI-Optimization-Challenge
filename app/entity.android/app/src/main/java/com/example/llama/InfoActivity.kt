@@ -50,7 +50,7 @@ class InfoActivity : AppCompatActivity() {
 
             LIVE METRICS
             Tokens, tokens/sec, time-to-first-token, temperature, power draw (W), app CPU and
-            free memory — a stats bar and an overlayable graph, each series toggleable.
+            free memory - a stats bar and an overlayable graph, each series toggleable.
 
             WHY Q4_0 WINS ON THIS CPU
             The 4-bit dotprod kernel path is better optimized on Arm than a "smaller" 3-bit

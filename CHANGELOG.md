@@ -9,6 +9,47 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [3.0.3] - 2026-07-20
+
+**Chat now measures whether the phone is keeping up, instead of assuming it can.** Streaming a
+reply rebuilds the message's `StaticLayout` on every repaint - full text measurement and
+line-breaking, on the main thread, competing with the four decode threads pinned to the same
+cores. Previous versions repainted on a fixed 120 ms clock regardless of whether frames were
+landing. A live frame-interval measurement (a `Choreographer` callback running only while
+generating) now drives that interval directly: a phone holding its refresh rate stays at the
+floor, one measurably missing frames backs off to a slower repaint and a slower telemetry sample,
+and the metrics graph sheds anti-aliasing, area fill and curve smoothing under the same signal.
+
+### Added
+
+- **Frame-health measurement while generating** (`renderInterval()`, `strained()` in
+  `MainActivity`). The pace is derived from measured frame interval, not text length or a device
+  tier - length is a bad proxy (the same reply that stalls a budget phone is nothing to a
+  flagship), and a device that never drops a frame runs at the floor interval forever.
+  `MetricsGraphView.setStrained()` drops anti-aliasing, fill and smoothing under the same signal
+  so the cycles go to decode instead of to the picture of decode.
+
+### Fixed
+
+- **Chat auto-scroll now follows the stream only while the reader is already at the bottom**,
+  instead of calling `scrollToPosition` on every repaint - stops fighting anyone scrolled up to
+  re-read, and skips a layout pass when the tail is off-screen.
+- **Process CPU% is now measured over a minimum 400 ms window** (`CPU_WINDOW_MIN_MS`) instead of
+  every call; a call inside that window reuses the last measured value rather than dividing by a
+  near-zero interval and reading as a nonsense percentage.
+- **Metrics graph now plots samples across the full width of whatever data exists**, instead of
+  anchoring to the 120-slot buffer capacity - fixed a spike jammed against the right edge during
+  the first minute of a session.
+- Replaced the remaining em dashes with plain hyphens across UI strings and error messages
+  (`strings.xml`, `InfoActivity`, `BenchmarkActivity`).
+
+### Upgrade notes
+
+- No inference-path, thread-derivation or pinning changes; every published CMF and OPPO benchmark
+  result carries over.
+- Preferences, conversations, KV session files and imported models carry over in place
+  (versionCode 11 -> 12, same signing key): `adb install -r` upgrades without uninstalling.
+
 ## [3.0.2] — 2026-07-20
 
 **The in-app benchmark derived its thread count from a stale rule, and a flagship exposed it.**
@@ -713,6 +754,8 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 3.0.3 | `ENTITY-v16-ui-perf-20260720-release.apk` (release-signed, ~10.3 MB) |
+| 3.0.2 | `ENTITY-v15-benchmark-thread-derivation-20260720-release.apk` (release-signed, ~10.3 MB) |
 | 3.0.1 | `ENTITY-v14-metrics-sampling-fix-20260720-release.apk` (release-signed, ~10.3 MB) |
 | 3.0.0 | `ENTITY-v13-mono-ui-refresh-20260718-release.apk` (release-signed, ~10.3 MB) |
 | 2.4.0 | `ENTITY-v12-kv-session-adaptive-threads-20260717-release.apk` (release-signed, ~10.3 MB) |
