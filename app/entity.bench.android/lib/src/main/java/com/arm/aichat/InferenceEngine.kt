@@ -60,6 +60,14 @@ interface InferenceEngine {
         topP: Float,
         pinCores: Boolean = true,
         pinEfficiency: Boolean = false,
+        /**
+         * [adpf] true opens an Android performance hint session over the decode thread and
+         * reports each step's real duration, so the platform can raise clocks and place
+         * threads against a deadline rather than reacting to load. Default false here:
+         * only the benchmark's `adpf` arm enables it, so every other arm measures exactly
+         * what it measured before.
+         */
+        adpf: Boolean = false,
     )
 
     /**

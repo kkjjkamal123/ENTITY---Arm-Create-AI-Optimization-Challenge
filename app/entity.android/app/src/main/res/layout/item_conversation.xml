@@ -14,7 +14,7 @@
         android:id="@+id/conv_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/mono_fg"
+        android:textColor="?attr/monoFg"
         android:textSize="11sp"
         android:textStyle="bold"
         android:singleLine="true"
@@ -26,7 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:textColor="@color/mono_fg"
+        android:textColor="?attr/monoFg"
         android:textSize="9sp"
         tools:text="2 hours ago" />
 </LinearLayout>

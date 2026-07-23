@@ -2,8 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/mono_bg"
-    android:fitsSystemWindows="true"
+    android:background="?attr/monoBg"
     android:fillViewport="true"
     android:overScrollMode="never"
     android:scrollbars="none">
@@ -42,7 +41,7 @@
                 android:layout_weight="1"
                 android:layout_marginStart="12dp"
                 android:text="@string/result_title"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="21sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.08" />
@@ -51,7 +50,7 @@
                 android:id="@+id/result_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="10sp"
                 android:gravity="end" />
         </LinearLayout>
@@ -61,7 +60,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:textColor="@color/mono_fg"
+            android:textColor="?attr/monoFg"
             android:textSize="11sp" />
 
         <!-- Headline -->
@@ -77,7 +76,7 @@
                 android:id="@+id/headline"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="21sp"
                 android:textStyle="bold" />
 
@@ -86,7 +85,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="11sp"
                 android:lineSpacingMultiplier="1.4" />
 
@@ -123,7 +122,7 @@
             android:layout_marginTop="12dp"
             android:background="@drawable/bg_dashed"
             android:padding="14dp"
-            android:textColor="@color/mono_fg"
+            android:textColor="?attr/monoFg"
             android:textSize="10.5sp"
             android:lineSpacingMultiplier="1.5" />
 

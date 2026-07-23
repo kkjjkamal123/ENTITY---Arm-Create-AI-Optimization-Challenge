@@ -55,6 +55,14 @@ interface InferenceEngine {
         topK: Int,
         topP: Float,
         pinCores: Boolean = true,
+        /**
+         * [adpf] true opens an Android performance hint session over the decode thread and
+         * reports each step's real duration, so the platform can raise clocks and place
+         * threads against a deadline instead of reacting to load after the fact. It is the
+         * only route an unprivileged app has into those kernel subsystems. Silently
+         * inactive on a device whose vendor did not implement the HAL.
+         */
+        adpf: Boolean = true,
     )
 
     /**

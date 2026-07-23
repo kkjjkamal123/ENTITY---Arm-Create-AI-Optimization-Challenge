@@ -5,7 +5,12 @@
 ## Does ENTITY need internet access?
 
 No. Model loading, prompt processing, generation, chat storage, and runtime metrics run locally on
-the phone. ENTITY does not require an inference server or a cloud API.
+the phone. ENTITY does not require an inference server or a cloud API, and once a model is on the
+device it runs with no connection at all.
+
+From v3.2.0 the app does declare the `INTERNET` permission, for one optional feature: the model
+catalog, which downloads a `.gguf` from a public model host when you tap one. It runs only on that
+tap. If you import your own model from storage instead, nothing in ENTITY ever opens a connection.
 
 ## Which devices are supported?
 
@@ -15,7 +20,8 @@ release does not include x86 or x86_64 binaries.
 
 ## Which models can I use?
 
-Import a runnable GGUF model through the in-app document picker. Model weights are not bundled
+Pick one from the in-app catalog, which lists models sized for your phone and says which reach Arm's KleidiAI
+kernels, or import any runnable GGUF through the in-app document picker. Model weights are not bundled
 with the APK. A 1B model is a good starting point; a 3B class model needs more free memory and may
 receive a smaller Auto context window.
 
@@ -95,8 +101,64 @@ numbers are yours: [full record](../benchmarks/BENCHMARKS.md).
 
 ## Does ENTITY use realtime scheduling or root-only controls?
 
-No. The Android app uses standard CPU affinity and a cooperative thermal delay. Historical Termux
-experiments with realtime priority are kept separate and are not claimed as app behavior.
+No, and it cannot. An unprivileged Android app has no access to kernel tunables: it cannot set a
+cpufreq governor, change scheduler policy, write to `/proc/sys`, load a module, or raise itself to
+a realtime priority class. Those paths need root, and requiring root would make the app
+un-shippable and the measurements unrepresentative of a normal phone.
+
+What ENTITY actually uses is the sanctioned unprivileged surface: `sched_setaffinity` for core
+placement, ggml thread pools with explicit CPU masks, thread priorities, and a cooperative thermal
+delay driven by `PowerManager.getCurrentThermalStatus()`. Everything it reads from the kernel -
+`cpu_capacity`, `cpuinfo_max_freq`, `scaling_cur_freq`, battery current - is read-only.
+
+Since v3.6.0 it also opens an **Android performance hint session** (ADPF). That is the one
+sanctioned route an unprivileged app has into the kernel's scheduler and cpufreq machinery:
+`sched_setaffinity` says *where* work runs but cannot say *how fast it needs to be*, so the kernel
+still picks a frequency by reacting to load after the fact. A hint session declares the deadline
+for each decode step instead, and the framework hands that to the same subsystems the vendor
+already tuned - so it can raise clocks, place threads, and back off under thermal pressure, per
+device, with no heuristic of ours.
+
+It is shipped to be measured, not assumed: ENTITY Bench carries an `adpf` arm, and no speed or
+energy claim is made for it until devices report back.
+
+Historical Termux experiments with realtime priority are kept separate and are not claimed as app
+behaviour.
+
+## Does ENTITY render LaTeX?
+
+Yes, since v3.5.0. Models emit LaTeX and it used to show as raw source. `$..$`, `$$..$$`,
+`\(..\)` and `\[..\]` are recognised: symbols and super/subscripts map to Unicode where Unicode
+has them (`x^2` -> x2, `\alpha \times \beta` -> alpha times beta, `H_2O`), and constructs that
+need real two-dimensional layout - fractions, radicals - are drawn on a Canvas with a proper rule
+and vinculum. Display math is centred on its own line.
+
+No dependency was added; it is hand-rolled in `Latex.kt` the same way `Markdown.kt` is. Currency is
+not mistaken for maths, so "it costs $5 and $10" stays text.
+
+## Can I turn core pinning off?
+
+Yes, since v3.5.0: Settings -> Inference -> **Core placement**, with *Auto*, *Perf cores* and
+*Scheduler*.
+
+It is a setting rather than a default because the measurements do not support one answer. Across
+the contributed dataset, pinning ranges from **-8.5% to +29.3%** on decode depending on the phone,
+and in the median it slightly *reduces* tokens per watt - it buys speed and pays for it in power.
+Android's own guidance is that forcing affinity also stops the platform reacting to load and
+thermal throttling.
+
+So the app measures instead of asserting. The benchmark's threads-only and optimized arms already
+run the same thread count and differ only in affinity, so after a run Settings reports which won on
+*your* phone and offers one-tap apply. The energy half of that verdict is suppressed if the run was
+charging, because a charging phone reports the charger's current rather than the workload's.
+
+## Why does the app use two different thread counts?
+
+Because decode and prefill are bound by different things. Decode is memory-bandwidth-bound and
+saturates on a couple of cores; prompt processing is compute-bound and scales with width. Until
+v3.5.0 both used one number, which was correct on a 4+4 phone and wrong on any phone with a prime
+core - prefill was running on two threads on every flagship. See
+[../benchmarks/CONTRIBUTED-DATA.md](../benchmarks/CONTRIBUTED-DATA.md).
 
 ## Where can I see the full optimization algorithm?
 

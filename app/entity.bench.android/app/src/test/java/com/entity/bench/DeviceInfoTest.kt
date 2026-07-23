@@ -74,4 +74,23 @@ class DeviceInfoTest {
         assertEquals(emptyList<String>(), DeviceInfo.cpuFeatures("CPU : NEON = 1 | ARM_FMA = 1 | "))
         assertEquals(emptyList<String>(), DeviceInfo.cpuFeatures(""))
     }
+
+    @Test
+    fun `cpu flags parsed from proc cpuinfo Features line`() {
+        // OPPO CPH2729 (Snapdragon 6 Gen 4): dotprod + i8mm, no fp16 vector token, no sve.
+        val oppo = "CPU part\t: 0xd47\nFeatures\t: fp asimd aes asimddp sha512 i8mm bf16 dit\nCPU revision : 0\n"
+        assertEquals(setOf("dotprod", "i8mm"), DeviceInfo.cpuFlags(oppo))
+
+        // CMF Phone 1 (Dimensity 7300): dotprod only, no i8mm.
+        val cmf = "Features\t: fp asimd evtstrm aes asimdhp asimddp\n"
+        assertEquals(true, "dotprod" in DeviceInfo.cpuFlags(cmf))
+        assertEquals(true, "fp16" in DeviceInfo.cpuFlags(cmf))
+        assertEquals(false, "i8mm" in DeviceInfo.cpuFlags(cmf))
+
+        // sve2 implies the sve token is present too.
+        val v9 = "Features\t: fp asimd asimddp sve sve2 i8mm\n"
+        assertEquals(setOf("dotprod", "sve", "sve2", "i8mm"), DeviceInfo.cpuFlags(v9))
+
+        assertEquals(emptySet<String>(), DeviceInfo.cpuFlags(""))
+    }
 }

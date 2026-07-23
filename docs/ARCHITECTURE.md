@@ -127,13 +127,25 @@ across three arms:
 |---|---|---|
 | Naïve | `NAIVE_THREADS = 8`, `pinCores = true` | Eight threads; the fast-core set spans every core, so this is the all-core default. |
 | Threads only | `autoGenThreads()`, `pinCores = false` | Auto's thread count with affinity off: no `sched_setaffinity`, no pinned pool, scheduler-placed. The ablation control. |
-| Optimized | `OPT_THREADS_AUTO = 0`, `pinCores = true` | The same Auto configuration used for chat: native code selects two to four frequency-ranked fast cores for generation while prompt processing can widen to all online cores. |
+| Optimized | `OPT_THREADS_AUTO = 0`, `pinCores = true` | The same Auto configuration used for chat: native code pins generation to the capacity-ranked fast cores, and prompt processing runs on the performance cluster (see below). |
 
-`autoGenThreads()` mirrors `init_context()` in `ai_chat.cpp` (online cores minus headroom, clamped
-to `DeviceOptimizer.MIN_THREADS`/`MAX_THREADS` = 2..4), so the threads-only arm runs the same thread
-count as Auto and differs from it *only* in placement. That is what makes the decode gap between
-them an attribution rather than a coincidence. The `finally` block restores `pinCores = true` so
-chat decode re-pins after the benchmark.
+`autoGenThreads()` mirrors `top_cluster_core_count()` in `ai_chat.cpp` - the cores whose
+`cpuinfo_max_freq` is within 10% of the fastest, clamped to
+`DeviceOptimizer.MIN_THREADS`/`MAX_THREADS` = **2..6** - so the threads-only arm runs the same
+thread count as Auto and differs from it *only* in placement. That is what makes the decode gap
+between them an attribution rather than a coincidence.
+
+Since v3.5.0 the two inference phases run **different widths**. Decode uses the rule above.
+Prompt processing uses `prompt_thread_count()`: every core strictly above the slowest
+`cpu_capacity` tier, never narrower than decode, capped at `N_THREADS_MAX`. On a 4+4 device the
+two are identical; on a prime-core flagship decode stays at 2 while prefill widens to the big
+cluster. See [OPTIMIZATIONS.md](OPTIMIZATIONS.md) §1 for the derivation and
+[../benchmarks/CONTRIBUTED-DATA.md](../benchmarks/CONTRIBUTED-DATA.md) for the measurements that
+forced the split.
+
+The `finally` block restores the user's **Core placement** setting (`Settings.pinCores`), not a
+hardcoded `true` - otherwise finishing a benchmark would silently re-pin someone who chose the
+system scheduler.
 
 A coroutine samples `BatteryManager.BATTERY_PROPERTY_CURRENT_NOW` every 150 ms during each pass.
 `PowerMath` resolves the OEM microamp or milliamp ambiguity before the app calculates average
@@ -314,7 +326,10 @@ defensive.
 | `app/src/main/java/com/example/llama/InfoActivity.kt` | Static "how it's optimized" page |
 | `app/src/main/java/com/example/llama/MetricsGraphView.kt` | Custom multi-series graph |
 | `app/src/main/java/com/example/llama/MessageAdapter.kt` | Chat RecyclerView adapter |
-| `app/src/main/java/com/example/llama/Settings.kt` | Shared SharedPreferences keys/defaults |
+| `app/src/main/java/com/example/llama/Settings.kt` | Shared SharedPreferences keys/defaults, incl. `KEY_PLACEMENT` and `pinCores()` |
+| `app/src/main/java/com/example/llama/Markdown.kt` | Hand-rolled Markdown -> `Spanned`; lifts math out before the emphasis pass |
+| `app/src/main/java/com/example/llama/Latex.kt` | LaTeX -> `Spanned`: delimiter scanner, Unicode tables, `FractionSpan`, `RadicalSpan` |
+| `app/src/main/java/com/example/llama/PowerMath.kt` | Battery power; resolves the voltage unit before the microamp/milliamp current unit |
 | `app/src/main/java/com/example/llama/IconStyle.kt` | Launcher-icon alias switcher |
 | `lib/src/main/java/com/arm/aichat/AiChat.kt` | Public facade |
 | `lib/src/main/java/com/arm/aichat/InferenceEngine.kt` | Engine contract + state machine |

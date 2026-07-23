@@ -9,6 +9,287 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [3.6.0] - 2026-07-23
+
+**Two things: the app now tells the kernel its deadline instead of only telling it which cores to
+use, and a power-measurement bug that silently produced physically impossible numbers is fixed.**
+
+An unprivileged Android app cannot touch kernel tunables - no cpufreq governor, no scheduler
+policy, no `/proc/sys`, no realtime class. All of that needs root, and a rooted app would be both
+unshippable and unrepresentative of a normal phone. But there is one sanctioned route into exactly
+those subsystems, and ENTITY now uses it.
+
+`sched_setaffinity` says *where* work runs. It cannot say *how fast it needs to be*, so the kernel
+still picks a frequency by reacting to load after the fact - and a hard mask also stops the
+platform migrating work when the phone heats up, which is why Android's own guidance is to avoid
+manual affinity. A performance hint session says *when* the work must finish. The framework feeds
+that to the same scheduler and cpufreq machinery the vendor already tuned, so it can raise clocks,
+place threads, and back off under thermal pressure - per device, with no heuristic of ours.
+
+This is deliberately shipped as something to **measure, not assume**: ENTITY Bench v2.1.0 carries
+an `adpf` arm, and no claim is made about it until devices report back.
+
+### Added
+
+- **ADPF performance hint session** (`ai_chat.cpp`). Opens over the decode thread, reports each
+  decode step's real duration, and retargets when the observed rate drifts more than 2x from the
+  deadline. Core APIs are `__INTRODUCED_IN(33)`, which is this app's minSdk, so no runtime guard
+  is needed; every call degrades to a no-op on a device whose vendor did not implement the HAL.
+  Honest limitation: a session boosts the threads registered in it, and ggml's workers are spawned
+  inside the pool with no TID to enumerate, so only the thread that runs `llama_decode` is
+  registered.
+
+### Fixed
+
+- **Battery power was under-reported by 1,000,000x on some devices** (`PowerMath.kt`). An OPPO
+  CPH2737 (Dimensity 8300) reported 2.7 **microwatts** of decode and 11 million tokens per watt.
+  The cause was voltage, not current: `EXTRA_VOLTAGE` is documented in millivolts and that device
+  reports whole **volts**. `PowerMath` chooses between microamp and milliamp current readings by
+  asking which product is a physically possible wattage - so with a 1000x-too-small voltage *both*
+  candidates fell under the plausible floor, the heuristic gave up, and it returned the
+  documented-unit branch. Two independent 1000x errors compounding.
+  `normalizeVoltageMv()` now resolves the voltage unit first: `<100` is volts, `>100,000` is
+  microvolts, otherwise millivolts. The three ranges are three orders of magnitude apart, so
+  magnitude alone identifies the unit. 7 regression tests.
+
+### File comparison (3.5.0 -> 3.6.0)
+
+| File | Change |
+|---|---|
+| `ai_chat.cpp` | `adpf_open/close/report/retarget`; session opened at `prepare()`, closed on teardown; per-token duration reporting; `configure()` takes an `adpf` flag. |
+| `PowerMath.kt` | `normalizeVoltageMv()`; `watts()` resolves the voltage unit before the current unit. |
+| `PowerMathTest.kt` | 7 tests: volt/millivolt/microvolt forms, the CPH2737 regression, and that honest microamp devices are unaffected. |
+| `InferenceEngine.kt`, `InferenceEngineImpl.kt` | `applyConfig(..., adpf)`. |
+
+## [3.5.0] - 2026-07-23
+
+**Prompt processing was running on two threads on every flagship.** Contributed benchmarks made it
+visible: a Dimensity 7300 prefills Llama-3.2-1B-Q4_0 at 139 tok/s while an SM8550 - far stronger
+silicon, with i8mm - manages 111. Two causes compounded. `top_cluster_core_count()` counts cores
+within 10% of the fastest, which is a proxy for "the performance cluster" that only holds on chips
+with no prime core; every modern flagship puts its prime 17-20% above its own big cluster, so the
+count collapsed to 1 and only `N_THREADS_MIN` pulled it back to 2. Prefill then inherited that
+number, because `n_pp = n_gen`.
+
+Decode was never the problem - it is memory-bandwidth-bound and two threads already saturates it
+(an SM8550 decodes 23.8 tok/s on 2 threads and 6.72 on 8), so `n_gen` is deliberately **unchanged**.
+
+Also new: core placement is now a user choice rather than an assumption. Across the contributed
+dataset pinning ranges from -8.5% to +29.3% on decode and is slightly *negative* on tokens per watt
+in the median - it buys speed and pays for it in power. Android's own guidance is that forcing
+affinity stops the platform reacting to load and thermal throttling. So the app measures both and
+lets the user pick.
+
+### Added
+
+- **LaTeX rendering in chat** (`Latex.kt`). Models emit LaTeX and it used to render as raw source.
+  `$..$`, `$$..$$`, `\(..\)` and `\[..\]`, mapped to Unicode where Unicode suffices and to
+  custom Canvas spans where it does not - stacked fractions with a real rule, radicals with a
+  vinculum. Zero new dependencies, in the same hand-rolled spirit as `Markdown.kt`. Currency is not
+  mistaken for math. 19 unit tests.
+- **Core placement setting** (Settings -> Inference): *Auto* / *Perf cores* / *Scheduler*. The
+  ablation benchmark already runs threads-only and optimized at the same thread count, differing
+  only in affinity, so Settings reports which won on *this* phone and offers one-tap apply. The
+  energy half of that verdict is suppressed for charging runs, whose watts are the charger's.
+- **`cpu_capacity` core detection** (`ai_chat.cpp`). The kernel's normalised per-core capacity is
+  the signal the scheduler itself uses; frequency cannot separate an A55 at 2.0 GHz from an A78 at
+  2.5 GHz. Falls back to `cpuinfo_max_freq` where the kernel omits it.
+
+### Fixed
+
+- **Prefill thread width decoupled from decode** (`n_pp`). Prompt processing now runs on the
+  performance cluster - every core strictly above the slowest frequency/capacity tier - while the
+  decode thread count stays narrow. Verified against the four contributed topologies under both the
+  capacity signal and the frequency fallback: `n_gen` 4/2/2/2 unchanged, `n_pp` now 4/6/5/4.
+- **The pinned CPU set now covers the prefill pool.** `pin_to_fast_cores()` sets the calling
+  thread's mask and ggml's workers inherit it lazily, so a set built for `n_gen` alone would have
+  confined the wider batch pool to the decode cores.
+- **The benchmark no longer overrides the user's placement choice.** Its restore path hardcoded
+  `pinCores = true`, so finishing a run silently re-pinned someone who had chosen the scheduler.
+
+### File comparison (3.4.1 -> 3.5.0)
+
+| File | Change |
+|---|---|
+| `Latex.kt` | New. LaTeX -> Spanned: scanner, Unicode tables, `FractionSpan`, `RadicalSpan`. |
+| `LatexTest.kt` | New. 19 tests over delimiters, currency, symbols, scripts, group parsing. |
+| `Markdown.kt` | Math lifted out before the emphasis pass; `$$`/`\[` display blocks. |
+| `ai_chat.cpp` | `cpu_weights()`, `perf_cluster_core_count()`, `prompt_thread_count()`; capacity-ranked affinity; `n_pp` decoupled at both attach sites. |
+| `Settings.kt` | `KEY_PLACEMENT`, `PLACEMENT_*`, `pinCores()`. |
+| `SettingsActivity.kt` | `buildPlacement()` - control, verdict, apply button. |
+| `BenchHistory.kt` | Persists the pinned/unpinned arm pair; `pinSpeedPct`, `pinEnergyPct`, `powerValid`. |
+| `BenchmarkActivity.kt` | Records the placement pair; restore paths honour the setting. |
+| `MainActivity.kt` | Chat `applyConfig` passes the user's placement. |
+
+## [3.4.1] - 2026-07-22
+
+**Content was running underneath the system bars and hard against the edge of the screen.** Every
+layout carried `android:fitsSystemWindows="true"` and it was inert: from targetSdk 35 Android draws
+apps edge-to-edge and stops honouring that attribute on ordinary containers - it only ever worked
+on inset-aware layouts such as `DrawerLayout`. ENTITY's screens are plain `LinearLayout`s, so they
+got no inset padding at all.
+
+### Fixed
+
+- **Window-inset handling on every screen** (`Insets.kt`), derived from system bars *and* display
+  cutout, so nothing sits under the status bar, navigation bar or camera cutout.
+- **Insets add to each layout's declared padding** rather than replacing it, so screens keep their
+  own gutters.
+- **Padding goes on containers**, so lists still scroll under the bars without content resting there.
+- **The chat input row takes the navigation-bar and IME insets directly**, so it rises with the
+  keyboard.
+
+### File comparison (3.4.0 -> 3.4.1)
+
+| File | Change |
+|---|---|
+| `Insets.kt` | New. System-bar + cutout + optional IME padding helper. |
+| `MainActivity.kt` | Insets on the chat column, drawer pane and input row. |
+| `ModelsActivity.kt`, `SettingsActivity.kt`, `InfoActivity.kt`, `BenchmarkActivity.kt`, `BenchHistoryActivity.kt` | Root inset padding. |
+| layouts | Inert `fitsSystemWindows` removed; `chat_column` / `input_row` ids added. |
+
+## [3.4.0] - 2026-07-22
+
+**MONO was too bright to use for long, and that was a measurable fault rather than a matter of
+taste.** Every previous version painted pure `#FFFFFF` on pure `#000000` - a 21:1 contrast
+ratio. On a black field the iris opens wider and white glyphs bleed into their own edges, an
+effect called halation; it reads as glare within minutes and is worst for the roughly half of
+people with some astigmatism. Material's dark-theme guidance is never to use black as the base
+surface for exactly this reason. This release retunes the palette, keeps the monochrome
+identity, and makes colour optional rather than absent.
+
+### Changed
+
+- **Pure black and pure white retired.** Dark is `#121212` base / `#1E1E1E` cards / `#E4E4E4`
+  text - Material's dark-surface baseline and its 87% high-emphasis text level. Light is
+  `#F1F0EC` paper / `#F9F8F5` cards / `#1F1F1D` ink. Body contrast 21:1 -> 15:1, still above
+  WCAG AAA (7:1).
+- **Cards sit lighter than the page in light theme**, following Carbon's alternating layering
+  model rather than piling white on white - less emitted light at identical text contrast.
+- **Borders are 1dp of a dedicated outline tone**, not 2dp at full text strength. A 2dp bright
+  border around every card is a large amount of lit area, and area is what makes a UI glare.
+- **Filled areas are dimmer than text** in dark theme (`mono_fill` < `mono_fg`), because a
+  full-width bright slab contributes far more perceived glare than a line of type.
+- **Secondary text has its own token** instead of being full-strength type set smaller.
+
+### Added
+
+- **Palette switch (Settings -> Theme): MONOCHROME or COLOUR.** Monochrome remains the default
+  and is unchanged in character. Colour keeps identical layout, spacing and luminance and
+  varies only hue: lightly tinted surfaces, one accent on the primary action, separate danger
+  and success tones. Semantic tones are deliberately not the accent hue - sharing a colour
+  between brand and error makes identity indistinguishable from warning. Every coloured state
+  still carries text or shape saying the same thing, so meaning never depends on colour alone
+  (WCAG 1.4.1).
+- **Colour addressed by role, as theme attributes** (`res/values/attrs.xml`). Layouts,
+  drawables and colour state lists reference `?attr/monoFg` and friends; raw colour resources
+  now appear only inside the two palette themes. That indirection is what makes a runtime
+  palette switch possible.
+
+### Fixed
+
+- **A model could not be reloaded after reopening the app.** `KEY_ACTIVE_MODEL` persists across
+  restarts but the engine does not, so a freshly opened app showed the last model as LOADED on
+  a disabled button with nothing loaded, and offered no way to load it. Loaded state is now
+  reported by the chat screen from real engine state and passed to the Models screen. The same
+  stale flag also wrongly blocked deleting that model.
+
+### File comparison (3.3.0 -> 3.4.0)
+
+| File | Change |
+|---|---|
+| `attrs.xml` | New. Ten role attributes for colour. |
+| `colors.xml`, `values-night/colors.xml` | Retuned; semantic tokens added. |
+| `colors_chroma.xml` (+ night) | New. The COLOUR palette. |
+| `bools.xml` (+ night) | New. System-bar polarity, replacing a duplicated night theme. |
+| `themes.xml` | Split into `Theme.Entity.Base` + `Theme.Entity` / `Theme.Entity.Chroma`. |
+| `values-night/themes.xml` | Deleted - a redeclared style replaces rather than merges. |
+| `Palette.kt` | New. Pref, theme selection, attribute resolution. |
+| `SettingsActivity.kt` | Palette segmented control. |
+| `MainActivity.kt`, `ModelsActivity.kt` | Real loaded-state via `EXTRA_LOADED`. |
+| layouts, drawables, `res/color/` | `@color/mono_*` -> `?attr/mono*` (21 files). |
+
+## [3.3.0] - 2026-07-22
+
+**Models get a screen instead of a dialog.** v3.2.0 put the catalog in the model picker, and the
+picker was an alert dialog with a list of strings: every entry became four or five lines of
+wrapped prose, stacked with no separation between one model and the next. The information was
+right and unreadable.
+
+### Added
+
+- **A Models screen** (`ModelsActivity`) from the drawer's MODEL row and the header, with **On
+  this phone** (per-model cards plus a storage summary) and **Available to download** (the
+  catalog, ranked best-fit-first).
+- **One card layout for both lists**, so every fact lands in the same place: name, a fixed
+  facts line (`1.24B · Q4_0 · 773 MB`), pills, reason, actions.
+- **KleidiAI reach as a pill** - filled when the quantization reaches Arm's kernels, dashed
+  when it does not, matching the Bench app's existing convention.
+- **One solid emphasis per card**: `ACTIVE` for an installed model, `RECOMMENDED` for the single
+  best catalog entry, in the same position.
+- **Actions on the card**: LOAD / DELETE, or DOWNLOAD / RESUME with a real progress bar and stop.
+
+### Changed
+
+- **A downloaded catalog entry is no longer listed twice** - it appears only under *On this
+  phone* rather than in both lists with two different actions.
+- Import moved onto the Models screen; the engine stays in the chat screen, so a pick returns
+  as an activity result.
+
+## [3.2.0] - 2026-07-22
+
+**A fresh install had nothing to talk to.** ENTITY has always required the user to supply their own
+`.gguf`: find a model host in a browser, judge a quantization and a parameter count against the
+phone by eye, download it, then import it through the file picker. That is a reasonable ask of a
+developer and an unreasonable one of everyone else, and it is the single step where a first run
+most often ended. The model picker now offers a small curated catalog that does the judging on the
+device, downloads the file, and loads it when it finishes. Importing from storage is unchanged.
+
+### Added
+
+- **Model catalog in the picker** (`ModelCatalog`). Seven entries across Qwen2.5 0.5B/1.5B and
+  Llama 3.2 1B/3B, leaning Q4_0 and Q8_0 because those are the two types Arm's KleidiAI kernels
+  accelerate. One K-quant is included on purpose, and its row says plainly that it misses KleidiAI
+  and falls back to ggml's Arm repack kernels - the same advice the model info card already gives
+  after loading.
+- **Device-aware fit assessment.** Each row is tagged RECOMMENDED / GOOD FIT / FITS / TIGHT /
+  TOO BIG for the phone in hand, with a one-line reason naming the quantization and the ISA it
+  will actually reach on this CPU. The flags come from `DeviceOptimizer.cpuFeatures()`, i.e. the
+  backend variant ggml dlopened for this device, so the row describes kernels that will really
+  run rather than what the silicon nominally supports. Fit is computed against **total** RAM, not
+  free RAM: free RAM swings with whatever else is running and would make the same phone report a
+  different verdict minute to minute.
+- **Resumable, cancellable download** (`ModelDownloader`). Bytes land in a `.part` file and a retry
+  continues with an HTTP `Range` request instead of starting over; a `200` response to a ranged
+  request is treated as the server declining to resume and restarts cleanly. The file only takes
+  its real `.gguf` name once its length matches the catalog's expected size, so a truncated
+  download can never be mistaken for a loadable model, and because `ModelStore.scan()` matches on
+  the `gguf` extension a half-finished file never appears in the picker or in Settings → Models.
+  Progress reuses the existing load bar; a transfer can be sent to the background or stopped.
+- **The finished model loads straight into the conversation** (guarded on the activity still being
+  at least STARTED, since loading drives this screen's UI), so downloading is one flow rather than
+  download-then-go-find-it.
+
+### Changed
+
+- **The empty-state dialog leads with Download.** A phone with no models cannot import one, so the
+  first-run dialog now offers Download first and Import second.
+- The app now declares `INTERNET` and `ACCESS_NETWORK_STATE`. They are used only by the catalog,
+  and only on an explicit tap. Inference, prompt processing, generation, chat storage and runtime
+  metrics never touch the network, and ENTITY still runs with no connection at all once a model is
+  present.
+
+### File comparison (3.1.0 → 3.2.0)
+
+| File | Change |
+|---|---|
+| `ModelCatalog.kt` | New. Catalog entries, fit rules, recommendation, `featureFlags()` bridge. |
+| `ModelDownloader.kt` | New. Ranged/resumable HTTP download into `.part`, verified rename. |
+| `MainActivity.kt` | `showModelPicker()` gains Download; new `showCatalog()`, `downloadModel()`. |
+| `AndroidManifest.xml` | `INTERNET`, `ACCESS_NETWORK_STATE`. |
+| `strings.xml` | Catalog and download strings; empty-state body mentions Download. |
+| `ModelCatalogTest.kt` | New. Catalog shape, fit rules, recommendation, `featureFlags()`. |
+
 ## [3.1.0] - 2026-07-21
 
 **Benchmark history: every run the chat app finishes is now kept on the phone.** The in-app
@@ -782,6 +1063,10 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 3.4.1 | `ENTITY-v20-edge-insets-20260722-release.apk` (release-signed, ~10.4 MB) |
+| 3.4.0 | `ENTITY-v19-models-screen-colour-20260722-release.apk` (release-signed, ~10.4 MB) |
+| 3.3.0 | superseded by v3.4.0 (same day) |
+| 3.2.0 | `ENTITY-v18-model-catalog-20260722-release.apk` (release-signed, ~10.4 MB) |
 | 3.1.0 | `ENTITY-v17-bench-history-20260721-release.apk` (release-signed, ~10.4 MB) |
 | 3.0.3 | `ENTITY-v16-ui-perf-20260720-release.apk` (release-signed, ~10.3 MB) |
 | 3.0.2 | `ENTITY-v15-benchmark-thread-derivation-20260720-release.apk` (release-signed, ~10.3 MB) |

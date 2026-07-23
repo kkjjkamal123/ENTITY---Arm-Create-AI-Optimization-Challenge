@@ -3,8 +3,8 @@
     android:insetLeft="16dp"
     android:insetRight="16dp">
     <shape android:shape="rectangle">
-        <solid android:color="@color/mono_bg" />
-        <stroke android:width="2dp" android:color="@color/mono_fg" />
+        <solid android:color="?attr/monoSurface" />
+        <stroke android:width="1dp" android:color="?attr/monoOutline" />
         <corners android:radius="@dimen/mono_radius" />
     </shape>
 </inset>

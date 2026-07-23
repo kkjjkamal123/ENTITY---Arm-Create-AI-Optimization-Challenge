@@ -10,11 +10,11 @@
 
     <!-- ============ MAIN CHAT ============ -->
     <LinearLayout
+        android:id="@+id/chat_column"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:fitsSystemWindows="true"
-        android:background="@color/mono_bg">
+        android:background="?attr/monoBg">
 
         <!-- Header -->
         <LinearLayout
@@ -45,7 +45,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/app_name"
-                    android:textColor="@color/mono_fg"
+                    android:textColor="?attr/monoFg"
                     android:textSize="18sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.08" />
@@ -56,7 +56,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="1dp"
                     android:text="@string/no_model"
-                    android:textColor="@color/mono_fg"
+                    android:textColor="?attr/monoFg"
                     android:textSize="9sp"
                     android:letterSpacing="0.05"
                     android:singleLine="true"
@@ -74,7 +74,7 @@
                     android:id="@+id/chip_temp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/mono_fg"
+                    android:textColor="?attr/monoFg"
                     android:textSize="9sp"
                     android:textStyle="bold"
                     tools:text="35°C" />
@@ -83,7 +83,7 @@
                     android:id="@+id/chip_mem"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/mono_fg"
+                    android:textColor="?attr/monoFg"
                     android:textSize="9sp"
                     tools:text="1.6 GB free" />
             </LinearLayout>
@@ -98,7 +98,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
-            android:background="@color/mono_fg" />
+            android:background="?attr/monoFg" />
 
         <!-- Model load / import progress -->
         <LinearLayout
@@ -116,7 +116,7 @@
                 android:id="@+id/load_label"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.08"
@@ -129,7 +129,7 @@
                 android:layout_height="14dp"
                 android:layout_marginTop="5dp"
                 android:progressDrawable="@drawable/progress_mono"
-                android:indeterminateTint="@color/mono_fg"
+                android:indeterminateTint="?attr/monoFg"
                 android:indeterminate="true" />
         </LinearLayout>
 
@@ -141,7 +141,7 @@
             android:visibility="gone"
             android:paddingHorizontal="14dp"
             android:paddingVertical="5dp"
-            android:textColor="@color/mono_fg"
+            android:textColor="?attr/monoFg"
             android:textSize="10sp"
             android:letterSpacing="0.02"
             tools:text="128tok · 17.3t/s · TTFT 240ms · 31.5°C · 2.1GB"
@@ -188,7 +188,7 @@
                     android:layout_width="56dp"
                     android:layout_height="56dp"
                     android:src="@drawable/entity_mark"
-                    app:tint="@color/mono_fg"
+                    app:tint="?attr/monoFg"
                     android:contentDescription="@string/app_name" />
 
                 <TextView
@@ -196,7 +196,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="14dp"
                     android:text="@string/app_name"
-                    android:textColor="@color/mono_fg"
+                    android:textColor="?attr/monoFg"
                     android:textSize="22sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.14" />
@@ -206,7 +206,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:text="@string/empty_tagline"
-                    android:textColor="@color/mono_fg"
+                    android:textColor="?attr/monoFg"
                     android:textSize="10sp"
                     android:letterSpacing="0.06" />
 
@@ -219,7 +219,7 @@
                     android:padding="14dp"
                     android:gravity="center"
                     android:text="@string/empty_hint_no_model"
-                    android:textColor="@color/mono_fg"
+                    android:textColor="?attr/monoFg"
                     android:textSize="10sp"
                     android:lineSpacingMultiplier="1.6"
                     android:letterSpacing="0.04" />
@@ -229,10 +229,11 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="2dp"
-            android:background="@color/mono_fg" />
+            android:background="?attr/monoFg" />
 
         <!-- Input -->
         <LinearLayout
+            android:id="@+id/input_row"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -253,8 +254,8 @@
                 android:paddingVertical="12dp"
                 android:maxLines="5"
                 android:inputType="textCapSentences|textMultiLine"
-                android:textColor="@color/mono_fg"
-                android:textColorHint="@color/mono_fg"
+                android:textColor="?attr/monoFg"
+                android:textColorHint="?attr/monoFg"
                 android:textCursorDrawable="@null"
                 android:textSize="14sp"
                 android:importantForAutofill="no"
@@ -280,7 +281,7 @@
         android:layout_height="match_parent"
         android:layout_gravity="start"
         android:fitsSystemWindows="true"
-        android:background="@color/mono_bg">
+        android:background="?attr/monoBg">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -301,7 +302,7 @@
                     android:layout_width="26dp"
                     android:layout_height="26dp"
                     android:src="@drawable/entity_mark"
-                    app:tint="@color/mono_fg"
+                    app:tint="?attr/monoFg"
                     android:contentDescription="@string/app_name" />
 
                 <LinearLayout
@@ -315,7 +316,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/app_name"
-                        android:textColor="@color/mono_fg"
+                        android:textColor="?attr/monoFg"
                         android:textSize="17sp"
                         android:textStyle="bold"
                         android:letterSpacing="0.1" />
@@ -324,7 +325,7 @@
                         android:id="@+id/drawer_version"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:textColor="@color/mono_fg"
+                        android:textColor="?attr/monoFg"
                         android:textSize="9sp"
                         android:letterSpacing="0.05"
                         tools:text="v3.0.0 · on-device LLM chat" />
@@ -375,7 +376,7 @@
                 android:padding="12dp"
                 android:gravity="center"
                 android:text="@string/conv_none"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="10sp"
                 android:lineSpacingMultiplier="1.5"
                 android:visibility="gone" />
@@ -408,7 +409,7 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:textColor="@color/mono_fg"
+                    android:textColor="?attr/monoFg"
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:singleLine="true"
@@ -420,7 +421,7 @@
                     android:layout_height="wrap_content"
                     android:layout_marginStart="8dp"
                     android:text="&gt;"
-                    android:textColor="@color/mono_fg"
+                    android:textColor="?attr/monoFg"
                     android:textStyle="bold"
                     android:textSize="13sp" />
             </LinearLayout>
@@ -511,6 +512,6 @@
             android:layout_width="2dp"
             android:layout_height="match_parent"
             android:layout_gravity="end"
-            android:background="@color/mono_fg" />
+            android:background="?attr/monoFg" />
     </FrameLayout>
 </androidx.drawerlayout.widget.DrawerLayout>

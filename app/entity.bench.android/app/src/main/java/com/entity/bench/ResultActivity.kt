@@ -29,8 +29,10 @@ class ResultActivity : AppCompatActivity() {
     private var fileName: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Palette.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_result)
+        Insets.pad(findViewById(android.R.id.content))
 
         fileName = intent.getStringExtra(EXTRA_FILE) ?: run { finish(); return }
         findViewById<View>(R.id.btn_back).setOnClickListener { finish() }

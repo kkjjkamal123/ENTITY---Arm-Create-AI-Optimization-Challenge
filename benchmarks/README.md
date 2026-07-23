@@ -99,6 +99,37 @@ All scripts read the retained CSVs; none invent data. Requires `python3 -m pip i
 | [`plot_telemetry.py`](plot_telemetry.py) | the six telemetry figures | any raw app export |
 | [`plot_competitors.py`](plot_competitors.py) | `competitor-comparison/three_app_comparison.png` | the recorded three-app numbers |
 
+### Across five SoCs (the contributed dataset)
+
+![Multi-device ablation](plots/contributed_multidevice.png)
+
+The ablation split into its two independent steps, because they behave nothing alike and the
+combined figure hides that. **Step 1 (thread count) pays on every device measured**, 1.65x to
+3.58x. **Step 2 (pinning) is device-dependent on speed and negative on energy** - the Pixel 10 is
+the clean case at +29.3% decode for +33.5% power, so tokens per watt falls 3.2%.
+
+Regenerate with `python3 benchmarks/plot_contributed.py`; it reads the committed CSV, not the
+database. SM-S911B is omitted from step 1 (its naive arm is 88.5% RSD - noise), and CPH2737 has no
+energy bar (its power came from a build with the voltage-unit bug).
+
+## Beyond the two development phones
+
+- [`CONTRIBUTED-DATA.md`](CONTRIBUTED-DATA.md) - the multi-device dataset. What it established
+  (thread tuning generalises; pinning is a speed lever, not an energy one), what it falsified (the
+  prefill thread width on every prime-core SoC), and the rules for reading it without
+  overclaiming.
+- [`dt_thread_rules.py`](dt_thread_rules.py) - evaluate the shipped thread-width rules against any
+  SoC whose kernel device tree is upstream, **without owning the device**. The kernel computes
+  `cpu_capacity` from the DT's `capacity-dmips-mhz`, and those DTs are public. Cross-checks against
+  measured hardware: for SM8550 it predicts the same 2 decode threads and 5 performance cores the
+  contributed Galaxy S23 reported. It validates the derivation, not the speed - only a run on the
+  hardware can tell you whether a width is fast.
+
+  ```
+  python3 dt_thread_rules.py                       # built-in SoC list
+  python3 dt_thread_rules.py qcom/sm8650           # any upstream DT path
+  ```
+
 ## Add your device
 
 Run the ablation with [ENTITY Bench](../apk/) on your own phone (unplugged), export the CSV, drop

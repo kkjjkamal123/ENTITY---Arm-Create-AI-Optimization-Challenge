@@ -32,7 +32,38 @@
     <string name="model_picker_title">Select a model</string>
     <string name="model_import">Import from device…</string>
     <string name="model_add_title">Add a model</string>
-    <string name="model_add_body">No models yet. Import a .gguf file from your storage - ENTITY copies it in for you. No file-manager copying needed.</string>
+    <string name="model_add_body">No models yet. Download one sized for this phone, or import a .gguf file from your storage - ENTITY copies it in for you. No file-manager copying needed.</string>
+
+    <!-- Palette -->
+    <string name="palette_label">Palette</string>
+    <string name="palette_mono">Monochrome</string>
+    <string name="palette_colour">Colour</string>
+    <string name="palette_note">Colour tints surfaces and marks the primary action, warnings and confirmations. Layout and brightness stay the same.</string>
+
+    <!-- Models screen -->
+    <string name="models_title">MODELS</string>
+    <string name="models_installed">On this phone</string>
+    <string name="models_installed_empty">No models yet.\nDownload one below, or import a .gguf you already have.</string>
+    <string name="models_catalog">Available to download</string>
+    <string name="models_catalog_note">Sized and ranked for this phone. Q4_0 and Q8_0 reach Arm\'s KleidiAI kernels; other types fall back to ggml\'s Arm repack kernels.</string>
+    <string name="models_load">LOAD</string>
+    <string name="models_loaded">LOADED</string>
+    <string name="models_delete">DELETE</string>
+    <string name="models_download">DOWNLOAD</string>
+    <string name="models_resume">RESUME</string>
+    <string name="models_downloading">%1$s  %2$d%%</string>
+    <string name="models_importing">Importing…</string>
+    <string name="models_download_failed">Download failed: %1$s</string>
+    <string name="models_one_at_a_time">One download at a time. Stop the current one first.</string>
+
+    <!-- Model catalog (optional download) -->
+    <string name="model_download">Download a model…</string>
+    <string name="model_catalog_title">Models for this phone</string>
+    <string name="model_downloading">Downloading…</string>
+    <string name="model_downloading_title">Downloading</string>
+    <string name="model_downloading_body">%1$s (%2$s). It loads automatically when it finishes, and resumes where it stopped if it is interrupted.</string>
+    <string name="model_download_stop">Stop</string>
+    <string name="model_download_background">Keep going</string>
 
     <!-- Settings -->
     <string name="settings_title">SETTINGS</string>
@@ -90,6 +121,19 @@
     <string name="settings_threads">Threads</string>
     <string name="settings_efficiency">Efficiency mode</string>
     <string name="settings_efficiency_desc">Trade speed for battery: caps inference at 2 threads and throttles harder when the phone warms up.</string>
+    <string name="placement_label">CORE PLACEMENT</string>
+    <string name="placement_auto">AUTO</string>
+    <string name="placement_pinned">PERF CORES</string>
+    <string name="placement_system">SCHEDULER</string>
+    <string name="placement_desc">Auto pins generation to the performance cores. Pinning is faster on some phones and not on others, and it costs power — run the benchmark and ENTITY will tell you which way yours lands.</string>
+    <string name="placement_no_data">No placement measurement yet. Run the benchmark to compare pinned against the system scheduler on this phone.</string>
+    <string name="placement_pin_faster">Last benchmark: pinning was %1$s faster</string>
+    <string name="placement_nopin_faster">Last benchmark: the system scheduler was %1$s faster</string>
+    <string name="placement_pin_energy">, and used %1$s less energy per token.</string>
+    <string name="placement_nopin_energy">, but used %1$s more energy per token.</string>
+    <string name="placement_power_unknown">. That run was charging, so its power figures are the charger\'s and cannot be compared — re-run unplugged for the energy verdict.</string>
+    <string name="placement_apply">APPLY THE FASTER SCHEME</string>
+    <string name="placement_applied">Core placement updated. It takes effect the next time a model loads.</string>
     <string name="settings_optimize">RE-RUN DEVICE OPTIMIZATION</string>
 
     <string name="sec_data">Data</string>

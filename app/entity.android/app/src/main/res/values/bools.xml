@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- System-bar icon polarity. A style redeclared in values-night REPLACES the light
+         one rather than merging with it, so the day/night difference lives in a bool the
+         single base theme reads instead of in a duplicated style. -->
+    <bool name="window_light_bars">true</bool>
+</resources>

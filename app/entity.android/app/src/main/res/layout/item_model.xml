@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One model card. The same card renders an installed model and a catalog entry:
+     the pills, the reason line and the two action buttons are shown or hidden per
+     case, so both lists read as one structure instead of two. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_box"
+    android:padding="14dp"
+    android:layout_marginBottom="8dp">
+
+    <!-- Title line: name grows, state pill pins right -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/m_name"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="?attr/monoFg"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:maxLines="2"
+            android:ellipsize="middle"
+            tools:text="Llama-3.2-1B-Instruct-Q4_0" />
+
+        <TextView
+            android:id="@+id/m_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/bg_fill"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:visibility="gone"
+            tools:text="ACTIVE"
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <!-- Facts line: the numbers, always in the same order so cards scan vertically -->
+    <TextView
+        android:id="@+id/m_meta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:textColor="?attr/monoDim"
+        android:textSize="11sp"
+        android:fontFamily="monospace"
+        tools:text="1.24B · Q4_0 · 773 MB" />
+
+    <!-- Kernel reach + fit, as pills rather than buried in prose -->
+    <LinearLayout
+        android:id="@+id/m_pills"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="8dp">
+
+        <TextView
+            android:id="@+id/m_pill_kleidi"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:visibility="gone"
+            tools:text="KLEIDIAI"
+            tools:visibility="visible" />
+
+        <TextView
+            android:id="@+id/m_pill_fit"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="3dp"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:visibility="gone"
+            tools:text="RECOMMENDED"
+            tools:visibility="visible" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/m_reason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="?attr/monoDim"
+        android:textSize="10.5sp"
+        android:lineSpacingMultiplier="1.35"
+        android:visibility="gone"
+        tools:text="Q4_0 reaches KleidiAI on this CPU's dotprod kernels"
+        tools:visibility="visible" />
+
+    <LinearLayout
+        android:id="@+id/m_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="12dp">
+
+        <TextView
+            android:id="@+id/m_primary"
+            style="@style/Entity.Button"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:textSize="11sp"
+            tools:text="LOAD" />
+
+        <TextView
+            android:id="@+id/m_secondary"
+            style="@style/Entity.ButtonOutline"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:textSize="11sp"
+            android:visibility="gone"
+            tools:text="DELETE"
+            tools:visibility="visible" />
+    </LinearLayout>
+</LinearLayout>

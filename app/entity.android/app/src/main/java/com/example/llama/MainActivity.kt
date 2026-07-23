@@ -1,5 +1,6 @@
 package com.example.llama
 
+import android.app.Activity
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
@@ -109,6 +110,7 @@ class MainActivity : AppCompatActivity() {
     private data class Snap(val temp: Double, val watts: Double, val cpuPercent: Double, val gb: Double)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Palette.apply(this)
         super.onCreate(savedInstanceState)
 
         prefs = getSharedPreferences(Settings.PREFS, Context.MODE_PRIVATE)
@@ -119,6 +121,12 @@ class MainActivity : AppCompatActivity() {
         // Keep the launcher icon in sync with the theme when set to Auto.
         IconStyle.apply(this, prefs.getInt(IconStyle.KEY, IconStyle.AUTO))
 
+        // Edge-to-edge: DrawerLayout honours fitsSystemWindows, its children do not.
+        Insets.pad(findViewById(R.id.chat_column), bottom = false)
+        // The input row is the bottom-most thing on screen, so it carries the
+        // navigation-bar inset and rises with the keyboard.
+        Insets.pad(findViewById(R.id.input_row), top = false, sides = false, includeIme = true)
+        Insets.pad(findViewById(R.id.drawer_pane), bottom = true)
         drawerLayout = findViewById(R.id.drawer_layout)
         // The window already paints the bars mono; DrawerLayout's default
         // colorPrimaryDark status-bar fill would draw an ink band over it.
@@ -564,33 +572,27 @@ class MainActivity : AppCompatActivity() {
 
     // ---------- Model handling ----------
 
+    /** The Models screen owns browsing, importing and downloading; loading stays here. */
     private fun showModelPicker() {
         if (!::engine.isInitialized) {
             Toast.makeText(this, "Engine is still starting…", Toast.LENGTH_SHORT).show()
             return
         }
+        pickModel.launch(
+            Intent(this, ModelsActivity::class.java).putExtra(
+                ModelsActivity.EXTRA_LOADED,
+                if (isModelReady) prefs.getString(Settings.KEY_ACTIVE_MODEL, null) else null,
+            )
+        )
+    }
 
-        val models = ModelStore.scan(this)
-
-        // Empty state: a real Import button (a dialog can't show a message AND a list).
-        if (models.isEmpty()) {
-            AlertDialog.Builder(this)
-                .setTitle(R.string.model_add_title)
-                .setMessage(R.string.model_add_body)
-                .setPositiveButton(R.string.model_import) { _, _ -> getContent.launch(arrayOf("*/*")) }
-                .setNegativeButton(android.R.string.cancel, null)
-                .show()
-            return
-        }
-
-        val labels = models.map { "${it.name}\n${ModelStore.sizeLabel(it.length())}" } +
-            getString(R.string.model_import)
-        AlertDialog.Builder(this)
-            .setTitle(R.string.model_picker_title)
-            .setItems(labels.toTypedArray()) { _, which ->
-                if (which < models.size) loadModel(models[which]) else getContent.launch(arrayOf("*/*"))
-            }
-            .show()
+    private val pickModel = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { r ->
+        if (r.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        val path = r.data?.getStringExtra(ModelsActivity.EXTRA_PICKED) ?: return@registerForActivityResult
+        val f = File(path)
+        if (f.exists()) loadModel(f)
     }
 
     private val getContent = registerForActivityResult(
@@ -670,7 +672,7 @@ class MainActivity : AppCompatActivity() {
             }
             // Remember the active context so the benchmark can restore it afterwards.
             prefs.edit().putInt(Settings.KEY_ACTIVE_CTX, ctx).apply()
-            engine.applyConfig(ctx, threads, v.temp, v.topK, v.topP)
+            engine.applyConfig(ctx, threads, v.temp, v.topK, v.topP, Settings.pinCores(prefs))
 
             engine.loadModel(model.path)
             engine.setSystemPrompt(Settings.systemPrompt(prefs))

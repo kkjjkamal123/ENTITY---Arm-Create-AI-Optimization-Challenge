@@ -1,10 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- The entire app is two colors: paper and ink. Light mode is white paper,
-         black ink; values-night inverts them. Hierarchy comes from weight, size,
-         case and inversion - never from a third color or a gray. -->
-    <color name="mono_bg">#FFFFFF</color>
-    <color name="mono_fg">#000000</color>
+    <!--
+      MONO stays monochrome - no hues, and hierarchy still comes from weight, case and
+      inversion. What changed is luminance. v3.3.0 and earlier used pure #FFFFFF on pure
+      #000000, a 21:1 ratio. That is the documented cause of halation: on a black field
+      the iris opens wider, and pure-white glyphs bleed into their own edges. It reads as
+      glare within minutes, and worse for the ~50% of people with some astigmatism.
+
+      Values follow Material's dark-theme guidance: #121212 rather than black as the base
+      surface, text as near-white rather than #FFFFFF (Material's 87% high-emphasis
+      level), and elevation expressed by lightening the surface rather than by shadow.
+      Light theme is off-white paper with near-black ink, the same reasoning in reverse.
+
+      Roles, not pictures - use the token that says what a thing IS:
+        mono_bg       window / page behind everything
+        mono_surface  a card or box sitting on the page
+        mono_fg       primary text and icons
+        mono_dim      secondary text (Material's 60% medium-emphasis level)
+        mono_outline  borders and rules - never full-strength fg, or the app is a cage
+        mono_fill     large solid areas (filled buttons, active pills)
+        mono_on_fill  text sitting on mono_fill
+    -->
+
+    <!--
+      Light: paper, not a lightbulb. #FFFFFF and #000000 are both retired.
+
+      The page is the darker of the two surfaces and cards sit lighter on top of it -
+      Carbon's light-theme layering model, which alternates rather than piling white on
+      white. That drops overall emitted light without touching text contrast, which is
+      the lever that matters: a full-white page is simply a brighter lamp pointed at you.
+    -->
+    <color name="mono_bg">#F1F0EC</color>
+    <color name="mono_surface">#F9F8F5</color>
+    <color name="mono_fg">#1F1F1D</color>
+    <color name="mono_dim">#5C5C58</color>
+    <color name="mono_outline">#D6D4CE</color>
+    <color name="mono_fill">#1F1F1D</color>
+    <color name="mono_on_fill">#F9F8F5</color>
 
     <color name="ic_launcher_background">#FFFFFF</color>
+
+    <!-- Semantic roles in MONOCHROME stay neutral: meaning is carried by the word and
+         the shape, exactly as before. -->
+    <color name="mono_danger">#1F1F1D</color>
+    <color name="mono_success">#1F1F1D</color>
+    <color name="mono_accent">#1F1F1D</color>
 </resources>

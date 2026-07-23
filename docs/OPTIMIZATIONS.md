@@ -38,6 +38,34 @@ On the reference 4+4 device the four 2.0 GHz A55s fall below the 2.25 GHz thresh
 derivation yields exactly 4 - the same value the earlier hardcoded default used. The upper
 clamp is 6 rather than 4 so that a flagship with more than four performance cores threads
 wider; the lower clamp keeps a misreported topology from collapsing to a single thread. When
+
+**Prefill uses a different width, from a different signal (v3.5.0).** The rule above is the
+*decode* width and applies only to decode. It is kept on `cpuinfo_max_freq` because that is the
+rule validated against the devices actually measured - see the falsification note in §2.
+
+Prompt processing is compute-bound and scales with width, so it is sized from the performance
+*cluster* rather than the top frequency tier, using the kernel's normalised per-core capacity
+$c_i$ from `/sys/devices/system/cpu/cpuN/cpu_capacity` (1024 = strongest core, derived from
+`capacity-dmips-mhz` x max clock):
+
+$$
+T_{\mathrm{pp}} = \max\left(T_{\mathrm{gen}},\ \min\left(6,\ \left|\{\,i : c_i > \min_j c_j\,\}\right|\right)\right)
+$$
+
+That is: everything strictly above the slowest tier. Capacity is the signal the Linux scheduler
+itself uses and the one Android's NDK guidance and engines such as Unity read to separate
+performance cores from efficiency cores. Frequency cannot do this job as a *ranking* - an A55 at
+2.0 GHz and an A78 at 2.5 GHz are 25% apart in clock and roughly 3x apart in throughput. Kernels
+that do not export `cpu_capacity` fall back to `cpuinfo_max_freq`, and capacity is used only when
+*every* core reports it, since a partial read would rank a 0 against a 1024.
+
+The threshold is deliberately "above the slowest tier" rather than Unity's "at least twice the
+slowest core". Unity's rule is calibrated for the capacity scale, where little cores sit near 250
+against 1024; on the frequency fallback it is meaningless, because no real SoC clocks its big
+cores at twice its little cores. On a 4x2.0 + 4x2.5 GHz device *no* core clears 2x, the count
+would collapse to zero, and prefill would widen to every core - reintroducing the exact A55
+straggler regression the split exists to prevent. The chosen rule gives 4 / 6 / 5 / 4 on the four
+contributed topologies under **both** signals, and matches `DeviceOptimizer.fastCoreCount()`.
 cpufreq is unreadable the fallback is half the online cores.
 
 $$
@@ -239,15 +267,70 @@ variants when the hardware supports them.
 instead of 1. A custom build could set `GGML_CPU_ALL_VARIANTS=OFF` and target a specific
 `GGML_CPU_ARM_ARCH` to go back to a single backend (see [`BUILD.md`](BUILD.md#device-specific-configuration-adapting-ggml_cpu_arm_arch)).
 
-**Expected behavior on Armv9 flagships (expected, not measured).** On flagships with more than
-four performance cores (a Galaxy S26 Ultra-class Snapdragon is the kind of device meant), the
-same two mechanisms should compose without code changes: variant scoring selects an armv9
-backend with i8mm/SVE2 KleidiAI kernels instead of the armv8.2 one, and the thread derivation
-counts the larger top frequency cluster, yielding 5 or 6 generation threads instead of 4 (capped
-at 6). Whether the wider pool helps or whether mid cores within 10% of the prime core should
-count is exactly the question the in-app three-arm ablation answers per device. No such device
-has been measured; this project only publishes measured numbers, so these two sentences are the
-entire claim.
+**Behavior on Armv9 flagships: the prediction was wrong, and contributed data falsified it.**
+
+This section previously predicted that on a flagship with more than four performance cores "the
+thread derivation counts the larger top frequency cluster, yielding 5 or 6 generation threads
+instead of 4," and flagged the open question as whether the wider pool helps. Contributed
+benchmarks from four SoCs showed the derivation does the opposite. Every modern flagship has a
+*prime* core clocked well above its own big cluster, and the 10% window admits only the prime:
+
+| device | top | 0.9 x top | cores passing | after clamp |
+|---|---|---|---|---|
+| Dimensity 7300 | 2500 MHz | 2250 | 4 | 4 |
+| Tensor G5 | 3782 MHz | 3404 | 1 | 2 |
+| SM8550 | 3360 MHz | 3024 | 1 | 2 |
+| SM8450 | 2995 MHz | 2696 | 1 | 2 |
+
+Rather than widening to 5 or 6, the count collapsed to 1 on all three flagships and only
+`N_THREADS_MIN` pulled it back to 2. Because prefill inherited that number (`n_pp = n_gen`),
+prompt processing ran on two threads: a Dimensity 7300 prefills Llama-3.2-1B-Q4_0 at 139 tok/s
+while an SM8550 - stronger silicon, with i8mm - manages 111.
+
+The v3.5.0 fix widens **only** prefill, via the capacity rule in §1. Decode width is unchanged,
+because the contributed data also shows decode does not want width: an SM8550 decodes 23.8 tok/s
+on 2 threads and 6.72 on 8. Decode is memory-bandwidth-bound and two threads already saturates
+it, so widening `n_gen` would cost throughput and power for nothing. The open question is now the
+`n_pp` *value*: the performance cluster is a defensible default, not a measurement, and the
+in-app thread sweep is what should confirm it per device.
+
+## 2b. Deadline hints (ADPF), v3.6.0
+
+Everything in §1 and §2 controls **placement**: which cores the work runs on. None of it controls
+**urgency**. The kernel still chooses a frequency by observing load after the fact, and a hard
+affinity mask additionally prevents the platform migrating work as the device heats up - which is
+why Android's own guidance is to avoid manual affinity for general apps.
+
+An unprivileged app has no access to the knobs that would fix that directly. cpufreq governors,
+scheduler policy, `/proc/sys` and realtime priority classes all require root, and a rooted app
+would neither ship nor produce measurements representative of a normal phone.
+
+`APerformanceHint` is the one sanctioned exception. The app creates a session over its decode
+thread with a target work duration, then reports each step's actual duration:
+
+$$
+\text{target} \leftarrow d_{\text{obs}} \quad\text{when}\quad d_{\text{obs}} < \tfrac{1}{2}\,\text{target}
+\ \ \text{or}\ \ d_{\text{obs}} > 2\,\text{target}
+$$
+
+The framework compares reported against target and adjusts core placement and clock to close the
+gap, using the vendor's own tuning. Retargeting is deliberately hysteretic - every update is a
+binder call and this sits on the per-token path.
+
+Availability: the core calls are `__INTRODUCED_IN(33)`, which is the app's minSdk, so they link
+without a runtime guard. `APerformanceHint_getManager()` returns null where a vendor has not
+implemented the HAL, and every call site tolerates null, so the feature is inert rather than fatal.
+
+**Limitation, stated rather than hidden.** A session boosts the threads registered in it. ggml's
+worker threads are created inside the thread pool and expose no TID the app can enumerate, so only
+the thread running `llama_decode` is registered. Whether that is sufficient is an open measurement.
+
+**No claim is attached to this yet.** ENTITY Bench v2.1.0 adds an `adpf` arm - Auto's thread count,
+affinity off, deadline hint on - so the hint can be compared against `threads_only` (same width,
+neither pinned) and against `optimized` (deadline hint versus hard mask). Until devices report
+back, this section documents a mechanism, not a result.
+
+Implementation: `ai_chat.cpp` - `adpf_open/close/report/retarget`.
 
 ## 3. Adaptive context window
 
@@ -411,13 +494,24 @@ big cores — see §1). That forced a single tradeoff: pin to only the big cores
 processing gives up the little cores' compute, or widen the mask and generation loses to A55
 stragglers.
 
-ENTITY now builds two persistent `ggml_threadpool_t` instances at `prepare()` time: a generation
-pool sized and pinned to the big-core count (same core ranking as §1), and a prompt-processing
-pool sized to every online core. `llama_attach_threadpool(g_context, g_tp_gen, g_tp_batch)` +
-`llama_set_n_threads(g_context, n_gen, n_pp)` tell llama.cpp to switch pools per phase —
-generation stays on the 4 Cortex-A78 cores, prompt processing widens to all 8. A manual thread
-count from Settings (Auto off) is honored on both phases equally instead of being silently
+ENTITY builds two persistent `ggml_threadpool_t` instances at `prepare()` time: a generation pool
+sized and pinned to the decode width (§1), and a prompt-processing pool sized to the performance
+cluster. `llama_attach_threadpool(g_context, g_tp_gen, g_tp_batch)` +
+`llama_set_n_threads(g_context, n_gen, n_pp)` tell llama.cpp to switch pools per phase. A manual
+thread count from Settings (Auto off) is honored on both phases equally instead of being silently
 widened for prompt processing.
+
+**This width has been wrong twice, in opposite directions.** It was first "every online core",
+which lost to A55 stragglers - PP 512 on the reference 4+4 runs 116 tok/s on 4 threads and only
+86 across all 8, because every GEMM waits on the slowest share. The correction was `n_pp = n_gen`,
+which fixed the 4+4 case and silently broke every prime-core flagship (see §2). Since v3.5.0 the
+prefill pool is the *performance cluster*: wider than decode where the silicon has a real big
+cluster, and still excluding the efficiency cores that caused the original regression. On a 4+4
+device all three rules agree on 4, which is why the reference phone never showed the bug.
+
+The pinned CPU set is built for $\max(T_{\mathrm{gen}}, T_{\mathrm{pp}})$, not the decode width
+alone: `pin_to_fast_cores()` sets the *calling* thread's affinity and ggml's workers spawn lazily
+inheriting it, so a narrower set would confine the batch pool to the decode cores.
 
 **Runtime resolution, not a link-time dependency:** the CPU backend is built with
 `GGML_BACKEND_DL` (dynamically loaded — see §2), so `ggml_threadpool_new`/`ggml_threadpool_free`

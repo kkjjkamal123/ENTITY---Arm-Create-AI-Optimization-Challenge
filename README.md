@@ -10,7 +10,7 @@
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
-![Release](https://img.shields.io/badge/release-v3.1.0-orange)
+![Release](https://img.shields.io/badge/release-v3.6.0-orange)
 ![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
 
 </div>
@@ -41,16 +41,16 @@ ENTITY does not claim to beat a tuned command line build on raw token rate. Its 
 
 ## Evidence at a glance
 
-ENTITY's own ablation disproved ENTITY's flagship optimization. That is recorded here rather than buried.
+The challenge names **performance-per-watt** as a judging axis, so ENTITY leads with the figure most on-device apps never even measure: the battery cost of producing the same output. Every number below is measured on the phone and bounded, and where the ablation disproved ENTITY's own flagship claim, that is recorded here rather than buried.
 
 | Claim | Evidence | Boundary |
 |---|---|---|
+| **The same output costs 42% less battery** | Each pass samples battery current and voltage every 150 ms; watts and tok/W appear only while unplugged. Integrated over a pass, the same 128 tokens cost **86 J naive versus 50 J optimized** - 42% less battery, from finishing in 11.8 s instead of 19.9 s at the same watts. On the Snapdragon 6 Gen 4, pinning holds decode flat while cutting median power 2.52 to 1.78 W: **tok/W 6.80 to 9.85 (+45%)**. | Battery current reporting is OEM dependent. Comparative on one device, not lab grade metering. |
 | Auto is much faster than the out of the box default | Current five-run exports (2026-07-18): decode 10.8 to 18.1 tok/s (+68%) on the CMF Phone 1 and 9.7 to 17.5 tok/s (+81%) on an OPPO Snapdragon 6 Gen 4. The July record read +81% to +106% across two models. | Two phones, 1B and 3B models. Not a universal multiplier. |
 | **The thread count earns the multiplier; what pinning adds is device dependent** | The threads only arm runs Auto's thread count with affinity switched off. The current five-run exports: on the Dimensity 7300 pinning adds **+21% decode** (distributions non overlapping); on the Snapdragon 6 Gen 4 it adds +1% decode but cuts median power 2.52 to 1.78 W (tok/W 6.80 to 9.85). July's three-run sets on the chat app's bench read pinning at ~0%, and the v2.0.0 claim of "+121% from big core affinity" was wrong either way - the ablation is the experiment that showed it. | Per-SoC behavior, not a universal rule. The July ~0% record is retained; the raw CSVs keep the difference answerable. |
-| **KleidiAI only accelerates Q4_0 and Q8_0** | Verified in Arm's kernel source. Every benchmark published before v2.1.0 used Q3_K_L, so KleidiAI never ran. Switching to Q4_0, same phone and same thread config: prompt 43 to 121 tok/s, TTFT 12.1s to 4.3s. | Decode does not improve. It is bandwidth bound and tracks bytes per weight, not kernel quality. Q4_0 is also a quality tradeoff, so ENTITY recommends rather than switches. |
+| **KleidiAI only accelerates Q4_0 and Q8_0** | Verified in Arm's kernel source. Every benchmark published before v2.1.0 used Q3_K_L, so KleidiAI never ran. Switching to Q4_0, same phone and same thread config: prompt 43 to 121 tok/s, TTFT 12.1s to 4.3s. On an i8mm phone (Snapdragon 6 Gen 4) the loaded backend's MATMUL_INT8 GEMM adds a further **+32% prompt** over dotprod on Q4_0 (190.6 vs 143.7 tok/s, cold). | Decode does not improve. It is bandwidth bound and tracks bytes per weight, not kernel quality. Q4_0 is also a quality tradeoff, so ENTITY recommends rather than switches. |
 | Widening prompt processing to all cores was a regression | Prompt on 4 fast cores measures 135 tok/s; spread across all 8 it measures 86. The efficiency cores gate every GEMM. Removed in v2.1.0. | Empirical to this SoC. A tri cluster chip may prefer a wider pool, which is why the benchmark decides it, not an assumption. |
-| Efficiency is measured, rather than inferred | Each pass samples battery current and voltage; watts and tok/W appear only while unplugged. Integrated over a pass, the same 128 tokens cost 86 J naive versus 50 J optimized: 42% less battery, from finishing in 11.8 s instead of 19.9 s at the same watts. | Battery current reporting is OEM dependent. Comparative on one device, not lab grade metering. |
-| A developer can reproduce or challenge any of it | The app runs the ablation and exports every pass to CSV. Each arm logs the CPU mask the kernel actually applied, so a failed pin cannot pass as "pinning earns nothing". | A matching device and model are needed for a direct numerical comparison. |
+| A developer can reproduce or challenge any of it | The app runs the ablation and exports every pass to CSV. Each arm logs the CPU mask the kernel actually applied, so a failed pin cannot pass as "pinning earns nothing". The device card's optimization indicator shows which Arm levers are live on the phone in hand. | A matching device and model are needed for a direct numerical comparison. |
 
 This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has the full record, the graphs, and the limits.
 
@@ -173,13 +173,13 @@ Ninety seconds from clone to chatting, on any arm64 phone with Android 13+:
 ```bash
 git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
 cd ENTITY---Arm-Create-AI-Optimization-Challenge
-adb install -r apk/ENTITY-v17-bench-history-20260721-release.apk
+adb install -r apk/ENTITY-v22-adpf-power-fix-20260723-release.apk
 ```
 
 Then on the phone:
 
 1. Download a model such as [Llama-3.2-1B-Instruct-Q4_0.gguf](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF) (Q4_0 reaches Arm's KleidiAI kernels; see [why](docs/KLEIDIAI-QUANTS.md)).
-2. Open ENTITY, tap the model line in the header, choose Import from device and select the GGUF file.
+2. Open ENTITY and tap the model line in the header. Choose **Download a model...** to pick from a curated catalog tagged for your phone, or **Import from device...** to select a GGUF file you already have.
 3. Leave Auto mode enabled (Settings, in the menu drawer) for device aware CPU and context decisions.
 4. Open BENCHMARK from the menu drawer to run the three arm ablation on the loaded model: the naive default, threads only, and the optimized path. Unplug the phone to see power and tokens per watt.
 
@@ -218,3 +218,7 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 ## License
 
 ENTITY is licensed under [Apache License 2.0](LICENSE). It builds on llama.cpp and Arm KleidiAI.
+
+---
+
+**Why trust any of this?** [`docs/JOURNEY.md`](docs/JOURNEY.md) is the record of every claim this project had to withdraw - the +121% pinning headline, the widened prompt pool, the flagship thread-width prediction, the energy attribution - with what broke each one and what replaced it. The falsifications are the evidence that the surviving numbers were actually checked.

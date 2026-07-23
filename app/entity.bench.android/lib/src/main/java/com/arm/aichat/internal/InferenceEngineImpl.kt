@@ -103,6 +103,7 @@ internal class InferenceEngineImpl private constructor(
         topP: Float,
         pinCores: Boolean,
         pinEfficiency: Boolean,
+        adpf: Boolean,
     )
 
     @FastNative
@@ -299,8 +300,9 @@ internal class InferenceEngineImpl private constructor(
         topP: Float,
         pinCores: Boolean,
         pinEfficiency: Boolean,
+        adpf: Boolean,
     ) = withContext(llamaDispatcher) {
-        configure(nCtx, nThreads, temp, topK, topP, pinCores, pinEfficiency)
+        configure(nCtx, nThreads, temp, topK, topP, pinCores, pinEfficiency, adpf)
     }
 
     /**

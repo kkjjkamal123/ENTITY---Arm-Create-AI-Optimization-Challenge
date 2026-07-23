@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      COLOUR palette, dark. Hues are desaturated and lightened versus their light-mode
+      counterparts: a saturated colour visually vibrates against a dark field, so the
+      dark theme takes lighter, calmer variants. Surfaces keep the #121212-class
+      luminance that fixed the glare - hue is added, brightness is not.
+    -->
+    <color name="chroma_bg">#121417</color>
+    <color name="chroma_surface">#1C1F24</color>
+    <color name="chroma_fg">#E2E4E8</color>
+    <color name="chroma_dim">#9BA1AA</color>
+    <color name="chroma_outline">#333941</color>
+    <color name="chroma_fill">#8AB4F8</color>
+    <color name="chroma_on_fill">#121417</color>
+
+    <color name="chroma_danger">#F2B8B5</color>
+    <color name="chroma_success">#87D6A4</color>
+    <color name="chroma_accent">#8AB4F8</color>
+</resources>

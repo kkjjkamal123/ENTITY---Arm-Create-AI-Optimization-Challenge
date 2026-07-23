@@ -43,8 +43,10 @@ class BenchHomeActivity : AppCompatActivity() {
     private var effArm = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Palette.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bench_home)
+        Insets.pad(findViewById(android.R.id.content))
 
         modelNameTv = findViewById(R.id.model_name)
         kleidiTv = findViewById(R.id.model_kleidi)
@@ -166,6 +168,21 @@ class BenchHomeActivity : AppCompatActivity() {
         Ui.gridRow(this, dutGrid, "temp / free RAM", "%.1fC · %.1f GB".format(tempC, freeGb))
         Ui.gridRow(this, dutGrid, "battery current", if (reporting) "reporting" else "not reported",
             boldValue = reporting)
+
+        renderOptimizations(reporting)
+    }
+
+    // The optimization indicator: which of ENTITY's levers are live on the phone in hand.
+    private fun renderOptimizations(currentReporting: Boolean) {
+        val freqs = DeviceInfo.maxFreqsKhz().filter { it > 0 }
+        val caps = Optimizations.Caps(
+            flags = DeviceInfo.readCpuFlags(),
+            multiCluster = freqs.isNotEmpty() && freqs.distinct().size > 1,
+            currentReporting = currentReporting,
+        )
+        val grid = findViewById<GridLayout>(R.id.opt_grid)
+        grid.removeAllViews()
+        for ((label, on) in Optimizations.evaluate(caps)) Ui.optChip(this, grid, label, on)
     }
 
     private fun topology(): String {
@@ -191,30 +208,21 @@ class BenchHomeActivity : AppCompatActivity() {
             .distinctBy { it.name }
             .sortedBy { it.name }
 
+    /** The Models screen owns browsing, importing and downloading; selection stays here. */
     private fun showModelPicker() {
-        val models = scanModels()
-        // Nothing imported yet: explain what a .gguf is doing here rather than showing a
-        // one-row list, which is what the chat app does in the same situation.
-        if (models.isEmpty()) {
-            AlertDialog.Builder(this)
-                .setTitle(R.string.model_add_title)
-                .setMessage(R.string.model_add_body)
-                .setPositiveButton(R.string.model_import) { _, _ -> getContent.launch(arrayOf("*/*")) }
-                .setNegativeButton(R.string.cancel, null)
-                .show()
-            return
-        }
-        val labels = models.map {
-            val b = it.length()
-            val size = if (b >= 1_000_000_000L) "%.2f GB".format(b / 1e9) else "%.0f MB".format(b / 1e6)
-            "${it.name}\n$size"
-        } + getString(R.string.model_import)
-        AlertDialog.Builder(this)
-            .setTitle(R.string.model_picker_title)
-            .setItems(labels.toTypedArray()) { _, which ->
-                if (which < models.size) selectModel(models[which]) else getContent.launch(arrayOf("*/*"))
-            }
-            .show()
+        pickModel.launch(
+            Intent(this, ModelsActivity::class.java)
+                .putExtra(ModelsActivity.EXTRA_LOADED, selectedModel?.nameWithoutExtension)
+        )
+    }
+
+    private val pickModel = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { r ->
+        if (r.resultCode != RESULT_OK) return@registerForActivityResult
+        val path = r.data?.getStringExtra(ModelsActivity.EXTRA_PICKED) ?: return@registerForActivityResult
+        val f = File(path)
+        if (f.exists()) selectModel(f)
     }
 
     private val getContent = registerForActivityResult(

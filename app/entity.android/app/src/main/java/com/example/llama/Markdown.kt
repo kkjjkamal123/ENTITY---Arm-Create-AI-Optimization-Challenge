@@ -15,7 +15,8 @@ import android.text.style.StyleSpan
 
 // Hand-rolled Markdown -> Spanned in the two-color style. Deliberately narrow:
 // bold, italic, inline code (reverse video), fenced code blocks (left ink bar),
-// bullet lists and headings. Any parse failure falls back to plain text.
+// bullet lists, headings and LaTeX math (see Latex). Any parse failure falls
+// back to plain text.
 object Markdown {
 
     private const val SPAN = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
@@ -33,7 +34,9 @@ object Markdown {
         val lines = src.split("\n")
         var inFence = false
         var codeStart = -1
-        for (raw in lines) {
+        var i = 0
+        while (i < lines.size) {
+            val raw = lines[i]
             val trimmed = raw.trimStart()
             if (trimmed.startsWith("```")) {
                 if (!inFence) {
@@ -43,17 +46,58 @@ object Markdown {
                     inFence = false
                     if (out.length > codeStart) applyCode(out, codeStart, out.length, ink, barWidth, barGap)
                 }
+                i++
                 continue
             }
             if (inFence) {
                 out.append(raw).append('\n')
+                i++
+                continue
+            }
+            // Display math is a block, not a line: $$ or \[ may open here and close
+            // several lines down, so it is consumed before the per-line pass.
+            val block = displayBlock(lines, i)
+            if (block != null) {
+                Latex.append(out, block.first, display = true, ink = ink)
+                out.append('\n')
+                i = block.second
                 continue
             }
             appendBlockLine(out, raw, trimmed, ink, paper)
             out.append('\n')
+            i++
         }
         while (out.isNotEmpty() && out.last() == '\n') out.delete(out.length - 1, out.length)
         return out
+    }
+
+    // A $$..$$ or \[..\] block starting at line [from]. Returns the body and the index
+    // of the line after the closing delimiter, or null when this line does not open one.
+    private fun displayBlock(lines: List<String>, from: Int): Pair<String, Int>? {
+        val open = lines[from].trim()
+        val delim = when {
+            open.startsWith("$$") -> "$$"
+            open.startsWith("\\[") -> "\\]"
+            else -> return null
+        }
+        val head = if (delim == "$$") open.removePrefix("$$") else open.removePrefix("\\[")
+        // Single-line form: $$ x^2 $$
+        val selfClose = if (delim == "$$") head.endsWith("$$") else head.endsWith("\\]")
+        if (selfClose && head.length >= delim.length) {
+            return head.dropLast(delim.length) to (from + 1)
+        }
+        val body = StringBuilder(head)
+        var i = from + 1
+        while (i < lines.size) {
+            val t = lines[i].trim()
+            if (t.endsWith(delim)) {
+                body.append('\n').append(t.dropLast(delim.length))
+                return body.toString() to (i + 1)
+            }
+            body.append('\n').append(lines[i])
+            i++
+        }
+        return null
     }
 
     private fun appendBlockLine(out: SpannableStringBuilder, raw: String, trimmed: String, ink: Int, paper: Int) {
@@ -76,7 +120,24 @@ object Markdown {
         appendInline(out, raw, ink, paper)
     }
 
+    // Inline math is lifted out first: a \times expansion contains *, and x_1 contains _,
+    // so running the emphasis pass over raw LaTeX would eat both.
     private fun appendInline(out: SpannableStringBuilder, s: String, ink: Int, paper: Int) {
+        val math = Latex.regions(s)
+        if (math.isEmpty()) {
+            appendEmphasis(out, s, ink, paper)
+            return
+        }
+        var at = 0
+        for (r in math) {
+            if (r.start > at) appendEmphasis(out, s.substring(at, r.start), ink, paper)
+            Latex.append(out, r.body, display = false, ink = ink)
+            at = r.end
+        }
+        if (at < s.length) appendEmphasis(out, s.substring(at), ink, paper)
+    }
+
+    private fun appendEmphasis(out: SpannableStringBuilder, s: String, ink: Int, paper: Int) {
         var i = 0
         while (i < s.length) {
             val c = s[i]

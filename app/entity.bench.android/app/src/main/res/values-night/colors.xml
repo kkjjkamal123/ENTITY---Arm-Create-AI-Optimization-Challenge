@@ -1,5 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="mono_bg">#000000</color>
-    <color name="mono_fg">#FFFFFF</color>
+    <!--
+      Dark theme. See values/colors.xml for why none of these are #000000 or #FFFFFF.
+
+        mono_bg      #121212  Material's dark-surface baseline, not black
+        mono_surface #1E1E1E  a card, one elevation step up - in dark theme, elevation
+                              is a lighter surface (~5% white overlay), not a shadow
+        mono_fg      #E4E4E4  ~90% white. #FFFFFF visually vibrates on a dark field
+        mono_dim     #A0A0A0  secondary text, still ~7:1 on mono_bg
+        mono_outline #333333  a border should describe an edge, not draw attention
+        mono_fill    #D6D6D6  deliberately dimmer than mono_fg: a filled button is a
+                              large area, and area multiplies perceived glare, so the
+                              biggest bright shapes are the ones to pull back
+        mono_on_fill #121212  ink on those filled areas
+
+      Measured contrast on mono_bg: mono_fg 15:1, mono_dim 7:1 - both above WCAG AAA
+      for body text (7:1), while well under the 21:1 that caused the glare.
+    -->
+    <color name="mono_bg">#121212</color>
+    <color name="mono_surface">#1E1E1E</color>
+    <color name="mono_fg">#E4E4E4</color>
+    <color name="mono_dim">#A0A0A0</color>
+    <color name="mono_outline">#333333</color>
+    <color name="mono_fill">#D6D6D6</color>
+    <color name="mono_on_fill">#121212</color>
+
+    <!-- Semantic roles in MONOCHROME stay neutral: meaning is carried by the word and
+         the shape, exactly as before. -->
+    <color name="mono_danger">#E4E4E4</color>
+    <color name="mono_success">#E4E4E4</color>
+    <color name="mono_accent">#E4E4E4</color>
 </resources>

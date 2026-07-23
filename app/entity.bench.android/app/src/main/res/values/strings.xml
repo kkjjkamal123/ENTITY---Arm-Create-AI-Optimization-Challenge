@@ -8,9 +8,18 @@
     <string name="dut_label">DEVICE UNDER TEST</string>
     <string name="dut_unplugged">UNPLUGGED OK</string>
     <string name="dut_charging">CHARGING / power off</string>
+    <string name="opt_label">OPTIMIZATIONS</string>
+    <string name="opt_caption">solid = live on this device · outline = not present</string>
     <string name="model_label">MODEL</string>
     <string name="model_none">tap to choose a .gguf</string>
     <string name="model_import">Import from device…</string>
+    <string name="model_download">Download a model…</string>
+    <string name="model_catalog_title">Models for this phone</string>
+    <string name="model_downloading">downloading… %1$d%%</string>
+    <string name="model_downloading_title">Downloading</string>
+    <string name="model_downloading_body">%1$s (%2$s). Keep this screen open; the download resumes if it is interrupted.</string>
+    <string name="model_download_stop">Stop</string>
+    <string name="model_download_background">Keep going</string>
     <string name="model_importing">importing…</string>
     <string name="model_picker_title">Select a model</string>
     <string name="model_add_title">Add a model</string>
@@ -63,4 +72,69 @@
     <string name="cancel">Cancel</string>
 
     <string name="back">Back</string>
+
+    <!-- Palette -->
+    <string name="palette_label">Palette</string>
+    <string name="palette_mono">MONOCHROME</string>
+    <string name="palette_colour">COLOUR</string>
+    <string name="palette_note">Colour tints surfaces and marks the primary action, warnings and confirmations. Layout and brightness stay the same.</string>
+
+    <!-- Models screen -->
+    <string name="models_title">MODELS</string>
+    <string name="models_installed">On this phone</string>
+    <string name="models_installed_empty">No models yet.\nDownload one below, or import a .gguf you already have.</string>
+    <string name="models_catalog">Available to download</string>
+    <string name="models_catalog_note">Sized and ranked for this phone. Q4_0 and Q8_0 reach Arm\'s KleidiAI kernels; other types fall back to ggml\'s Arm repack kernels.</string>
+    <string name="models_load">SELECT</string>
+    <string name="models_loaded">SELECTED</string>
+    <string name="models_delete">DELETE</string>
+    <string name="models_download">DOWNLOAD</string>
+    <string name="models_resume">RESUME</string>
+    <string name="models_downloading">%1$s  %2$d%%</string>
+    <string name="models_importing">Importing…</string>
+    <string name="models_download_failed">Download failed: %1$s</string>
+    <string name="models_one_at_a_time">One download at a time. Stop the current one first.</string>
+    <string name="model_active_block">That model is selected for the next run.</string>
+    <string name="model_delete_confirm">Delete %1$s (%2$s)? The file is removed from this phone.</string>
+
+    <!-- Settings sections -->
+    <string name="sec_benchmark">Benchmark</string>
+    <string name="sec_data">Data</string>
+    <string name="settings_keep_on">Keep screen on during a run</string>
+    <string name="settings_keep_on_desc">The display never sleeps mid-benchmark. Turning this off risks the screen locking during a long sustained run.</string>
+    <string name="settings_eff_arm">Efficiency-core arm</string>
+    <string name="settings_eff_arm_desc">Adds a fourth arm pinning Auto\'s thread count to the slowest cluster, to answer whether the little cores are actually more energy-efficient for decode.</string>
+    <string name="settings_models">Manage models</string>
+    <string name="settings_results">Saved results</string>
+    <string name="settings_results_clear">Delete every saved result? This cannot be undone.</string>
+    <string name="settings_models_none">No models on this phone.</string>
+    <string name="settings_results_none">No saved results yet.</string>
+
+    <!-- Contribute -->
+    <string name="sec_contribute">Contribute results</string>
+    <string name="contribute_body">ENTITY\'s finding - that thread count earns the decode speed-up and core pinning is device-dependent - was measured on two phones. Sending your result makes it a claim about Arm silicon rather than about two devices. Off by default. Summary numbers only: no telemetry trace, no accounts, no identifier that links two of your runs. Every submission records whether the phone was charging, because power readings taken while charging are the charger\'s, not the workload\'s.</string>
+    <string name="contribute_toggle">Share my benchmark results</string>
+    <string name="contribute_show">Show exactly what gets sent</string>
+    <string name="contribute_unconfigured">This build has no contribution endpoint, so nothing can be sent.</string>
+    <string name="contribute_queued">%1$d result(s) waiting to send</string>
+    <string name="contribute_none">Nothing queued.</string>
+    <string name="contribute_empty">Run a benchmark first - then this shows the exact body that would be sent.</string>
+
+    <!-- Contribute: pick which results to share -->
+    <string name="contribute_title">SHARE RESULTS</string>
+    <string name="contribute_open">Choose results to share</string>
+    <string name="contribute_pick_body">Pick the runs to add to the public dataset. Rows already contributed are marked and left unselected, so sending again will not duplicate them. Tap a row to select or deselect it.</string>
+    <string name="contribute_select_all">ALL / NONE</string>
+    <string name="contribute_select_unsent">NOT SENT YET</string>
+    <string name="contribute_send">SEND SELECTED</string>
+    <string name="contribute_sending">SENDING %1$d / %2$d…</string>
+    <string name="contribute_sent">SENT</string>
+    <string name="contribute_status">%1$d selected · %2$d already sent</string>
+    <string name="contribute_confirm">Send %1$d result(s) to the public ENTITY dataset? A contributed row cannot be recalled.</string>
+    <string name="contribute_done">Sent %1$d result(s). Thank you.</string>
+    <string name="contribute_partial">Sent %1$d, failed %2$d. Failed ones stay selected - try again when you have a connection.</string>
+    <string name="contribute_power_valid">Unplugged: power and tok/W are valid.</string>
+    <string name="contribute_power_invalid">Charging during the run, so power and tok/W are excluded from the dataset.</string>
+
+    <!-- Contribute: pick which results to share -->
 </resources>

@@ -1,8 +1,41 @@
-# ENTITY v2.0.0 Technical Reference
+# ENTITY documentation index
 
-This is the current technical overview for ENTITY. It describes the app that ships in the v2.0.0
-release. Versioned release notes and the older Termux experiments are preserved as historical
-evidence and are not interchangeable with the current Android app result.
+Start here. This page is the map: what each document covers, and the order to read them in.
+The technical summary below tracks the current release (chat **v3.5.0**, ENTITY Bench **v2.0.0**).
+
+Versioned release notes and the older Termux experiments are preserved as historical evidence and
+are not interchangeable with the current Android app result.
+
+## Reading order
+
+**Understand the project**
+1. [`../README.md`](../README.md) - what ENTITY is, install, screenshots.
+2. [`../github.md`](../github.md) - the full narrative, including the falsification arcs.
+3. [`FAQ.md`](FAQ.md) - the short answers, including what is deliberately *not* claimed.
+4. [`JOURNEY.md`](JOURNEY.md) - every claim that had to be withdrawn, why it survived, and what
+   replaced it. If you want to know whether to trust the numbers, read this one.
+
+**Understand how it works**
+5. [`ARCHITECTURE.md`](ARCHITECTURE.md) - module layout, threading model, file-by-file inventory.
+6. [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md) - the algorithms: core selection, thread widths, context
+   admission, thermal policy, power math, and the limit of each claim. The deepest document.
+7. [`KLEIDIAI-QUANTS.md`](KLEIDIAI-QUANTS.md) - which quantizations reach which Arm kernels.
+
+**Understand the evidence**
+8. [`../benchmarks/README.md`](../benchmarks/README.md) - the results at a glance.
+9. [`../benchmarks/CONTRIBUTED-DATA.md`](../benchmarks/CONTRIBUTED-DATA.md) - the multi-device
+   dataset: what it established, what it falsified, and the rules for reading it.
+10. [`../benchmarks/REPRODUCIBILITY.md`](../benchmarks/REPRODUCIBILITY.md) - how to re-run it.
+11. [`../benchmarks/COMPARISONS.md`](../benchmarks/COMPARISONS.md) - against other apps.
+
+**Build, contribute, extend**
+12. [`BUILD.md`](BUILD.md) - toolchain and build.
+13. [`CONTRIBUTING.md`](CONTRIBUTING.md) - conventions and validation.
+14. [`../benchmarks/CONTRIBUTE-BACKEND.md`](../benchmarks/CONTRIBUTE-BACKEND.md) - the results
+    backend, if you are forking it.
+
+**History**
+15. [`../CHANGELOG.md`](../CHANGELOG.md) and [`../releases/`](../releases/) - per-version detail.
 
 Source repository: [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge).
 
@@ -22,21 +55,41 @@ The app has been measured on:
 | CMF Phone 1 | MediaTek Dimensity 7300 | 6 GB | 16 |
 | OPPO CPH2729 | Qualcomm Snapdragon 6 Gen 4 | 7.4 GB | 16 |
 
+Plus four SoCs measured by contributors on devices the author does not own - Tensor G5, SM8550,
+SM8450 and MT6878 - see
+[`../benchmarks/CONTRIBUTED-DATA.md`](../benchmarks/CONTRIBUTED-DATA.md).
+
 ## Runtime decisions
 
 ### CPU selection
 
-Native code reads cpuinfo maximum frequency for every CPU, sorts the cores, and selects the fastest
-generation set. In Auto mode the generation thread count is online cores minus two clamped to the
-range two through four. The selected set is passed to sched_setaffinity().
+Native code ranks every CPU by strength and pins inference to the strongest set. Ranking prefers
+`/sys/devices/system/cpu/cpuN/cpu_capacity` - the kernel's own normalised capacity, 1024 = the
+strongest core - and falls back to `cpuinfo_max_freq` where a kernel does not export it. Frequency
+alone cannot rank cores correctly: an A55 at 2.0 GHz and an A78 at 2.5 GHz are 25% apart in clock
+and roughly 3x apart in throughput.
 
-Both inference phases run on that fast core set.
+The two inference phases run **different thread widths**, because they are bound by different
+things:
 
-Until v2.1.0 prompt processing was widened to every online core through a separate ggml thread pool,
-on the assumption that a compute bound phase wants all the hardware. Measured, that was a
-regression: an efficiency core is roughly a third of a performance core, so the widened pool
-finished late and every matmul waited on the stragglers. Prompt throughput on a 1B Q4_0 measures 135
-tokens per second on the four fast cores and 86 spread across all eight. The widening was removed.
+| phase | width | rule |
+|---|---|---|
+| decode (`n_gen`) | narrow | cores within 10% of the fastest **clock**, clamped [2, 6] |
+| prefill (`n_pp`) | performance cluster | cores strictly above the slowest **capacity** tier, >= `n_gen`, capped at 6 |
+
+Decode is memory-bandwidth-bound and saturates on a handful of cores; prefill is compute-bound and
+scales with width. On a 4+4 device both rules give the same answer. On a prime-core flagship they
+do not, and conflating them was a real bug - see below.
+
+This width has been wrong twice, in opposite directions. It was first "every online core", which
+lost to efficiency-core stragglers: prompt throughput on a 1B Q4_0 measures 135 tok/s on the four
+fast cores and 86 spread across all eight. The correction was `n_pp = n_gen`, which fixed the 4+4
+case and silently broke every prime-core flagship - prefill ran on two threads there until v3.5.0.
+Full account in [`../benchmarks/CONTRIBUTED-DATA.md`](../benchmarks/CONTRIBUTED-DATA.md).
+
+Core **placement** is a user setting since v3.5.0 (Settings -> Inference -> Core placement: Auto /
+Perf cores / Scheduler). Pinning is a speed lever with a power cost and it lands differently per
+device, so the app measures both and reports which won on that phone rather than asserting one.
 
 Implementation: app/entity.android/lib/src/main/cpp/ai_chat.cpp.
 

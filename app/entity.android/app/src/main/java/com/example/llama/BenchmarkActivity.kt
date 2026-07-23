@@ -174,8 +174,10 @@ class BenchmarkActivity : AppCompatActivity() {
     private data class Stat(val median: Double, val sd: Double, val n: Int)
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Palette.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_benchmark)
+        Insets.pad(findViewById(android.R.id.content))
 
         // Recover the staged export if the system killed us while the file picker was up.
         pendingCsvPath = savedInstanceState?.getString(STATE_PENDING_CSV)
@@ -306,10 +308,11 @@ class BenchmarkActivity : AppCompatActivity() {
             }
             return Result(naive, threadsOnly, opt, charging, baselineC, benchmarkStartThermalStatus)
         } finally {
-            // pinCores back to the shipped default: chat decode must re-pin after the
-            // threads-only arm turned affinity off.
+            // Placement back to whatever the USER chose, not a hardcoded true: the
+            // threads-only arm turned affinity off, and restoring to "pinned" would
+            // silently override someone who picked the system scheduler.
             withContext(NonCancellable) {
-                engine.applyConfig(ctx, restoreThreads, v.temp, v.topK, v.topP, pinCores = true)
+                engine.applyConfig(ctx, restoreThreads, v.temp, v.topK, v.topP, Settings.pinCores(prefs))
             }
         }
     }
@@ -366,8 +369,9 @@ class BenchmarkActivity : AppCompatActivity() {
             }
             return SustainedResult(threadsOnly, opt, (durationMs / 60_000L).toInt())
         } finally {
+            // Same reason as the ablation path: restore the user's placement choice.
             withContext(NonCancellable) {
-                engine.applyConfig(ctx, restoreThreads, v.temp, v.topK, v.topP, pinCores = true)
+                engine.applyConfig(ctx, restoreThreads, v.temp, v.topK, v.topP, Settings.pinCores(prefs))
             }
         }
     }
@@ -646,7 +650,14 @@ class BenchmarkActivity : AppCompatActivity() {
             appendLine("†prompt row is not an isolated ablation: only auto widens PP to all cores")
         }.trim()
 
-        autosave(BenchHistory.TYPE_ABLATION, n, 0, r.charging, naiveTg, optTg) { buildCsv(r) }
+        // Arms 1 and 2 are threads-only and optimized: same thread count, affinity off
+        // then on. That pair is the placement measurement Settings reads back.
+        autosave(
+            BenchHistory.TYPE_ABLATION, n, 0, r.charging, naiveTg, optTg,
+            unpinnedTg = threadsTg, pinnedTg = optTg,
+            unpinnedW = if (watts[1].n > 0) watts[1].median else 0.0,
+            pinnedW = if (watts[2].n > 0) watts[2].median else 0.0,
+        ) { buildCsv(r) }
     }
 
     // Written the moment the run finishes, before the user can navigate away or the
@@ -659,6 +670,10 @@ class BenchmarkActivity : AppCompatActivity() {
         charging: Boolean,
         naiveTg: Double,
         autoTg: Double,
+        unpinnedTg: Double = 0.0,
+        pinnedTg: Double = 0.0,
+        unpinnedW: Double = 0.0,
+        pinnedW: Double = 0.0,
         csv: () -> String,
     ) {
         val text = lastResultText ?: return
@@ -666,6 +681,8 @@ class BenchmarkActivity : AppCompatActivity() {
             BenchHistory.save(
                 this, type, modelTv.text.toString(), runs, durationMin, charging,
                 naiveTg, autoTg, csv(), text,
+                unpinnedTg = unpinnedTg, pinnedTg = pinnedTg,
+                unpinnedW = unpinnedW, pinnedW = pinnedW,
             )
         }.getOrDefault(false)
         if (!ok) Toast.makeText(this, R.string.bench_save_failed, Toast.LENGTH_SHORT).show()

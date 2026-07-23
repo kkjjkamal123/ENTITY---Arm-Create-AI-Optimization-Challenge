@@ -5,7 +5,7 @@ import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatDelegate
 
 object Prefs {
-    private const val NAME = "entity_bench"
+    const val NAME = "entity_bench"
 
     const val KEY_THEME = "theme"            // THEME_SYSTEM | THEME_LIGHT | THEME_DARK
     const val KEY_MODEL = "last_model"
@@ -13,6 +13,14 @@ object Prefs {
     const val KEY_MODE = "mode"              // MODE_ABLATION | MODE_SUSTAINED | MODE_SWEEP
     const val KEY_DURATION = "duration_min"
     const val KEY_EFF_ARM = "efficiency_arm"
+    const val KEY_PALETTE = "palette"        // 0 monochrome, 1 colour
+    const val KEY_KEEP_ON = "keep_screen_on"
+    const val KEY_CONTRIBUTE = "contribute_results"
+    const val KEY_SENT_RESULTS = "sent_results"   // file names already contributed
+
+    const val DEF_PALETTE = 0                // monochrome stays the default look
+    const val DEF_KEEP_ON = true             // a run must not be cut short by the lock screen
+    const val DEF_CONTRIBUTE = false         // contribution is opt-in, never a default
 
     const val THEME_SYSTEM = 0
     const val THEME_LIGHT = 1

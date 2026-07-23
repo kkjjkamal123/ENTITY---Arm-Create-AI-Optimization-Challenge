@@ -89,6 +89,9 @@ data class BenchResult(
     val fastCores: List<Int>,
     val littleCores: List<Int>,
     val maxFreqsMhz: List<Int>,
+    // Kernel-normalised per-core capacity, 1024 = strongest core. Empty on kernels
+    // that do not export cpu_capacity.
+    val cpuCapacities: List<Int> = emptyList(),
     val arms: List<Arm>,
 ) {
     val naive get() = arms.firstOrNull { it.key == "naive" }
@@ -149,6 +152,7 @@ data class BenchResult(
         put("fast_cores", JSONArray(fastCores))
         put("little_cores", JSONArray(littleCores))
         put("max_freqs_mhz", JSONArray(maxFreqsMhz))
+        put("cpu_capacities", JSONArray(cpuCapacities))
         put("arms", JSONArray().also { arr ->
             arms.forEach { a ->
                 arr.put(JSONObject().apply {
@@ -260,6 +264,7 @@ data class BenchResult(
                 fastCores = ints(o.optJSONArray("fast_cores")),
                 littleCores = ints(o.optJSONArray("little_cores")),
                 maxFreqsMhz = ints(o.optJSONArray("max_freqs_mhz")),
+                cpuCapacities = ints(o.optJSONArray("cpu_capacities")),
                 arms = arms,
             )
         }

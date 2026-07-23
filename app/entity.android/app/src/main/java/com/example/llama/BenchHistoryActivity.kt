@@ -28,8 +28,10 @@ class BenchHistoryActivity : AppCompatActivity() {
     private var detailStem: String? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Palette.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_bench_history)
+        Insets.pad(findViewById(android.R.id.content))
         findViewById<View>(R.id.btn_back).setOnClickListener { finish() }
         detailStem = intent.getStringExtra(EXTRA_STEM)
     }

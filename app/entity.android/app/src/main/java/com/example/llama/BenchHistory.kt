@@ -25,8 +25,33 @@ object BenchHistory {
         val charging: Boolean,
         val naiveTg: Double,
         val autoTg: Double,
+        // The threads-only and optimized arms run the SAME thread count and differ only
+        // in affinity, so this pair is the placement measurement. Watts are 0 when the
+        // run could not measure them.
+        val unpinnedTg: Double = 0.0,
+        val pinnedTg: Double = 0.0,
+        val unpinnedW: Double = 0.0,
+        val pinnedW: Double = 0.0,
     ) {
         val deltaPct get() = if (naiveTg > 0) (autoTg / naiveTg - 1) * 100 else 0.0
+
+        // A charging phone reports the charger's current, not the workload's, so power
+        // from a charging run is physically meaningless and must never be quoted.
+        val powerValid get() = !charging && unpinnedW > 0 && pinnedW > 0
+
+        val hasPlacement get() = unpinnedTg > 0 && pinnedTg > 0
+
+        // Speed change from turning pinning ON, as a percentage. Positive favours pinning.
+        val pinSpeedPct get() = if (unpinnedTg > 0) (pinnedTg / unpinnedTg - 1) * 100 else 0.0
+
+        // Change in tokens per watt from turning pinning ON. Only meaningful if powerValid.
+        val pinEnergyPct: Double
+            get() {
+                if (!powerValid) return 0.0
+                val a = unpinnedTg / unpinnedW
+                val b = pinnedTg / pinnedW
+                return if (a > 0) (b / a - 1) * 100 else 0.0
+            }
     }
 
     const val TYPE_ABLATION = "ablation"
@@ -49,6 +74,10 @@ object BenchHistory {
         autoTg: Double,
         csv: String,
         text: String,
+        unpinnedTg: Double = 0.0,
+        pinnedTg: Double = 0.0,
+        unpinnedW: Double = 0.0,
+        pinnedW: Double = 0.0,
     ) = runCatching {
         val ts = System.currentTimeMillis()
         val stem = ts.toString()
@@ -64,6 +93,10 @@ object BenchHistory {
             put("charging", charging)
             put("naive", naiveTg)
             put("auto", autoTg)
+            put("unpinned_tg", unpinnedTg)
+            put("pinned_tg", pinnedTg)
+            put("unpinned_w", unpinnedW)
+            put("pinned_w", pinnedW)
         }
         indexFile(ctx).appendText(line.toString() + "\n")
     }.isSuccess
@@ -87,6 +120,10 @@ object BenchHistory {
                         charging = o.optBoolean("charging"),
                         naiveTg = o.optDouble("naive", 0.0),
                         autoTg = o.optDouble("auto", 0.0),
+                        unpinnedTg = o.optDouble("unpinned_tg", 0.0),
+                        pinnedTg = o.optDouble("pinned_tg", 0.0),
+                        unpinnedW = o.optDouble("unpinned_w", 0.0),
+                        pinnedW = o.optDouble("pinned_w", 0.0),
                     )
                 }
                 .sortedByDescending { it.ts }

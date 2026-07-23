@@ -1,34 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.EntityBench" parent="Theme.Material3.DayNight.NoActionBar">
-        <item name="colorPrimary">@color/mono_fg</item>
-        <item name="colorOnPrimary">@color/mono_bg</item>
-        <item name="android:colorBackground">@color/mono_bg</item>
-        <item name="colorSurface">@color/mono_bg</item>
-        <item name="colorOnSurface">@color/mono_fg</item>
-        <item name="android:textColorPrimary">@color/mono_fg</item>
-        <item name="android:textColorSecondary">@color/mono_fg</item>
-        <item name="android:textColor">@color/mono_fg</item>
-        <item name="android:textColorHint">@color/mono_fg</item>
+    <style name="Theme.EntityBench.Base" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">?attr/monoFg</item>
+        <item name="colorOnPrimary">?attr/monoBg</item>
+        <item name="android:colorBackground">?attr/monoBg</item>
+        <!-- The inset padding strip shows the WINDOW background, so it has to be
+             our surface too or a band appears above the header. -->
+        <item name="android:windowBackground">?attr/monoBg</item>
+        <item name="colorSurface">?attr/monoBg</item>
+        <item name="colorOnSurface">?attr/monoFg</item>
+        <item name="android:textColorPrimary">?attr/monoFg</item>
+        <item name="android:textColorSecondary">?attr/monoFg</item>
+        <item name="android:textColor">?attr/monoFg</item>
+        <item name="android:textColorHint">?attr/monoFg</item>
         <item name="android:fontFamily">monospace</item>
-        <item name="android:statusBarColor">@color/mono_bg</item>
-        <item name="android:navigationBarColor">@color/mono_bg</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:statusBarColor">?attr/monoBg</item>
+        <item name="android:navigationBarColor">?attr/monoBg</item>
+        <item name="android:windowLightStatusBar">@bool/window_light_bars</item>
+        <item name="android:windowLightNavigationBar">@bool/window_light_bars</item>
         <item name="alertDialogTheme">@style/Dialog.EntityBench</item>
     </style>
 
     <!-- Dialogs follow the same two-color rule: square, bordered, monospace. -->
     <style name="Dialog.EntityBench" parent="Theme.AppCompat.DayNight.Dialog.Alert">
         <item name="android:windowBackground">@drawable/bg_dialog</item>
-        <item name="colorPrimary">@color/mono_fg</item>
-        <item name="colorAccent">@color/mono_fg</item>
-        <item name="android:textColor">@color/mono_fg</item>
-        <item name="android:textColorPrimary">@color/mono_fg</item>
-        <item name="android:textColorSecondary">@color/mono_fg</item>
-        <item name="android:textColorAlertDialogListItem">@color/mono_fg</item>
+        <item name="colorPrimary">?attr/monoFg</item>
+        <item name="colorAccent">?attr/monoFg</item>
+        <item name="android:textColor">?attr/monoFg</item>
+        <item name="android:textColorPrimary">?attr/monoFg</item>
+        <item name="android:textColorSecondary">?attr/monoFg</item>
+        <item name="android:textColorAlertDialogListItem">?attr/monoFg</item>
         <item name="android:fontFamily">monospace</item>
-        <item name="android:colorBackground">@color/mono_bg</item>
+        <item name="android:colorBackground">?attr/monoBg</item>
         <!-- Force ink text on the OK/Cancel/etc. buttons; without this the button
              color can resolve from the base dialog theme and vanish into the bg. -->
         <item name="buttonBarButtonStyle">@style/Dialog.EntityBench.Button</item>
@@ -38,7 +41,7 @@
     </style>
 
     <style name="Dialog.EntityBench.Button" parent="Widget.AppCompat.Button.Borderless">
-        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textColor">?attr/monoFg</item>
         <item name="android:textStyle">bold</item>
         <item name="android:fontFamily">monospace</item>
         <item name="android:letterSpacing">0.08</item>
@@ -48,7 +51,7 @@
     <style name="Bench.Label" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">@color/mono_fg</item>
+        <item name="android:textColor">?attr/monoFg</item>
         <item name="android:textSize">11sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:letterSpacing">0.18</item>
@@ -83,5 +86,32 @@
         <item name="android:gravity">center</item>
         <item name="android:paddingTop">11dp</item>
         <item name="android:paddingBottom">11dp</item>
+    </style>
+
+    <!-- Palette definitions: the only place raw colour resources appear. -->
+    <style name="Theme.EntityBench" parent="Theme.EntityBench.Base">
+        <item name="monoBg">@color/mono_bg</item>
+        <item name="monoSurface">@color/mono_surface</item>
+        <item name="monoFg">@color/mono_fg</item>
+        <item name="monoDim">@color/mono_dim</item>
+        <item name="monoOutline">@color/mono_outline</item>
+        <item name="monoFill">@color/mono_fill</item>
+        <item name="monoOnFill">@color/mono_on_fill</item>
+        <item name="monoDanger">@color/mono_danger</item>
+        <item name="monoSuccess">@color/mono_success</item>
+        <item name="monoAccent">@color/mono_accent</item>
+    </style>
+
+    <style name="Theme.EntityBench.Chroma" parent="Theme.EntityBench.Base">
+        <item name="monoBg">@color/chroma_bg</item>
+        <item name="monoSurface">@color/chroma_surface</item>
+        <item name="monoFg">@color/chroma_fg</item>
+        <item name="monoDim">@color/chroma_dim</item>
+        <item name="monoOutline">@color/chroma_outline</item>
+        <item name="monoFill">@color/chroma_fill</item>
+        <item name="monoOnFill">@color/chroma_on_fill</item>
+        <item name="monoDanger">@color/chroma_danger</item>
+        <item name="monoSuccess">@color/chroma_success</item>
+        <item name="monoAccent">@color/chroma_accent</item>
     </style>
 </resources>

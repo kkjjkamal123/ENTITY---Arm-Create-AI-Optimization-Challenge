@@ -8,8 +8,10 @@ import androidx.appcompat.app.AppCompatActivity
 class InfoActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Palette.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_info)
+        Insets.pad(findViewById(android.R.id.content))
 
         findViewById<View>(R.id.btn_back).setOnClickListener { finish() }
         findViewById<TextView>(R.id.info_text).text = CONTENT

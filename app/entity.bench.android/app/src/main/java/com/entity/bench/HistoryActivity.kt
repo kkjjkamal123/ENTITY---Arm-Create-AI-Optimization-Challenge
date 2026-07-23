@@ -18,8 +18,10 @@ import java.util.Locale
 class HistoryActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Palette.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_history)
+        Insets.pad(findViewById(android.R.id.content))
         findViewById<View>(R.id.btn_back).setOnClickListener { finish() }
     }
 

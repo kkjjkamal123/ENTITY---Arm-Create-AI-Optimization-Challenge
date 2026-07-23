@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Colour is addressed by ROLE, never by value. Every layout, drawable and state list
+      points at one of these attributes, so a theme can supply a different palette
+      without a single view knowing which palette it got. That is what makes the
+      MONOCHROME / COLOUR switch in Settings possible at all.
+
+      Light and dark still come from resource qualifiers (values / values-night) on the
+      colours these attributes point at - the palette switch and the theme switch are
+      independent, and every combination resolves.
+    -->
+    <attr name="monoBg" format="color" />
+    <attr name="monoSurface" format="color" />
+    <attr name="monoFg" format="color" />
+    <attr name="monoDim" format="color" />
+    <attr name="monoOutline" format="color" />
+    <attr name="monoFill" format="color" />
+    <attr name="monoOnFill" format="color" />
+
+    <!--
+      Semantic roles. In MONOCHROME these resolve to the neutral tokens above, so the
+      app looks exactly as it does today. In COLOUR they carry hue - and only here:
+      status and consequence, never decoration. Every place they are used also carries
+      text or shape saying the same thing, so meaning never depends on colour alone
+      (WCAG 1.4.1).
+    -->
+    <attr name="monoDanger" format="color" />
+    <attr name="monoSuccess" format="color" />
+    <attr name="monoAccent" format="color" />
+</resources>

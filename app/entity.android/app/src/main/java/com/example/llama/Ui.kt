@@ -11,8 +11,11 @@ object Ui {
 
     fun dp(ctx: Context, v: Int) = (v * ctx.resources.displayMetrics.density).toInt()
 
-    fun fg(ctx: Context) = ContextCompat.getColor(ctx, R.color.mono_fg)
-    fun bg(ctx: Context) = ContextCompat.getColor(ctx, R.color.mono_bg)
+    fun fg(ctx: Context) = Palette.color(ctx, R.attr.monoFg)
+    fun bg(ctx: Context) = Palette.color(ctx, R.attr.monoBg)
+    fun dim(ctx: Context) = Palette.color(ctx, R.attr.monoDim)
+    fun onFill(ctx: Context) = Palette.color(ctx, R.attr.monoOnFill)
+    fun danger(ctx: Context) = Palette.color(ctx, R.attr.monoDanger)
 
     // Segmented option: selected = solid inversion, unselected = 1dp outline.
     fun seg(tv: TextView, selected: Boolean) {

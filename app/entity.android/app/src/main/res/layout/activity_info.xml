@@ -2,8 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/mono_bg"
-    android:fitsSystemWindows="true"
+    android:background="?attr/monoBg"
     android:fillViewport="true"
     android:overScrollMode="never"
     android:scrollbars="none">
@@ -41,7 +40,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:text="@string/about_title"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="21sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.08" />
@@ -59,7 +58,7 @@
                 android:id="@+id/info_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="11sp"
                 android:lineSpacingMultiplier="1.5"
                 android:textIsSelectable="true" />
@@ -72,7 +71,7 @@
             android:gravity="center"
             android:paddingTop="16dp"
             android:paddingBottom="6dp"
-            android:textColor="@color/mono_fg"
+            android:textColor="?attr/monoFg"
             android:textSize="10sp"
             android:textStyle="bold"
             android:letterSpacing="0.08" />

@@ -91,14 +91,16 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
 
     // ---- the two benchmark types ----
 
-    suspend fun runAblation(modelName: String, nRuns: Int, efficiencyArm: Boolean): BenchResult {
+    suspend fun runAblation(modelName: String, nRuns: Int, efficiencyArm: Boolean,
+                            adpfEnabled: Boolean = true): BenchResult {
         val charging = isCharging()
         val baselineC = readTempC()
         val startThermal = powerManager.currentThermalStatus
         val coolTargetC = coolTarget(baselineC)
         val withEfficiency = efficiencyArm && littleCores.isNotEmpty()
+        val adpfArm = adpfEnabled
         progressDone = 0
-        progressTotal = 1 + (if (withEfficiency) 4 else 3) * nRuns
+        progressTotal = 1 + ((if (withEfficiency) 4 else 3) + (if (adpfArm) 1 else 0)) * nRuns
         try {
             status("warming up (discarded pass)")
             engine.applyConfig(activeCtx, THREADS_AUTO, TEMP, TOP_K, TOP_P)
@@ -115,7 +117,16 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
                 runArm("efficiency", "efficiency", effThreads, true, nRuns, coolTargetC, pinEfficiency = true)
             } else null
 
-            val arms = listOfNotNull(naive, threadsOnly, opt, efficiency)
+            // ADPF: Auto's thread count, affinity OFF, but the platform is told the
+            // deadline for each decode step. Deliberately unpinned - it is the
+            // alternative to pinning, not an addition to it, so the comparison that
+            // matters is adpf vs threads_only (same width, neither pinned) and adpf vs
+            // optimized (same width, hint instead of a hard mask).
+            val adpf = if (adpfArm) {
+                runArm("adpf", "adpf", autoGenThreads(), false, nRuns, coolTargetC, adpf = true)
+            } else null
+
+            val arms = listOfNotNull(naive, threadsOnly, opt, efficiency, adpf)
             if (arms.any { a -> stat(a.passes.map { it.tg }).n == 0 }) {
                 error("Engine returned no timing - try again.")
             }
@@ -216,6 +227,7 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
         fastCores = fastCores,
         littleCores = littleCores,
         maxFreqsMhz = maxFreqsKhz.map { (it / 1000).toInt() },
+        cpuCapacities = DeviceInfo.cpuCapacities().map { it.toInt() },
         arms = arms,
     )
 
@@ -238,14 +250,16 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
         nRuns: Int,
         coolTargetC: Double,
         pinEfficiency: Boolean = false,
+        adpf: Boolean = false,
     ): Arm {
         // 0 threads = auto, exactly what the chat app ships. pinCores = false is the
         // ablation arm: same thread count, scheduler-placed, no pinned pool.
-        engine.applyConfig(activeCtx, threads, TEMP, TOP_K, TOP_P, pinCores, pinEfficiency)
+        engine.applyConfig(activeCtx, threads, TEMP, TOP_K, TOP_P, pinCores, pinEfficiency, adpf)
         val genThreads = if (threads <= 0) autoGenThreads() else threads
         val passes = ArrayList<Pass>(nRuns)
         for (i in 1..nRuns) {
             val placement = when {
+                adpf -> "adpf"
                 pinEfficiency -> "slow pinned"
                 pinCores -> "pinned"
                 else -> "no pin"

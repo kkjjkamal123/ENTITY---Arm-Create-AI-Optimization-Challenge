@@ -44,6 +44,7 @@ class RunActivity : AppCompatActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Palette.apply(this)
         super.onCreate(savedInstanceState)
         // A recreated instance has lost the in-flight run; go back to home rather
         // than pretend to be benchmarking.
@@ -52,7 +53,12 @@ class RunActivity : AppCompatActivity() {
             return
         }
         setContentView(R.layout.activity_run)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        Insets.pad(findViewById(android.R.id.content))
+        // Honour the Settings toggle rather than forcing it: default is on, because a
+        // sustained run outlasts most lock timeouts and a locked screen ends the run.
+        if (Prefs.get(this).getBoolean(Prefs.KEY_KEEP_ON, Prefs.DEF_KEEP_ON)) {
+            window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        }
 
         statusTv = findViewById(R.id.run_status)
         pctTv = findViewById(R.id.progress_pct)
@@ -114,6 +120,11 @@ class RunActivity : AppCompatActivity() {
             outcome
                 .onSuccess { result ->
                     val f = withContext(Dispatchers.IO) { ResultStore.save(this@RunActivity, result) }
+                    // Opt-in contribution. Saved locally first, so a failed or refused
+                    // upload can never cost the user their result.
+                    if (ResultUploader.enabled(this@RunActivity)) {
+                        runCatching { ResultUploader.upload(this@RunActivity, result, f.name) }
+                    }
                     startActivity(Intent(this@RunActivity, ResultActivity::class.java)
                         .putExtra(ResultActivity.EXTRA_FILE, f.name))
                     finish()

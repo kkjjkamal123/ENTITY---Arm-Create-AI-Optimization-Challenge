@@ -5,6 +5,17 @@ the matching APK filename, an intro paragraph, and Added/Changed/Fixed bullets f
 
 | File | Version | APK |
 |---|---|---|
+| [`RELEASE-v3.6.0.md`](RELEASE-v3.6.0.md) | 3.6.0 | `ENTITY-v22-adpf-power-fix-20260723-release.apk` (release) |
+| [`RELEASE-Bench-v2.1.0.md`](RELEASE-Bench-v2.1.0.md) | Bench 2.1.0 | `ENTITY-Bench-v2.1.0-release.apk` (release) |
+| [`RELEASE-v3.5.0.md`](RELEASE-v3.5.0.md) | 3.5.0 | `ENTITY-v21-prefill-threads-placement-latex-20260723-release.apk` (release) |
+| [`RELEASE-Bench-v2.0.0.md`](RELEASE-Bench-v2.0.0.md) | Bench 2.0.0 | `ENTITY-Bench-v2.0.0-release.apk` (release) |
+| [`RELEASE-v3.4.1.md`](RELEASE-v3.4.1.md) | 3.4.1 | `ENTITY-v20-edge-insets-20260722-release.apk` (release) |
+| [`RELEASE-Bench-v1.5.0.md`](RELEASE-Bench-v1.5.0.md) | Bench 1.5.0 | `ENTITY-Bench-v1.5.0-release.apk` (release) |
+| [`RELEASE-v3.4.0.md`](RELEASE-v3.4.0.md) | 3.4.0 | `ENTITY-v19-models-screen-colour-20260722-release.apk` (release) |
+| [`RELEASE-v3.3.0.md`](RELEASE-v3.3.0.md) | 3.3.0 | superseded by v3.4.0 |
+| [`RELEASE-v3.2.0.md`](RELEASE-v3.2.0.md) | 3.2.0 | `ENTITY-v18-model-catalog-20260722-release.apk` (release) |
+| [`RELEASE-Bench-v1.4.0.md`](RELEASE-Bench-v1.4.0.md) | Bench 1.4.0 | `ENTITY-Bench-v1.4.0-release.apk` (release) |
+| [`RELEASE-Bench-v1.3.0.md`](RELEASE-Bench-v1.3.0.md) | Bench 1.3.0 | `ENTITY-Bench-v1.3.0-release.apk` (release) |
 | [`RELEASE-v3.1.0.md`](RELEASE-v3.1.0.md) | 3.1.0 | `ENTITY-v17-bench-history-20260721-release.apk` (release) |
 | [`RELEASE-Bench-v1.2.1.md`](RELEASE-Bench-v1.2.1.md) | Bench 1.2.1 | `ENTITY-Bench-v1.2.1-release.apk` (release) |
 | [`RELEASE-v3.0.3.md`](RELEASE-v3.0.3.md) | 3.0.3 | `ENTITY-v16-ui-perf-20260720-release.apk` (release) |

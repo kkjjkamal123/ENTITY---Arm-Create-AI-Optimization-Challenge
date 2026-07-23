@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Text on an outlined surface. Pressed fills, so text flips to on-fill. -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:state_pressed="true" android:color="@color/mono_bg" />
-    <item android:color="@color/mono_fg" />
+    <item android:state_pressed="true" android:color="?attr/monoOnFill" />
+    <item android:state_enabled="false" android:color="?attr/monoDim" />
+    <item android:color="?attr/monoFg" />
 </selector>

@@ -2,8 +2,7 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/mono_bg"
-    android:fitsSystemWindows="true"
+    android:background="?attr/monoBg"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -20,7 +19,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/run_title"
-            android:textColor="@color/mono_fg"
+            android:textColor="?attr/monoFg"
             android:textSize="21sp"
             android:textStyle="bold"
             android:letterSpacing="0.08" />
@@ -29,7 +28,7 @@
             android:id="@+id/run_elapsed"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/mono_fg"
+            android:textColor="?attr/monoFg"
             android:textSize="13sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -39,7 +38,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:textColor="@color/mono_fg"
+        android:textColor="?attr/monoFg"
         android:textSize="11sp" />
 
     <!-- Status -->
@@ -55,7 +54,7 @@
             android:id="@+id/run_status"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/mono_fg"
+            android:textColor="?attr/monoFg"
             android:textSize="13sp"
             android:lineSpacingMultiplier="1.4"
             android:minLines="2" />
@@ -89,7 +88,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
             android:gravity="end"
-            android:textColor="@color/mono_fg"
+            android:textColor="?attr/monoFg"
             android:textSize="11sp"
             android:textStyle="bold" />
     </LinearLayout>
@@ -122,7 +121,7 @@
         android:background="@drawable/bg_dashed"
         android:padding="12dp"
         android:text="@string/run_keep_on"
-        android:textColor="@color/mono_fg"
+        android:textColor="?attr/monoFg"
         android:textSize="10sp" />
 
     <View

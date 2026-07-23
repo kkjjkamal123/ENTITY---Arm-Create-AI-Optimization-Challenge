@@ -35,8 +35,10 @@ class SettingsActivity : AppCompatActivity() {
     private var modelsValue: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Palette.apply(this)
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_settings)
+        Insets.pad(findViewById(android.R.id.content))
         prefs = getSharedPreferences(Settings.PREFS, Context.MODE_PRIVATE)
         root = findViewById(R.id.settings_root)
         findViewById<View>(R.id.btn_back).setOnClickListener { finish() }
@@ -62,6 +64,22 @@ class SettingsActivity : AppCompatActivity() {
             // AppCompat recreates every started activity when the mode changes.
             AppCompatDelegate.setDefaultNightMode(Settings.nightMode(which))
         }
+
+        miniLabel(box, getString(R.string.palette_label))
+        segRow(
+            box,
+            listOf(getString(R.string.palette_mono), getString(R.string.palette_colour)),
+            selected = { prefs.getInt(Settings.KEY_PALETTE, Settings.DEF_PALETTE) },
+            topMargin = 6,
+        ) { which ->
+            if (which == prefs.getInt(Settings.KEY_PALETTE, Settings.DEF_PALETTE)) return@segRow
+            prefs.edit().putInt(Settings.KEY_PALETTE, which).apply()
+            // The palette is a theme, and a theme is applied at inflation, so the screen
+            // has to be rebuilt for the change to be visible. Other screens pick it up in
+            // their own onCreate.
+            recreate()
+        }
+        miniLabel(box, getString(R.string.palette_note))
     }
 
     private fun buildInterface() {
@@ -173,11 +191,72 @@ class SettingsActivity : AppCompatActivity() {
         checkRow(box, getString(R.string.settings_efficiency), getString(R.string.settings_efficiency_desc),
             Settings.KEY_EFFICIENCY, Settings.DEF_EFFICIENCY)
 
+        buildPlacement(box)
+
         // Re-open the first-run suggestion on demand. recreate() so every row
         // redraws with whatever the dialog just wrote.
         outlineButton(box, getString(R.string.settings_optimize)) {
             val info = runCatching { AiChat.getInferenceEngine(applicationContext).cpuInfo() }.getOrDefault("")
             DeviceOptimizer.show(this, info) { recreate() }
+        }
+    }
+
+    // Core placement, plus what this phone's own benchmark says about it.
+    //
+    // Pinning is not a free win. Across the contributed dataset it swings from -8.5% to
+    // +29.3% on decode depending on the SoC, and in the median it slightly REDUCES tokens
+    // per watt, because the speed it buys is paid for in power. Android's guidance is that
+    // forcing affinity also stops the platform reacting to load and thermal throttling.
+    // So rather than assert a default, the app shows the user their own measurement.
+    private fun buildPlacement(box: LinearLayout) {
+        miniLabel(box, getString(R.string.placement_label))
+        segRow(
+            box,
+            listOf(
+                getString(R.string.placement_auto),
+                getString(R.string.placement_pinned),
+                getString(R.string.placement_system),
+            ),
+            selected = { prefs.getInt(Settings.KEY_PLACEMENT, Settings.DEF_PLACEMENT) },
+            topMargin = 6,
+        ) { which -> prefs.edit().putInt(Settings.KEY_PLACEMENT, which).apply() }
+        miniLabel(box, getString(R.string.placement_desc))
+
+        val last = BenchHistory.summaries(this)
+            .firstOrNull { it.type == BenchHistory.TYPE_ABLATION && it.hasPlacement }
+        if (last == null) {
+            miniLabel(box, getString(R.string.placement_no_data))
+            return
+        }
+
+        // Positive pinSpeedPct means pinning won. The power clause is gated on
+        // powerValid: a charging phone reports the charger's current, not the
+        // workload's, so quoting watts from it would be meaningless.
+        val pinWins = last.pinSpeedPct >= 0
+        val speed = "%.1f%%".format(kotlin.math.abs(last.pinSpeedPct))
+        val verdict = StringBuilder(
+            if (pinWins) getString(R.string.placement_pin_faster, speed)
+            else getString(R.string.placement_nopin_faster, speed)
+        )
+        if (last.powerValid) {
+            val e = last.pinEnergyPct
+            val energy = "%.1f%%".format(kotlin.math.abs(e))
+            verdict.append(
+                if (e >= 0) getString(R.string.placement_pin_energy, energy)
+                else getString(R.string.placement_nopin_energy, energy)
+            )
+        } else {
+            verdict.append(getString(R.string.placement_power_unknown))
+        }
+        miniLabel(box, verdict.toString())
+
+        val suggested = if (pinWins) Settings.PLACEMENT_PINNED else Settings.PLACEMENT_SYSTEM
+        if (prefs.getInt(Settings.KEY_PLACEMENT, Settings.DEF_PLACEMENT) != suggested) {
+            outlineButton(box, getString(R.string.placement_apply)) {
+                prefs.edit().putInt(Settings.KEY_PLACEMENT, suggested).apply()
+                Toast.makeText(this, R.string.placement_applied, Toast.LENGTH_LONG).show()
+                recreate()
+            }
         }
     }
 

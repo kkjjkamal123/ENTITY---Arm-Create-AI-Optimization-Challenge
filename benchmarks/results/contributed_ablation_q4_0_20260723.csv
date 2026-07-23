@@ -1,0 +1,29 @@
+# ENTITY Bench contributed results, exported from Supabase public.bench_results 2026-07-23.
+# Llama-3.2-1B-Instruct-Q4_0 only, one row per arm. Source query is in CONTRIBUTED-DATA.md.
+#
+# power_valid=false means watts/tok_per_w on that row are NOT usable: the OPPO CPH2737 rows
+# were produced by a build with the EXTRA_VOLTAGE unit bug (fixed after v2.0.0), which
+# under-reported power by 1e6. Decode and prompt throughput on those rows are unaffected.
+#
+# SM-S911B has no efficiency arm (user toggle) and its naive arm has an 88.5% relative
+# standard deviation - it is noise, not a measurement. Do not build a ratio on it.
+id,run_date,device,soc,runs_per_arm,power_valid,arm,threads,pinned,decode_tok_s,decode_sd,prompt_tok_s,ttft_ms,watts,tok_per_w
+6,2026-07-23,Nothing A015,MT6878 Dimensity 7300,1,true,naive,8,true,9.44,0,95,5495.41,4.673140,2.020055
+6,2026-07-23,Nothing A015,MT6878 Dimensity 7300,1,true,threads_only,4,false,17.6,0,137,3794.04,4.365795,4.031339
+6,2026-07-23,Nothing A015,MT6878 Dimensity 7300,1,true,optimized,4,true,16.1,0,139,3745.57,4.691121,3.432016
+6,2026-07-23,Nothing A015,MT6878 Dimensity 7300,1,true,efficiency,4,true,15.0,0,134,3887.56,4.871317,3.079249
+5,2026-07-22,Google Pixel 10,Tensor G5,3,true,naive,8,true,7.43,1.011479,57.6,9023.48,2.867775,2.095657
+5,2026-07-22,Google Pixel 10,Tensor G5,3,true,threads_only,2,false,21.5,3.961762,72.6,7096.59,4.156607,5.172488
+5,2026-07-22,Google Pixel 10,Tensor G5,3,true,optimized,2,true,27.8,1.276279,94.7,5442.52,5.549681,5.009297
+5,2026-07-22,Google Pixel 10,Tensor G5,3,true,efficiency,2,true,15.4,0.216025,43.7,11780.76,3.248623,4.757248
+7,2026-07-23,Samsung SM-S911B,SM8550 Snapdragon 8 Gen 2,3,true,naive,8,true,6.72,5.947864,41.9,12279.09,5.899191,1.138911
+7,2026-07-23,Samsung SM-S911B,SM8550 Snapdragon 8 Gen 2,3,true,threads_only,2,false,23.4,0.124722,110,4697.46,6.180609,3.799504
+7,2026-07-23,Samsung SM-S911B,SM8550 Snapdragon 8 Gen 2,3,true,optimized,2,true,23.8,0.141421,111,4654.63,6.249562,3.808267
+8,2026-07-23,Samsung SM-S908E,SM8450 Snapdragon 8 Gen 1,3,true,naive,8,true,5.08,0.837470,76.6,6880.92,4.281359,1.116562
+8,2026-07-23,Samsung SM-S908E,SM8450 Snapdragon 8 Gen 1,3,true,threads_only,2,false,18.2,0.124722,82.1,6290.65,4.855258,3.727917
+8,2026-07-23,Samsung SM-S908E,SM8450 Snapdragon 8 Gen 1,3,true,optimized,2,true,18.1,0.169967,81.6,6328.86,4.752957,3.808155
+8,2026-07-23,Samsung SM-S908E,SM8450 Snapdragon 8 Gen 1,3,true,efficiency,2,true,11.8,4.786091,75.6,6857.23,4.313582,2.735546
+11,2026-07-23,OPPO CPH2737,MT6897 Dimensity 8300,1,false,naive,8,true,18.1,0,96.5,5360.95,,
+11,2026-07-23,OPPO CPH2737,MT6897 Dimensity 8300,1,false,threads_only,4,false,29.9,0,102,5053.05,,
+11,2026-07-23,OPPO CPH2737,MT6897 Dimensity 8300,1,false,optimized,4,true,30.5,0,105,4908.98,,
+11,2026-07-23,OPPO CPH2737,MT6897 Dimensity 8300,1,false,efficiency,4,true,30.5,0,104,4955.86,,

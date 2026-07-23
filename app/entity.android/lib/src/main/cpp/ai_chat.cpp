@@ -1,6 +1,7 @@
 #include <android/log.h>
 #include <jni.h>
 #include <iomanip>
+#include <chrono>
 #include <cmath>
 #include <string>
 #include <vector>
@@ -10,6 +11,7 @@
 #include <functional>
 #include <unistd.h>
 #include <sched.h>
+#include <android/performance_hint.h>
 #include <sampling.h>
 
 #include "logging.h"
@@ -84,23 +86,114 @@ static float g_top_p     = 0.95f;
 // alone. Only the benchmark's threads-only configuration sets this false.
 static bool  g_pin_cores = true;
 
-// CPU indices ranked by max cpufreq, fastest first.
-// On big.LITTLE the leading entries are the performance cluster (e.g. the A78
-// cores), the trailing ones the efficiency cluster.
-static std::vector<int> ranked_fast_cpus() {
+// ---- ADPF: tell the scheduler the deadline instead of only pinning to cores -------
+//
+// sched_setaffinity says WHERE work runs. It cannot say how fast it needs to be, so the
+// kernel still picks a frequency by reacting to load after the fact, and a hard mask also
+// stops the platform migrating work when the phone heats up. Android's own guidance is to
+// avoid manual affinity for exactly that reason.
+//
+// A performance hint session says WHEN the work must finish. The framework feeds that to
+// the same scheduler and cpufreq machinery the vendor already tuned, so it can raise the
+// clock, place threads, and back off under thermal pressure - per device, without any
+// heuristic of ours. It is the only lever an unprivileged app has that reaches those
+// kernel subsystems at all.
+//
+// Available from API 33, which is this app's minSdk, so no runtime guard is needed for
+// the core calls. Every function returns null/error rather than crashing on a device
+// whose vendor did not implement the HAL, and every call site tolerates that.
+//
+// Limitation worth stating: a session boosts the threads registered in it, and ggml's
+// worker threads are spawned inside the thread pool with no TID we can enumerate. We
+// register the calling thread, which is the one that runs llama_decode and participates
+// in the compute. Whether that is enough is a measurement, not an assumption - which is
+// why the bench app carries an `adpf` arm rather than the app just switching it on.
+static APerformanceHintSession *g_hint            = nullptr;
+static bool                     g_adpf_enabled    = true;
+static int64_t                  g_hint_target_ns  = 0;
+
+// Nominal starting deadline: 20 ms per decode step (50 tok/s). reportActualWorkDuration
+// converges the real one, so this only has to be the right order of magnitude.
+constexpr int64_t ADPF_INITIAL_TARGET_NS = 20'000'000;
+
+static void adpf_open() {
+    if (!g_adpf_enabled || g_hint != nullptr) { return; }
+    APerformanceHintManager *mgr = APerformanceHint_getManager();
+    if (mgr == nullptr) { return; }                 // vendor did not implement it
+    int32_t tids[1] = { (int32_t) gettid() };
+    g_hint_target_ns = ADPF_INITIAL_TARGET_NS;
+    g_hint = APerformanceHint_createSession(mgr, tids, 1, g_hint_target_ns);
+    LOGi("%s: performance hint session %s", __func__, g_hint ? "open" : "unavailable");
+}
+
+static void adpf_close() {
+    if (g_hint != nullptr) {
+        APerformanceHint_closeSession(g_hint);
+        g_hint = nullptr;
+    }
+}
+
+// Report how long the last decode step actually took. The framework compares it against
+// the target and adjusts frequency/placement to close the gap.
+static void adpf_report(int64_t actual_ns) {
+    if (g_hint == nullptr || actual_ns <= 0) { return; }
+    APerformanceHint_reportActualWorkDuration(g_hint, actual_ns);
+}
+
+// Retarget when the observed rate has drifted far from the deadline we asked for. Done
+// sparingly: every update is a binder call, and this sits on the per-token path.
+static void adpf_retarget(int64_t observed_ns) {
+    if (g_hint == nullptr || observed_ns <= 0) { return; }
+    const int64_t lo = g_hint_target_ns / 2;
+    const int64_t hi = g_hint_target_ns * 2;
+    if (observed_ns < lo || observed_ns > hi) {
+        g_hint_target_ns = observed_ns;
+        APerformanceHint_updateTargetWorkDuration(g_hint, g_hint_target_ns);
+    }
+}
+
+// Per-core strength, one entry per cpu.
+//
+// cpu_capacity is the kernel's own normalised figure (1024 = the strongest core in the
+// system), computed from the DT's capacity-dmips-mhz times the core's max frequency. It
+// is the signal the scheduler itself uses and the one Android's NDK guidance and engines
+// like Unity read to tell performance cores from efficiency cores. Frequency alone
+// cannot: an A55 at 2.0 GHz and an A78 at 2.5 GHz are 25% apart in clock and roughly 3x
+// apart in throughput.
+//
+// Some older and vendor kernels do not export it, so cpuinfo_max_freq is the fallback.
+// Both are monotone in core strength, which is all the ranking needs. Capacity is only
+// used when EVERY core reports it; a partial read would rank a 0 against a 1024.
+static std::vector<long> cpu_weights(bool *from_capacity) {
     const int ncpu = (int) sysconf(_SC_NPROCESSORS_CONF);
-    std::vector<std::pair<long, int>> cores;
+    std::vector<long> cap((size_t) ncpu, 0), khz((size_t) ncpu, 0);
+    int cap_ok = 0;
     for (int i = 0; i < ncpu; i++) {
         char path[128];
-        snprintf(path, sizeof(path),
-                 "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", i);
-        long khz = 0;
+        snprintf(path, sizeof(path), "/sys/devices/system/cpu/cpu%d/cpu_capacity", i);
         if (FILE *f = fopen(path, "r")) {
-            if (fscanf(f, "%ld", &khz) != 1) { khz = 0; }
+            if (fscanf(f, "%ld", &cap[i]) == 1 && cap[i] > 0) { cap_ok++; }
             fclose(f);
         }
-        cores.emplace_back(khz, i);
+        snprintf(path, sizeof(path),
+                 "/sys/devices/system/cpu/cpu%d/cpufreq/cpuinfo_max_freq", i);
+        if (FILE *f = fopen(path, "r")) {
+            if (fscanf(f, "%ld", &khz[i]) != 1) { khz[i] = 0; }
+            fclose(f);
+        }
     }
+    const bool use_cap = (ncpu > 0 && cap_ok == ncpu);
+    if (from_capacity) { *from_capacity = use_cap; }
+    return use_cap ? cap : khz;
+}
+
+// CPU indices ranked strongest first: the leading entries are the performance cluster,
+// the trailing ones the efficiency cluster.
+static std::vector<int> ranked_fast_cpus() {
+    const std::vector<long> w = cpu_weights(nullptr);
+    std::vector<std::pair<long, int>> cores;
+    cores.reserve(w.size());
+    for (size_t i = 0; i < w.size(); i++) { cores.emplace_back(w[i], (int) i); }
     std::sort(cores.begin(), cores.end(),
               [](const auto &a, const auto &b) { return a.first > b.first; });
 
@@ -108,6 +201,46 @@ static std::vector<int> ranked_fast_cpus() {
     ranked.reserve(cores.size());
     for (const auto &c : cores) { ranked.push_back(c.second); }
     return ranked;
+}
+
+// Cores in the performance cluster, i.e. everything that is not an efficiency core:
+// strictly above the slowest tier. On a prime + big + little chip that keeps the prime
+// AND the big cluster and drops only the littles - which is what prompt processing
+// wants, since it is compute-bound and scales with width, unlike decode.
+//
+// Deliberately NOT Unity's "at least twice the slowest core's capacity". That threshold
+// is calibrated for the capacity scale, where littles sit near 250 against 1024, and it
+// is meaningless on the cpuinfo_max_freq fallback, where no real SoC clocks its big
+// cores at twice its little cores: on a 4x2.0 + 4x2.5 GHz device NO core clears 2x, the
+// count collapses to zero, and the uniform-CPU fallback below would widen prefill to
+// every core - reintroducing exactly the A55 straggler regression this split exists to
+// prevent (PP 512 falls 116 -> 86 tok/s when it spans the little cores). "Above the
+// slowest tier" gives the same answer on both scales, and matches DeviceOptimizer's
+// fastCoreCount() in Kotlin.
+//
+// Distinct from top_cluster_core_count() on purpose. That one answers "how many threads
+// should DECODE run", is deliberately narrow, and is left exactly as it was because it
+// is the rule validated against the measured devices. This one answers "how wide can
+// PREFILL go", and is the only place the capacity signal changes behaviour.
+//
+// Returns 0 when the topology is unreadable or uniform, so callers can fall back.
+static int perf_cluster_core_count() {
+    const std::vector<long> w = cpu_weights(nullptr);
+    long lo = 0;
+    for (long v : w) { if (v > 0 && (lo == 0 || v < lo)) { lo = v; } }
+    if (lo <= 0) { return 0; }
+    int n = 0;
+    for (long v : w) { if (v > lo) { n++; } }
+    // Uniform CPU: every core clocks the same, so they are all performance cores.
+    return n > 0 ? n : (int) w.size();
+}
+
+// Prompt-processing thread width. Never narrower than the decode width, capped by the
+// same N_THREADS_MAX. See the note above the threadpool attach for why this is separate.
+static int prompt_thread_count(int n_gen) {
+    const int perf = perf_cluster_core_count();
+    if (perf <= 0) { return n_gen; }
+    return std::max(n_gen, std::min(N_THREADS_MAX, perf));
 }
 
 // Number of cores in the top frequency cluster: cpuinfo_max_freq within 10% of the
@@ -314,7 +447,7 @@ static llama_context *init_context(llama_model *model, int n_ctx_override = -1) 
     ctx_params.n_batch = BATCH_SIZE;
     ctx_params.n_ubatch = BATCH_SIZE;
     ctx_params.n_threads = n_threads;
-    ctx_params.n_threads_batch = n_threads;
+    ctx_params.n_threads_batch = prompt_thread_count(n_threads);
     auto *context = llama_init_from_model(g_model, ctx_params);
     if (context == nullptr) {
         LOGe("%s: llama_new_context_with_model() returned null)", __func__);
@@ -325,7 +458,10 @@ static llama_context *init_context(llama_model *model, int n_ctx_override = -1) 
     g_n_ctx = (int) llama_n_ctx(context);
 
     if (g_pin_cores) {
-        build_fast_cpu_set(n_threads);
+        // Wide enough for the prefill pool too. pin_to_fast_cores() sets the CALLING
+        // thread's mask and ggml's workers spawn lazily inheriting it, so a set built
+        // for n_gen alone would confine the batch pool to the decode cores.
+        build_fast_cpu_set(std::max(n_threads, prompt_thread_count(n_threads)));
         pin_to_fast_cores_checked();
         LOGi("%s: pinned inference to %d fast cores, effective cpus [%s]",
              __func__, g_fast_count, effective_cpu_mask().c_str());
@@ -371,20 +507,33 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_prepare(JNIEnv * /*env*/, jobje
     }
     g_context = context;
 
-    // Prompt processing runs on the same thread count as generation.
+    // Prompt processing runs on the performance cluster; generation stays narrow.
     //
-    // This used to widen to every online core, on the assumption that prompt eval is
-    // compute-bound and therefore wants all the hardware. Measured on a Dimensity 7300
-    // (4x A78 + 4x A55), that assumption is wrong: PP 512 on Llama-3.2-1B-Q4_0 runs at
-    // 116 tok/s on 4 threads and only 86 tok/s spread across all 8. The A55s are roughly
-    // a third the throughput of an A78, so the widened pool finishes its share late and
-    // every GEMM waits on the stragglers. Fewer, faster threads win both phases.
+    // This once widened to every ONLINE core, which was wrong: measured on a Dimensity
+    // 7300 (4x A78 + 4x A55), PP 512 on Llama-3.2-1B-Q4_0 runs at 116 tok/s on 4 threads
+    // and only 86 tok/s across all 8, because the A55s finish their share late and every
+    // GEMM waits on the stragglers. The fix at the time was n_pp = n_gen, which threw out
+    // the useful half of the idea along with the harmful half.
     //
-    // ponytail: n_pp is kept as a separate value rather than deleted, because the right
-    // width is an empirical property of the SoC. A tri-cluster chip may well prefer a
-    // wider prompt pool; the in-app benchmark is what should decide it, not an assumption.
+    // On a 4+4 device the two are identical, so nothing changes. On a prime + big +
+    // little flagship they are not, and n_pp = n_gen was leaving prefill on 2 threads:
+    // top_cluster_core_count() counts cores within 10% of the fastest, and a prime core
+    // sits 17-20% above its own big cluster, so the count collapses to 1 and only
+    // N_THREADS_MIN pulls it back to 2. Contributed benchmarks show the result - a
+    // Dimensity 7300 prefills Llama-3.2-1B-Q4_0 at 139 tok/s on 4 threads while an
+    // SM8550, far stronger silicon with i8mm, manages 111 on 2.
+    //
+    // Widening only n_pp is the safe half: decode is memory-bandwidth-bound and 2 threads
+    // already saturates it (an SM8550 decodes 23.8 tok/s on 2 threads and 6.72 on 8), so
+    // touching n_gen would cost throughput and power for nothing. Prefill is compute-bound
+    // and scales with width. The two phases want different widths, and llama.cpp already
+    // takes two thread counts - this just stops passing it the same number twice.
+    //
+    // ponytail: the WIDTH is still an empirical property of the SoC. The performance
+    // cluster is a defensible default, not a measurement; the in-app thread sweep is what
+    // should confirm the value per device.
     const int n_gen = (int) llama_n_threads(g_context);
-    const int n_pp  = n_gen;
+    const int n_pp  = prompt_thread_count(n_gen);
     g_tp_gen = new_threadpool_on_fast_cores(n_gen);
     if (g_tp_gen) {
         if (n_pp > n_gen) {
@@ -400,6 +549,10 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_prepare(JNIEnv * /*env*/, jobje
             LOGi("%s: %d threads (big cores) for gen and pp", __func__, n_gen);
         }
     }
+    // Opened here, not at the first token: prepare() runs on the same single-threaded
+    // dispatcher as the completion loop, so gettid() is the thread that will decode.
+    adpf_close();
+    adpf_open();
     return 0;
 }
 
@@ -407,15 +560,22 @@ extern "C"
 JNIEXPORT void JNICALL
 Java_com_arm_aichat_internal_InferenceEngineImpl_configure(
         JNIEnv * /*env*/, jobject /*unused*/,
-        jint nCtx, jint nThreads, jfloat temp, jint topK, jfloat topP, jboolean pinCores) {
+        jint nCtx, jint nThreads, jfloat temp, jint topK, jfloat topP, jboolean pinCores,
+        jboolean adpf) {
     if (nCtx > 0) { g_n_ctx = nCtx; }
     g_n_threads = nThreads < 0 ? 0 : nThreads;
     g_temp  = temp;
     g_top_k = topK;
     g_top_p = topP;
     g_pin_cores = pinCores != JNI_FALSE;
-    LOGi("%s: ctx=%d threads=%d temp=%.2f topK=%d topP=%.2f pinCores=%d",
-         __func__, g_n_ctx, g_n_threads, g_temp, g_top_k, g_top_p, (int) g_pin_cores);
+    const bool want_adpf = adpf != JNI_FALSE;
+    if (want_adpf != g_adpf_enabled) {
+        g_adpf_enabled = want_adpf;
+        adpf_close();               // reopened by the next prepare()
+    }
+    LOGi("%s: ctx=%d threads=%d temp=%.2f topK=%d topP=%.2f pinCores=%d adpf=%d",
+         __func__, g_n_ctx, g_n_threads, g_temp, g_top_k, g_top_p,
+         (int) g_pin_cores, (int) g_adpf_enabled);
 }
 
 extern "C"
@@ -469,11 +629,11 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_benchModel(JNIEnv *env, jobject
         return env->NewStringUTF(err_msg);
     }
 
-    // Same pools the chat path attaches in prepare(): both phases on the same fast
-    // thread count. Without this the benchmark would measure a config the app never runs.
-    // Local handles — g_tp_gen/g_tp_batch belong to the chat context.
+    // Same pools the chat path attaches in prepare(): narrow decode, prefill on the
+    // performance cluster. Without this the benchmark would measure a config the app
+    // never runs. Local handles — g_tp_gen/g_tp_batch belong to the chat context.
     const int n_gen = (int) llama_n_threads(context);
-    const int n_pp  = n_gen;
+    const int n_pp  = prompt_thread_count(n_gen);
     ggml_threadpool_t tp_gen   = new_threadpool_on_fast_cores(n_gen);
     ggml_threadpool_t tp_batch = (tp_gen && n_pp > n_gen) ? new_threadpool_on_fast_cores(n_pp) : nullptr;
     if (tp_gen && tp_batch) {
@@ -1101,13 +1261,19 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_generateNextToken(
     const auto new_token_id = common_sampler_sample(g_sampler, g_context, -1);
     common_sampler_accept(g_sampler, new_token_id, true);
 
-    // Populate the batch with new token, then decode
+    // Populate the batch with new token, then decode. The decode step is the unit of
+    // work the hint session is told about: one token in, one token out.
     common_batch_clear(g_batch);
     common_batch_add(g_batch, new_token_id, current_position, {0}, true);
+    const auto step_start = std::chrono::steady_clock::now();
     if (llama_decode(g_context, g_batch) != 0) {
         LOGe("%s: llama_decode() failed for generated token", __func__);
         return nullptr;
     }
+    const int64_t step_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+            std::chrono::steady_clock::now() - step_start).count();
+    adpf_report(step_ns);
+    adpf_retarget(step_ns);
 
     // Update position
     current_position++;
@@ -1154,6 +1320,7 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_unload(JNIEnv * /*unused*/, job
     g_batch = {};
     llama_free(g_context);
     g_context = nullptr;
+    adpf_close();
     if (g_tp_batch) { g_threadpool_free_fn(g_tp_batch); g_tp_batch = nullptr; }
     if (g_tp_gen)   { g_threadpool_free_fn(g_tp_gen);   g_tp_gen   = nullptr; }
     llama_model_free(g_model);

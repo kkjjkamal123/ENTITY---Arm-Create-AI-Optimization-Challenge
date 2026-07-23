@@ -2,8 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/mono_bg"
-    android:fitsSystemWindows="true"
+    android:background="?attr/monoBg"
     android:fillViewport="true"
     android:overScrollMode="never"
     android:scrollbars="none">
@@ -41,7 +40,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="12dp"
                 android:text="@string/settings_title"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="21sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.08" />
@@ -104,6 +103,205 @@
                     android:letterSpacing="0.1"
                     android:text="@string/theme_dark" />
             </LinearLayout>
+
+            <TextView
+                style="@style/Bench.Label"
+                android:layout_marginTop="18dp"
+                android:text="@string/palette_label" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <TextView
+                    android:id="@+id/palette_mono"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:paddingVertical="10dp"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:text="@string/palette_mono" />
+
+                <TextView
+                    android:id="@+id/palette_colour"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:gravity="center"
+                    android:paddingVertical="10dp"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.1"
+                    android:text="@string/palette_colour" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="?attr/monoDim"
+                android:textSize="10sp"
+                android:lineSpacingMultiplier="1.4"
+                android:text="@string/palette_note" />
+        </LinearLayout>
+
+        <!-- Benchmark -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_box"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/Bench.Label"
+                android:text="@string/sec_benchmark" />
+
+            <TextView
+                android:id="@+id/row_keep_on"
+                style="@style/Bench.ButtonOutline"
+                android:layout_marginTop="12dp"
+                android:textSize="11sp"
+                android:text="@string/settings_keep_on" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="?attr/monoDim"
+                android:textSize="10sp"
+                android:lineSpacingMultiplier="1.4"
+                android:text="@string/settings_keep_on_desc" />
+
+            <TextView
+                android:id="@+id/row_eff_arm_set"
+                style="@style/Bench.ButtonOutline"
+                android:layout_marginTop="12dp"
+                android:textSize="11sp"
+                android:text="@string/settings_eff_arm" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="?attr/monoDim"
+                android:textSize="10sp"
+                android:lineSpacingMultiplier="1.4"
+                android:text="@string/settings_eff_arm_desc" />
+        </LinearLayout>
+
+        <!-- Data -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_box"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/Bench.Label"
+                android:text="@string/sec_data" />
+
+            <TextView
+                android:id="@+id/row_models"
+                style="@style/Bench.ButtonOutline"
+                android:layout_marginTop="12dp"
+                android:textSize="11sp"
+                android:text="@string/settings_models" />
+
+            <TextView
+                android:id="@+id/models_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="?attr/monoDim"
+                android:textSize="10sp"
+                android:fontFamily="monospace" />
+
+            <TextView
+                android:id="@+id/row_results"
+                style="@style/Bench.ButtonOutline"
+                android:layout_marginTop="12dp"
+                android:textSize="11sp"
+                android:text="@string/settings_results" />
+
+            <TextView
+                android:id="@+id/results_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="?attr/monoDim"
+                android:textSize="10sp"
+                android:fontFamily="monospace" />
+        </LinearLayout>
+
+        <!-- Contribute -->
+        <LinearLayout
+            android:id="@+id/card_contribute"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_box"
+            android:padding="16dp">
+
+            <TextView
+                style="@style/Bench.Label"
+                android:text="@string/sec_contribute" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="?attr/monoDim"
+                android:textSize="10sp"
+                android:lineSpacingMultiplier="1.45"
+                android:text="@string/contribute_body" />
+
+            <TextView
+                android:id="@+id/row_contribute"
+                style="@style/Bench.ButtonOutline"
+                android:layout_marginTop="12dp"
+                android:textSize="11sp"
+                android:text="@string/contribute_toggle" />
+
+            <TextView
+                android:id="@+id/row_contribute_pick"
+                style="@style/Bench.ButtonOutline"
+                android:layout_marginTop="6dp"
+                android:textSize="11sp"
+                android:text="@string/contribute_open" />
+
+            <TextView
+                android:id="@+id/row_contribute_open"
+                style="@style/Bench.Button"
+                android:layout_marginTop="6dp"
+                android:textSize="11sp"
+                android:text="@string/contribute_open" />
+
+            <TextView
+                android:id="@+id/row_contribute_show"
+                style="@style/Bench.ButtonOutline"
+                android:layout_marginTop="6dp"
+                android:textSize="11sp"
+                android:text="@string/contribute_show" />
+
+            <TextView
+                android:id="@+id/contribute_value"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="?attr/monoDim"
+                android:textSize="10sp"
+                android:fontFamily="monospace" />
         </LinearLayout>
 
         <!-- About -->
@@ -124,7 +322,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
                 android:text="@string/about_body"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="11sp"
                 android:lineSpacingMultiplier="1.5" />
 
@@ -133,7 +331,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:textColor="@color/mono_fg"
+                android:textColor="?attr/monoFg"
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.08" />

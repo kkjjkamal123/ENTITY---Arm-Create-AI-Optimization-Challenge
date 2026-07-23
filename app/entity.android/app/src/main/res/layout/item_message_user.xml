@@ -16,6 +16,6 @@
         android:paddingVertical="10dp"
         android:lineSpacingMultiplier="1.35"
         android:textIsSelectable="false"
-        android:textColor="@color/mono_bg"
+        android:textColor="?attr/monoBg"
         android:textSize="15sp" />
 </LinearLayout>

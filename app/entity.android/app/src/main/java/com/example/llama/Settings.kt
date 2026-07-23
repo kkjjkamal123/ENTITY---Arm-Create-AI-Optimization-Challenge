@@ -1,7 +1,10 @@
 package com.example.llama
 
+import android.content.ContentResolver
 import android.content.Context
 import android.content.SharedPreferences
+import android.net.Uri
+import android.provider.OpenableColumns
 import androidx.appcompat.app.AppCompatDelegate
 import java.io.File
 
@@ -22,9 +25,11 @@ object Settings {
     const val KEY_SYSTEM_PROMPT = "cfg_system_prompt"
     const val KEY_EFFICIENCY = "cfg_efficiency"
     const val KEY_FIRST_RUN = "cfg_first_run_done"
+    const val KEY_PLACEMENT = "cfg_placement"  // 0 auto, 1 always pin, 2 never pin
 
     // Interface
     const val KEY_THEME = "theme"             // 0 system, 1 light, 2 dark
+    const val KEY_PALETTE = "palette"         // 0 monochrome, 1 colour
     const val KEY_ANIM = "cfg_anim"
     const val KEY_TEXT_SIZE = "cfg_text_size" // 0 small, 1 medium, 2 large
     const val KEY_HAPTICS = "cfg_haptics"
@@ -61,9 +66,25 @@ object Settings {
     const val DEF_EFFICIENCY = false
     const val DEF_FIRST_RUN = false
     const val DEF_THEME = 0
+    const val DEF_PALETTE = 0   // monochrome stays the default look
     const val DEF_TEXT_SIZE = 1
     const val DEF_HAPTICS = true
     const val DEF_KEEP_ON = true
+
+    // Core placement. Pinning generation to the performance cores is a speed lever with
+    // a power cost, and which way it lands is a property of the phone: across the
+    // contributed dataset it ranges from -8.5% to +29.3% on decode and is slightly
+    // NEGATIVE on tokens per watt in the median. Android's own guidance is that forcing
+    // affinity stops the platform reacting to load and thermal throttling, so this is a
+    // real choice rather than a strictly-better default - hence the setting.
+    const val PLACEMENT_AUTO = 0    // pin, ENTITY's shipped default
+    const val PLACEMENT_PINNED = 1  // always pin
+    const val PLACEMENT_SYSTEM = 2  // never pin, leave placement to the scheduler
+    const val DEF_PLACEMENT = PLACEMENT_AUTO
+
+    // Whether inference should pin to the performance cluster under the current setting.
+    fun pinCores(prefs: SharedPreferences): Boolean =
+        prefs.getInt(KEY_PLACEMENT, DEF_PLACEMENT) != PLACEMENT_SYSTEM
 
     const val DEF_SYSTEM_PROMPT =
         "You are ENTITY, a helpful AI assistant running fully offline on the user's phone. " +
@@ -137,4 +158,34 @@ object ModelStore {
     fun sizeLabel(bytes: Long): String =
         if (bytes >= 1_000_000_000L) String.format("%.2f GB", bytes / 1e9)
         else String.format("%.0f MB", bytes / 1e6)
+
+    /** Display name of a picked document, forced to end in .gguf so scan() will find it. */
+    fun safeName(cr: ContentResolver, uri: Uri): String {
+        var name: String? = null
+        runCatching {
+            cr.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                if (c.moveToFirst()) {
+                    val i = c.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+                    if (i >= 0) name = c.getString(i)
+                }
+            }
+        }
+        var clean = (name ?: "model-${System.currentTimeMillis()}").substringAfterLast('/').trim()
+        if (!clean.endsWith(".gguf", ignoreCase = true)) clean += ".gguf"
+        return clean
+    }
+
+    /** Size of a picked document, or -1 when the provider does not report one. */
+    fun sizeOf(cr: ContentResolver, uri: Uri): Long {
+        var size = -1L
+        runCatching {
+            cr.query(uri, arrayOf(OpenableColumns.SIZE), null, null, null)?.use { c ->
+                if (c.moveToFirst()) {
+                    val i = c.getColumnIndex(OpenableColumns.SIZE)
+                    if (i >= 0 && !c.isNull(i)) size = c.getLong(i)
+                }
+            }
+        }
+        return size
+    }
 }

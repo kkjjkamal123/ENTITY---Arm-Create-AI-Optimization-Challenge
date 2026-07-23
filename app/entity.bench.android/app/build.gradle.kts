@@ -5,6 +5,14 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
+// Contribution endpoint. Kept out of the repo so a fork builds and runs with uploading
+// switched off rather than posting into someone else's database. Create
+// `results.properties` (gitignored) with RESULTS_ENDPOINT and RESULTS_KEY to enable it.
+val resultsPropertiesFile = rootProject.file("results.properties")
+val resultsProperties = Properties().apply {
+    if (resultsPropertiesFile.exists()) resultsPropertiesFile.inputStream().use { load(it) }
+}
+
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val hasReleaseKeystore = keystorePropertiesFile.exists()
 val keystoreProperties = Properties().apply {
@@ -30,8 +38,13 @@ android {
         minSdk = 33
         targetSdk = 36
 
-        versionCode = 5
-        versionName = "1.2.1"
+        versionCode = 10
+        versionName = "2.1.0"
+
+        buildConfigField("String", "RESULTS_ENDPOINT",
+            "\"${resultsProperties.getProperty("RESULTS_ENDPOINT", "")}\"")
+        buildConfigField("String", "RESULTS_KEY",
+            "\"${resultsProperties.getProperty("RESULTS_KEY", "")}\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

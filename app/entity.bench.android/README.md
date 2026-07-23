@@ -13,14 +13,14 @@
 
 ![License](https://img.shields.io/badge/license-Apache--2.0-blue)
 ![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
-![Release](https://img.shields.io/badge/release-v1.2.1-orange)
+![Release](https://img.shields.io/badge/release-v2.1.0-orange)
 ![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
 
 </div>
 
 ## Navigation
 
-[Home](../../README.md) · [Evidence](../../benchmarks/REPRODUCIBILITY.md) · [Benchmarks](../../benchmarks/BENCHMARKS.md) · [Optimization](../../docs/OPTIMIZATIONS.md) · [Release notes](../../releases/RELEASE-Bench-v1.2.1.md) · [FAQ](../../docs/FAQ.md) · [Contributing](../../docs/CONTRIBUTING.md) · [License](../../LICENSE)
+[Home](../../README.md) · [Evidence](../../benchmarks/REPRODUCIBILITY.md) · [Benchmarks](../../benchmarks/BENCHMARKS.md) · [Optimization](../../docs/OPTIMIZATIONS.md) · [Release notes](../../releases/RELEASE-Bench-v2.1.0.md) · [FAQ](../../docs/FAQ.md) · [Contributing](../../docs/CONTRIBUTING.md) · [License](../../LICENSE)
 
 ## What ENTITY Bench is
 
@@ -52,7 +52,7 @@ The workload is llama.cpp's synthetic bench (PP 512 / TG 128) on whatever model 
 
 A real single run ablation on the reference phone (CMF Phone 1, Dimensity 7300): decode +63% vs naive, of which +60% comes from dropping 8 threads to 4 and +2% from pinning those threads to the performance cores. The efficiency core arm below the table shows the little cores decoding at 13.9 tok/s against auto's 17.8.
 
-The interface is two colors, pure black and pure white, inverted between the dark and light themes - selectable in Settings (System / Light / Dark). Square corners, monospace, no shades: a lab instrument, not a dashboard.
+The interface is monochrome and shares the chat app's colour system exactly. Pure black and pure white are deliberately not used: #FFFFFF on #000000 is a 21:1 contrast ratio and causes halation, so dark theme is Material's #121212 surface with #E4E4E4 text (15:1, still above WCAG AAA) and light theme is off-white paper with near-black ink. Theme (System / Light / Dark) and palette (MONOCHROME / COLOUR) are both selectable in Settings. Monospace, one 10 dp radius, press feedback as inversion: a lab instrument, not a dashboard.
 
 ## The three arms
 
@@ -104,14 +104,16 @@ The controlled benchmark cools back to baseline before every pass by design, so 
 ## Features
 
 1. Fully offline benchmark for any runnable GGUF model: Llama, Qwen, Gemma, Phi, Mistral and other llama.cpp supported architectures.
-2. In app model import through Android Storage Access Framework; a KleidiAI badge on the model row tells you whether the chosen quantization reaches Arm's kernels (Q4_0 / Q8_0) or falls back to generic ggml.
-3. Device under test card: core topology, ABI, temperature, free RAM, and whether the kernel reports battery current at all.
-4. Live run screen: per arm status, cooldown countdown, progress bar, live battery temperature, power draw, thermal status and app CPU, with the screen held on and an abort button.
-5. Every result autosaved with history; any past run reopens as a full result page.
-6. Result page: headline attribution, decode bars, the full metric table (prompt, decode, derived TTFT, power, tok/W, app CPU, per cluster clocks, RAM floor, temperatures, peak thermal status), methodology notes, Copy, Export CSV, Delete.
-7. Raw per pass CSV export with device fingerprint, app version, thermal record, 150 ms telemetry samples, per core clock traces and the applied CPU mask per arm. Row keys are unchanged from v1.0.0, so existing analysis scripts keep working.
-8. Thread sweep mode: every usable thread width, pinned and scheduler placed, with the winning configuration named and a run length estimate before it starts.
-9. Pure black and white theme with System / Light / Dark selection in Settings.
+2. **Model catalog** (v1.4.0): a curated list of Qwen2.5 and Llama 3.2 GGUFs, each row tagged for the phone in hand (RECOMMENDED / GOOD FIT / FITS / TIGHT / TOO BIG) with a reason naming the quantization and the ISA it actually reaches on that CPU, judged against total RAM. Downloads resume after an interruption and a file only takes its `.gguf` name once its length matches the expected size, so a truncated transfer is never mistaken for a model. This is the only feature that uses the network, and only on an explicit tap.
+3. In app model import through Android Storage Access Framework; a KleidiAI badge on the model row tells you whether the chosen quantization reaches Arm's kernels (Q4_0 / Q8_0) or falls back to generic ggml.
+4. Device under test card: core topology, ABI, temperature, free RAM, and whether the kernel reports battery current at all.
+   - **Optimization indicator** (v1.3.0): every lever ENTITY ships, listed on the device card; a lever glows (solid inversion) only when it is actually live on the phone in hand. Silicon levers gate on the CPU's ISA flags read from `/proc/cpuinfo` - `i8mm` (Arm MATMUL_INT8) lights on a Snapdragon 6 Gen 4 and stays dark on a dotprod-only Dimensity 7300 - runtime levers that ship in every build stay lit. Nothing is claimed that the loaded backend variant does not actually run.
+5. Live run screen: per arm status, cooldown countdown, progress bar, live battery temperature, power draw, thermal status and app CPU, with the screen held on and an abort button.
+6. Every result autosaved with history; any past run reopens as a full result page.
+7. Result page: headline attribution, decode bars, the full metric table (prompt, decode, derived TTFT, power, tok/W, app CPU, per cluster clocks, RAM floor, temperatures, peak thermal status), methodology notes, Copy, Export CSV, Delete.
+8. Raw per pass CSV export with device fingerprint, app version, thermal record, 150 ms telemetry samples, per core clock traces and the applied CPU mask per arm. Row keys are unchanged from v1.0.0, so existing analysis scripts keep working.
+9. Thread sweep mode: every usable thread width, pinned and scheduler placed, with the winning configuration named and a run length estimate before it starts.
+10. Pure black and white theme with System / Light / Dark selection in Settings.
 
 ## Run a valid benchmark
 
@@ -140,13 +142,13 @@ Ninety seconds from clone to a saved result, on any arm64 phone with Android 13+
 ```bash
 git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
 cd ENTITY---Arm-Create-AI-Optimization-Challenge
-adb install -r apk/ENTITY-Bench-v1.2.1-release.apk
+adb install -r apk/ENTITY-Bench-v2.1.0-release.apk
 ```
 
 Then on the phone:
 
-1. Download a model such as [Llama-3.2-1B-Instruct-Q4_0.gguf](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF) (Q4_0 reaches Arm's KleidiAI kernels; see [why](../../docs/KLEIDIAI-QUANTS.md)). It does not need the chat app.
-2. Open ENTITY Bench, tap the model field and import the GGUF from device storage.
+1. Open ENTITY Bench and tap the model field. Choose **Download a model...** to take one from the built-in catalog, already tagged for your phone (Q4_0 and Q8_0 reach Arm's KleidiAI kernels; see [why](../../docs/KLEIDIAI-QUANTS.md)), or **Import from device...** for a GGUF you already have. It does not need the chat app.
+2. Wait for the model row to show the file and its KleidiAI badge.
 3. Unplug, pick 3 runs, and tap RUN BENCHMARK. The result page opens - and stays - when it finishes.
 
 ## Build from source
@@ -169,7 +171,7 @@ The APK lands at `app/build/outputs/apk/release/app-release.apk`. Without a `key
 2. [Reproducibility](../../benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
 3. [Optimizations](../../docs/OPTIMIZATIONS.md): source level explanation of each runtime decision the arms test.
 4. [Which GGUF quant actually reaches KleidiAI](../../docs/KLEIDIAI-QUANTS.md): the two types Arm's kernels accelerate, and what the rest cost.
-5. [Release notes for v1.2.1](../../releases/RELEASE-Bench-v1.2.1.md) and [v1.2.0](../../releases/RELEASE-Bench-v1.2.0.md): what each release changed and what it deliberately kept.
+5. [Release notes for v1.4.0](../../releases/RELEASE-Bench-v1.4.0.md), [v1.3.0](../../releases/RELEASE-Bench-v1.3.0.md), [v1.2.1](../../releases/RELEASE-Bench-v1.2.1.md) and [v1.2.0](../../releases/RELEASE-Bench-v1.2.0.md): what each release changed and what it deliberately kept.
 6. [ENTITY chat app](../../README.md): the assistant these optimizations ship in.
 
 ## License

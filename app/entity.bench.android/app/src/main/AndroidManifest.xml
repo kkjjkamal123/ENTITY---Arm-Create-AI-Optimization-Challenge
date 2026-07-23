@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- The only network use is downloading a model you pick from the catalog.
+         Inference never touches the network, and no result ever leaves the phone. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:name=".BenchApp"
         android:allowBackup="true"
@@ -37,6 +42,14 @@
             android:name=".HistoryActivity"
             android:exported="false"
             android:parentActivityName=".BenchHomeActivity" />
+        <activity
+            android:name=".ContributeActivity"
+            android:exported="false" />
+
+
+        <activity
+            android:name=".ModelsActivity"
+            android:exported="false" />
 
         <activity
             android:name=".SettingsActivity"

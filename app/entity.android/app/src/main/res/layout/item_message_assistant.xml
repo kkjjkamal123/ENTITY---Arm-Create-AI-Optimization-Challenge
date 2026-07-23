@@ -16,7 +16,7 @@
         android:paddingVertical="10dp"
         android:lineSpacingMultiplier="1.35"
         android:textIsSelectable="false"
-        android:textColor="@color/mono_fg"
+        android:textColor="?attr/monoFg"
         android:textSize="15sp" />
 
     <com.example.llama.TypingDotsView

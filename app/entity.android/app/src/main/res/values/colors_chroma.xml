@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      COLOUR palette, light. Same luminance discipline as MONO - only the hue changes.
+      Surfaces carry a trace of blue (2-4% saturation) rather than being neutral grey:
+      enough to read as "designed" and to make the accent feel intentional, far too
+      little to compete with content. This is the 60-30-10 split, with the 10% spent on
+      meaning: accent marks the one primary action, danger and success mark consequence.
+    -->
+    <color name="chroma_bg">#EFF1F4</color>
+    <color name="chroma_surface">#F8F9FB</color>
+    <color name="chroma_fg">#1A1D21</color>
+    <color name="chroma_dim">#5A6069</color>
+    <color name="chroma_outline">#D2D7DE</color>
+    <color name="chroma_fill">#2C5CE6</color>
+    <color name="chroma_on_fill">#F8F9FB</color>
+
+    <!-- Semantic. Deliberately not the accent hue: if brand blue and error share a
+         colour, a user cannot tell identity from warning. -->
+    <color name="chroma_danger">#B3261E</color>
+    <color name="chroma_success">#1B6E3C</color>
+    <color name="chroma_accent">#2C5CE6</color>
+</resources>

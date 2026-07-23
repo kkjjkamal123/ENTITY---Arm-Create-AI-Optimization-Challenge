@@ -51,4 +51,51 @@ class PowerMathTest {
         // Absurdly large raw value: neither reading is a real phone, keep microamps.
         assertEquals(390.0, PowerMath.watts(100_000_000L, 3900), 0.1)
     }
+
+    // ---- voltage unit normalisation (OPPO CPH2737 / Dimensity 8300 regression) ----
+
+    @Test
+    fun millivoltsArePassedThrough() {
+        assertEquals(4000, PowerMath.normalizeVoltageMv(4000))
+        assertEquals(8700, PowerMath.normalizeVoltageMv(8700))   // dual cell in series
+    }
+
+    @Test
+    fun wholeVoltsAreScaledUp() {
+        assertEquals(4000, PowerMath.normalizeVoltageMv(4))
+        assertEquals(9000, PowerMath.normalizeVoltageMv(9))
+    }
+
+    @Test
+    fun microvoltsAreScaledDown() {
+        assertEquals(4000, PowerMath.normalizeVoltageMv(4_000_000))
+    }
+
+    @Test
+    fun nonPositiveVoltageIsZero() {
+        assertEquals(0, PowerMath.normalizeVoltageMv(0))
+        assertEquals(0, PowerMath.normalizeVoltageMv(-1))
+    }
+
+    // The bug itself: milliamp current AND volt-scale voltage together put both
+    // candidate wattages below the plausible floor, so the heuristic fell through to
+    // the documented unit and under-reported by 1e6.
+    @Test
+    fun voltScaleVoltageStillYieldsPlausibleWatts() {
+        val w = PowerMath.watts(679L, 4)          // 679 mA reported, 4 V reported
+        assertTrue("expected a plausible wattage, got $w", PowerMath.plausible(w))
+        assertEquals(2.716, w, 0.01)
+    }
+
+    @Test
+    fun voltAndMillivoltFormsAgree() {
+        assertEquals(PowerMath.watts(679L, 4000), PowerMath.watts(679L, 4), 1e-9)
+    }
+
+    @Test
+    fun microampDeviceUnaffectedByTheFix() {
+        // 1.5 A reported honestly in microamps at 4.0 V -> 6 W, still the microamp branch.
+        assertEquals(6.0, PowerMath.watts(1_500_000L, 4000), 0.01)
+    }
+
 }

@@ -21,16 +21,38 @@ object PowerMath {
     // ponytail: plausibility heuristic, not a real unit probe. A device idling below
     // ~0.05 W would be misread as milliamps; sample under load. Upgrade path: calibrate
     // the unit once from a known-load sample.
-    fun watts(rawCurrent: Long, voltageMv: Int): Double {
-        if (rawCurrent == 0L || voltageMv <= 0) return 0.0
+    fun watts(rawCurrent: Long, rawVoltage: Int): Double {
+        val mv = normalizeVoltageMv(rawVoltage)
+        if (rawCurrent == 0L || mv <= 0) return 0.0
         val mag = abs(rawCurrent).toDouble()
-        val wattsIfMicroamps = mag * voltageMv / 1e9
-        val wattsIfMilliamps = mag * 1000.0 * voltageMv / 1e9
+        val wattsIfMicroamps = mag * mv / 1e9
+        val wattsIfMilliamps = mag * 1000.0 * mv / 1e9
         return when {
             plausible(wattsIfMicroamps) -> wattsIfMicroamps
             plausible(wattsIfMilliamps) -> wattsIfMilliamps
             else -> wattsIfMicroamps  // neither fits: fall back to the documented unit
         }
+    }
+
+    // Battery voltage normalised to millivolts.
+    //
+    // EXTRA_VOLTAGE is documented in millivolts and most devices comply. Some do not: an
+    // OPPO CPH2737 (Dimensity 8300) reports whole VOLTS, and microvolt readings exist in
+    // the wild too. However it is reported, a phone battery is 3-10 V - single cell near
+    // 4 V, dual cell in series near 8 - so the magnitude identifies the unit on its own.
+    // The three candidate ranges are three orders of magnitude apart and cannot overlap.
+    //
+    // This matters more than it looks. The microamp/milliamp heuristic above decides by
+    // asking which product is a physically possible wattage. Hand it volts instead of
+    // millivolts and BOTH candidates land below the plausible floor, so the heuristic
+    // gives up and returns the documented unit - a reading 1000x too small on top of the
+    // 1000x already lost to the current unit. That is exactly what the first Dimensity
+    // 8300 results showed: 2.7 microwatts of decode and 11 million tokens per watt.
+    fun normalizeVoltageMv(raw: Int): Int = when {
+        raw <= 0 -> 0
+        raw < 100 -> raw * 1000       // volts
+        raw > 100_000 -> raw / 1000   // microvolts
+        else -> raw                   // millivolts, as documented
     }
 
     fun plausible(watts: Double): Boolean = watts in MIN_PLAUSIBLE_W..MAX_PLAUSIBLE_W

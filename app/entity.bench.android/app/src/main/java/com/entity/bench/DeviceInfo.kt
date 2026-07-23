@@ -70,10 +70,48 @@ object DeviceInfo {
         return friendly.filterKeys { it in on }.values.distinct()
     }
 
+    // ISA feature flags the CPU advertises, normalised to the names the optimization
+    // indicator uses. Parsed from /proc/cpuinfo's "Features" line rather than ggml's
+    // system-info string so the home screen can show capability with no model loaded.
+    // Because the app ships every Arm backend variant (GGML_CPU_ALL_VARIANTS) and ggml
+    // dlopens the best one the CPU supports, a flag present here is a flag the loaded
+    // kernel actually uses - so lighting it up is not an overclaim.
+    fun cpuFlags(cpuinfo: String): Set<String> {
+        val line = cpuinfo.lineSequence().firstOrNull { it.startsWith("Features") } ?: return emptySet()
+        val tok = line.substringAfter(':').trim().split(Regex("\\s+")).toSet()
+        val out = linkedSetOf<String>()
+        if ("asimddp" in tok) out += "dotprod"
+        if ("i8mm" in tok) out += "i8mm"
+        if ("sve" in tok) out += "sve"
+        if ("sve2" in tok) out += "sve2"
+        if ("sme" in tok) out += "sme"
+        // SME2 is a separate cpuinfo flag. ggml's android_armv9.2_2 variant is built
+        // with SVE+SVE2+SME and pulls KleidiAI's sme2 microkernels, so on an SME2
+        // phone those kernels already run - this only lets the app say so.
+        if ("sme2" in tok) out += "sme2"
+        if ("asimdhp" in tok || "fphp" in tok) out += "fp16"
+        return out
+    }
+
+    fun readCpuFlags(): Set<String> =
+        runCatching { cpuFlags(File("/proc/cpuinfo").readText()) }.getOrDefault(emptySet())
+
     fun maxFreqsKhz(): List<Long> =
         (0 until Runtime.getRuntime().availableProcessors()).map { i ->
             runCatching {
                 File("/sys/devices/system/cpu/cpu$i/cpufreq/cpuinfo_max_freq").readText().trim().toLong()
+            }.getOrDefault(0L)
+        }
+
+    // The kernel's own normalised per-core capacity, 1024 = the strongest core in the
+    // system. Derived from capacity-dmips-mhz times max clock, so unlike frequency it
+    // separates an A55 from an A78 that happen to clock similarly - which is exactly the
+    // distinction the thread-width rules turn on. Collected because the dataset should
+    // carry the canonical signal, not a frequency proxy for it. 0 where unreadable.
+    fun cpuCapacities(): List<Long> =
+        (0 until Runtime.getRuntime().availableProcessors()).map { i ->
+            runCatching {
+                File("/sys/devices/system/cpu/cpu$i/cpu_capacity").readText().trim().toLong()
             }.getOrDefault(0L)
         }
 
