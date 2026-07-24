@@ -38,6 +38,8 @@ On the reference 4+4 device the four 2.0 GHz A55s fall below the 2.25 GHz thresh
 derivation yields exactly 4 - the same value the earlier hardcoded default used. The upper
 clamp is 6 rather than 4 so that a flagship with more than four performance cores threads
 wider; the lower clamp keeps a misreported topology from collapsing to a single thread. When
+`cpufreq` is unreadable for a core, the fallback derivation instead uses half the online core
+count.
 
 **Prefill uses a different width, from a different signal (v3.5.0).** The rule above is the
 *decode* width and applies only to decode. It is kept on `cpuinfo_max_freq` because that is the
@@ -66,7 +68,6 @@ cores at twice its little cores. On a 4x2.0 + 4x2.5 GHz device *no* core clears 
 would collapse to zero, and prefill would widen to every core - reintroducing the exact A55
 straggler regression the split exists to prevent. The chosen rule gives 4 / 6 / 5 / 4 on the four
 contributed topologies under **both** signals, and matches `DeviceOptimizer.fastCoreCount()`.
-cpufreq is unreadable the fallback is half the online cores.
 
 $$
 S_{\mathrm{gen}} = \{\pi_0,\pi_1,\ldots,\pi_{T_{\mathrm{gen}}-1}\}
@@ -265,7 +266,7 @@ variants when the hardware supports them.
 
 **Trade-off:** APK size increases (~9.8 MB release, up from ~7 MB at v1.7.0) because 7 kernels ship
 instead of 1. A custom build could set `GGML_CPU_ALL_VARIANTS=OFF` and target a specific
-`GGML_CPU_ARM_ARCH` to go back to a single backend (see [`BUILD.md`](BUILD.md#device-specific-configuration-adapting-ggml_cpu_arm_arch)).
+`GGML_CPU_ARM_ARCH` to go back to a single backend (see [`BUILD.md`](BUILD.md#device-specific-configuration-adapting-cpu-backend-variants)).
 
 **Behavior on Armv9 flagships: the prediction was wrong, and contributed data falsified it.**
 

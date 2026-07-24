@@ -9,6 +9,29 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [3.6.2] - 2026-07-24
+
+**The assistant had no idea it was ENTITY.** The default system prompt said only that it was "a
+helpful AI assistant running fully offline" - true, but not enough to stop a small model from
+answering identity questions as whatever base persona it was trained on, or from guessing at
+capabilities (web search, image generation) it does not have. Neither is hypothetical: every model
+in the catalog is text-only, and `ai_chat.cpp` has no image pipeline, no network call in the
+inference path.
+
+### Changed
+
+- **Default system prompt** (`Settings.kt`). Now states plainly what ENTITY is (offline, Arm,
+  on-device), what it structurally cannot do (browse, look up real-time information, generate
+  images), and to say so instead of guessing when asked. Existing users who have not edited their
+  system prompt keep the old default until they reset it - this only changes what a fresh install
+  or a reset-to-default gets. Bench has no chat surface, so this is chat-only.
+
+### File comparison (3.6.1 -> 3.6.2)
+
+| File | Change |
+|---|---|
+| `Settings.kt` | `DEF_SYSTEM_PROMPT` rewritten with app identity and capability grounding. |
+
 ## [3.6.1] - 2026-07-24
 
 **Repetition penalty was off.** `new_sampler()` only ever set `temp`, `top_k` and `top_p` from the
@@ -1106,6 +1129,7 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 3.6.2 | `ENTITY-v24-entity-identity-prompt-20260724-release.apk` (release-signed, ~10 MB) |
 | 3.6.1 | `ENTITY-v23-repeat-penalty-20260724-release.apk` (release-signed, ~10 MB) |
 | 3.6.0 | `ENTITY-v22-adpf-power-fix-20260723-release.apk` (release-signed, ~10 MB) |
 | 3.5.0 | `ENTITY-v21-prefill-threads-placement-latex-20260723-release.apk` (release-signed, ~10 MB) |

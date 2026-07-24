@@ -12,13 +12,11 @@ On the loaded model, ENTITY compares:
 |---|---|
 | Naïve | Eight inference threads across all online cores. |
 | Threads only | The same thread count Auto derives, with `pinCores` off: no `sched_setaffinity`, no pinned thread pool, placement left to the Linux scheduler. Equivalent in policy to an upstream llama.cpp `-t N` run. |
-| ENTITY Auto | Native code ranks online CPU cores by `cpuinfo_max_freq` and runs **both** inference phases on its fastest two to four cores. (Before v2.1.0 it widened prompt processing to every core; that measured slower and was removed.) |
+| ENTITY Auto | Native code ranks online CPU cores by `cpuinfo_max_freq` for decode (2 to 6 cores, clamped). Since v3.5.0, prompt processing is derived separately by per-core capacity - usually wider than decode, never narrower - rather than sharing decode's width. (Before v2.1.0 it widened prompt processing to every online core instead; that measured slower and was removed. Before v3.5.0 it shared decode's width exactly, which under-widened prompt processing on prime-core flagships; see [`OPTIMIZATIONS.md`](../docs/OPTIMIZATIONS.md) §1 for the exact current derivation of both widths.) |
 
 The middle arm exists so the result can be attributed rather than assumed. Naïve versus Auto varies
 thread count and core placement together; on its own it cannot say which one produced the gain.
 Naïve versus threads-only isolates the thread count; threads-only versus Auto isolates the pinning.
-Both the decode and prompt rows are clean ablations, because every arm now runs both phases on the
-same thread count.
 
 The workload is a synthetic llama-bench-style test: **PP 512**, **TG 128**, and one decode token
 for the derived TTFT calculation. It measures prompt throughput, decode throughput, battery power,

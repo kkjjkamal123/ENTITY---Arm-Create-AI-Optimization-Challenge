@@ -68,15 +68,16 @@ Subsequent builds reuse the `.cxx/` CMake cache.
 ./gradlew :app:assembleRelease --no-daemon --console=plain
 # -> app/build/outputs/apk/release/app-release.apk (~9.8 MB)
 ```
-The release build (versionName **2.0.0**) applies R8 minification + resource shrinking and ships
-stripped native symbols. It is larger than v1.7.0 (~9.8 MB vs ~7 MB) because 7 Arm CPU backend
-variants are now shipped instead of one, providing universal Arm support. It is signed with a release
-keystore (see **Release keystore setup** below) — credentials are read from a gitignored
-`keystore.properties` file. If the keystore file is absent, the build silently falls back to debug
-signing, so contributors are never blocked. Both build types set `isMinifyEnabled = true` /
-`isShrinkResources = true` in `app/build.gradle.kts`; the debug APK stays large (~49 MB) because it
-deliberately keeps native `.so` debug symbols (`keepDebugSymbols` for `**/*.so`). The app module pins
-`ndkVersion 27.1.12297006` so release symbol stripping works.
+The release build applies R8 minification + resource shrinking and ships stripped native symbols.
+Universal Arm support shipped in v2.0.0 - 7 CPU backend variants instead of one - and grew the
+release APK from ~7 MB (v1.7.0) to ~9.8 MB at the time; the current release is larger still
+(~10 MB as of v3.6.2, see `apk/README.md` for the exact figure per version) as further features
+have shipped since. It is signed with a release keystore (see **Release keystore setup** below) —
+credentials are read from a gitignored `keystore.properties` file. If the keystore file is absent,
+the build silently falls back to debug signing, so contributors are never blocked. Both build types
+set `isMinifyEnabled = true` / `isShrinkResources = true` in `app/build.gradle.kts`; the debug APK
+stays large (~49 MB) because it deliberately keeps native `.so` debug symbols (`keepDebugSymbols`
+for `**/*.so`). The app module pins `ndkVersion 27.1.12297006` so release symbol stripping works.
 
 ### Release keystore setup
 
@@ -119,7 +120,7 @@ adb shell am start -n com.entity.chat/com.example.llama.MainActivity
 ```
 
 Models are not bundled with this repo. Q4_0 GGUF quantizations are recommended on this CPU (see
-[`OPTIMIZATIONS.md`](OPTIMIZATIONS.md#4-quantization-q4_0-on-dotprod)) — e.g. from
+[`OPTIMIZATIONS.md`](OPTIMIZATIONS.md#4-quantization-is-what-gates-arms-kleidiai-kernels)) — e.g. from
 [Hugging Face / bartowski](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF).
 
 **End users don't use `adb push`.** The app's real model-loading path is the in-app **Import from
@@ -134,9 +135,10 @@ developer shortcut that happens to work because `adb` can write to `Android/data
   [`../benchmarks/BENCHMARKS.md`](../benchmarks/BENCHMARKS.md). The historical Termux raw output
   uses different workloads and CLI-only realtime priority.
 - Menu drawer (≡) → **BENCHMARK** on the loaded model — runs three arms: the naïve eight-thread path,
-  threads-only (Auto's thread count with affinity off), and ENTITY Auto, which ranks cores by
-  maximum frequency and runs both inference phases on that fast-core set. This is the fastest way
-  to confirm a native or affinity change has not regressed the shipped path.
+  threads-only (Auto's thread count with affinity off), and ENTITY Auto, which pins decode to a
+  frequency-ranked core set and (since v3.5.0) runs prompt processing on a separately-derived,
+  usually wider, capacity-ranked set - see [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md) §1. This is the
+  fastest way to confirm a native or affinity change has not regressed the shipped path.
 - `adb logcat -s AiChat:* ai-chat:*` while loading a model shows `init_context` logging the chosen
   thread count, context size, and the affinity actually applied — confirms pinning ran (see
   `pin_to_fast_cores()` in `ai_chat.cpp`).

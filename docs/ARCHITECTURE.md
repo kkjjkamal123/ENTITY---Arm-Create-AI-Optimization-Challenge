@@ -236,7 +236,7 @@ model loaded at a time, matching the single-threaded dispatcher above.
   [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md) for the split rationale and fallback behavior.
 - **`init_context(model, n_ctx_override)`** — the core setup function:
   1. Picks thread count: the app's `configure()`-supplied value if `> 0`, else
-     `clamp(n_online_cpus - N_THREADS_HEADROOM, N_THREADS_MIN, N_THREADS_MAX)` (2–4 threads,
+     `clamp(n_online_cpus - N_THREADS_HEADROOM, N_THREADS_MIN, N_THREADS_MAX)` (2-6 threads,
      headroom 2). This is the generation thread count; prompt-processing width is derived
      separately in `prepare()`.
   2. Picks context size: an explicit override (used by the benchmark) wins, else the configured
@@ -245,9 +245,13 @@ model loaded at a time, matching the single-threaded dispatcher above.
   4. Records the context size actually allocated back into `g_n_ctx` (bounds the completion loop).
   5. Calls **`build_fast_cpu_set(n_threads)`** then **`pin_to_fast_cores()`** — see
      [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md#1-big-core-affinity) for exactly what these do.
-- **`configure(nCtx, nThreads, temp, topK, topP)` / `setSampler(temp, topK, topP)`** — JNI setters
-  for the globals above; `configure` takes effect on the *next* `loadModel`/`prepare`, `setSampler`
-  rebuilds the live sampler immediately (used by Settings' live temperature/top-k/top-p sliders).
+- **`configure(nCtx, nThreads, temp, topK, topP, pinCores, adpf)`** / **`setSampler(temp, topK,
+  topP)`** — JNI setters for the globals above; `configure` takes effect on the *next*
+  `loadModel`/`prepare`, `setSampler` rebuilds the live sampler immediately (used by Settings'
+  live temperature/top-k/top-p sliders). `pinCores` (v3.5.0) backs the Core placement setting;
+  `adpf` (v3.6.0) toggles the performance-hint session, closed and reopened on change since a
+  session can only be configured at open time - see [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md) for
+  both.
 - **Completion loop**: `processSystemPrompt` → tokenizes and decodes the system prompt via
   `decode_tokens_in_batches` (which re-pins affinity on every call and triggers `shift_context()`
   if a batch would overflow the KV window); `processUserPrompt` tokenizes/decodes the user turn and

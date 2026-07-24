@@ -44,14 +44,16 @@ so it needs no second toolchain and no Termux. The benchmark runs three arms:
 | Arm | Threads | Affinity | What it represents |
 |---|---|---|---|
 | Naïve | 8 | none | The out-of-the-box default: every core, scheduler-placed. |
-| Threads only | Auto's count (2-4) | none | An upstream llama.cpp `-t N` run: the right thread count, no pinning, no pinned pool. |
-| ENTITY Auto | Auto's count (2-4) | pinned to the frequency-ranked fast cores | The shipped path: both phases on the fast-core set. |
+| Threads only | Auto's decode count (2-6) | none | An upstream llama.cpp `-t N` run: the right thread count, no pinning, no pinned pool. |
+| ENTITY Auto | Auto's decode count (2-6) for decode; a separately-derived, usually wider count for prompt processing (since v3.5.0) | pinned to the frequency-ranked cores for decode, capacity-ranked for prompt | The shipped path. |
 
 Naïve versus threads-only isolates the thread-count decision. Threads-only versus Auto isolates
-core pinning. Both the decode and prompt rows are clean, because every arm runs both phases on the
-same thread count. (Before v2.1.0 Auto widened prompt processing to every core, which made the
-prompt row a confound — and, when finally measured, turned out to be a regression: prompt is 135
-tok/s on 4 fast cores against 86 spread across all 8.) See [BENCHMARKS.md](BENCHMARKS.md).
+core pinning. (Before v2.1.0 Auto widened prompt processing to every core, which made the prompt
+row a confound — and, when finally measured, turned out to be a regression: prompt is 135 tok/s on
+4 fast cores against 86 spread across all 8. Before v3.5.0 prompt processing instead shared
+decode's width exactly, which under-widened it on prime-core flagships.) See
+[BENCHMARKS.md](BENCHMARKS.md) and [`OPTIMIZATIONS.md`](../docs/OPTIMIZATIONS.md) §1 for the exact
+current derivation of both widths.
 
 Threads-only is not a stand-in for the upstream baseline script below — it shares ENTITY's runtime
 build and JNI boundary. It isolates the *policy*; the script isolates the *stack*. Run both.

@@ -27,9 +27,10 @@ receive a smaller Auto context window.
 
 ## What does Auto mode change?
 
-Auto mode ranks online CPU cores by their advertised maximum frequency, uses the fastest two to
-four cores for both inference phases, and sizes context from
-model size plus available memory. It also enables the thermal guard.
+Auto mode ranks online CPU cores by their advertised maximum frequency for decode (2 to 6 cores,
+clamped), and - since v3.5.0 - ranks cores by the kernel's own per-core capacity for prompt
+processing, which is usually wider and never narrower than decode's set. It sizes context from
+model size plus available memory, and enables the thermal guard.
 
 ## Why not use every CPU core?
 
@@ -40,8 +41,11 @@ token-by-token path: 8 threads gives 8.8 tok/s, 4 threads gives 16.9.
 
 Prompt eval is compute-bound, so ENTITY used to widen it to all 8 cores. That was a regression: an
 A55 is about a third of an A78's throughput, so every GEMM waited on the stragglers. Prompt on 4
-fast cores measures 135 tok/s; across all 8 it measures 86. Since v2.1.0 both phases run on the
-fast-core set.
+fast cores measures 135 tok/s; across all 8 it measures 86. From v2.1.0 both phases ran on the same
+fast-core set as decode; since v3.5.0 prompt processing derives its own, usually wider set instead
+(see "Why does the app use two different thread counts?" below) - decode's clock-ranked set can
+collapse to as few as 2 cores on a prime-core flagship, and prompt processing inheriting that same
+narrow width was itself a later regression, fixed in v3.5.0.
 
 ## How does ENTITY avoid running out of memory?
 
@@ -88,16 +92,21 @@ arms change both at once.
 
 ## So how much does the core pinning actually earn?
 
-**About 0%.** ENTITY's own ablation disproved ENTITY's flagship optimization.
+**Most of the gain is the thread count, not the pin - but the pin is real and device-dependent,
+not zero.**
 
 The Benchmark screen runs a third arm — threads-only: Auto's thread count with affinity switched
 off, which is what an upstream `llama.cpp -t 4` run does. Across twelve runs on two models, dropping
-8 threads to 4 earns +81% to +106% of decode, roughly 2x, and pinning those threads to the performance cluster
-adds nothing measurable.
+8 threads to 4 earns +81% to +106% of decode, roughly 2x, and that is the larger share everywhere.
+On three runs per arm the pin measured at ~0% on top of that - the first published answer here, and
+too strong. A later four-arm, five-run export on two vendors' silicon refined it: **+21% decode on
+the Dimensity 7300**, **+1% decode but a real power saving on the Snapdragon 6 Gen 4**. See "Can I
+turn core pinning off?" below for the full range across the contributed dataset.
 
-The affinity code still ships, because it is free and another SoC may behave differently. It is
-simply no longer claimed as the reason ENTITY is fast. Run the benchmark on your own phone and the
-numbers are yours: [full record](../benchmarks/BENCHMARKS.md).
+The affinity code ships pinning ON by default because it wins on the reference device, but it is
+credited as a second-order, device-dependent effect - not the multiplier - and it is a setting, not
+an assumption. Run the benchmark on your own phone and the numbers are yours:
+[full record](../benchmarks/BENCHMARKS.md).
 
 ## Does ENTITY use realtime scheduling or root-only controls?
 

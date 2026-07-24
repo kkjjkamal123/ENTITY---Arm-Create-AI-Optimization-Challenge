@@ -111,14 +111,13 @@ phone thermal state and background load both move the numbers.
 
 ## Good first issues / next steps
 
-- **Session save/restore for instant warm starts.** `primeHistory` (v1.6.0) rebuilds a restored
-  conversation's KV state by re-decoding its turns, which is correct but pays prompt-processing
-  cost once per restore. Investigate whether llama.cpp's session save/restore (`llama_state_*`
-  APIs) can persist a warmed KV state across app restarts and skip that re-decode entirely.
-- **More devices.** The v2 build already ships all seven arm64 CPU backend variants and
-  `build_fast_cpu_set()` ranks cores from live `cpufreq`. The next useful work is collecting
-  the same in-app benchmark record on more vendors and CPU layouts, including the selected backend,
-  core count, temperature, power, and raw CSV export.
+- **More devices.** Install [ENTITY Bench](../app/entity.bench.android/README.md), a separate,
+  open-source APK built exactly for this: run the four-arm ablation on your own phone and
+  optionally contribute the row to the public device dataset. This is now the highest-leverage
+  contribution in the project - the four/five-run cross-vendor exports are what falsified the
+  original two-arm pinning claim and the flagship thread-width rule; see
+  [`../benchmarks/CONTRIBUTED-DATA.md`](../benchmarks/CONTRIBUTED-DATA.md) for what each
+  contributed SoC has changed so far, and there is still no Exynos row.
 - **Realtime priority, done safely.** See
   [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md#5-big-core-pinning-under-contention--app-vs-cli-read-this-one-carefully)
   for why the app doesn't currently request `SCHED_RR`. If you want to explore it, gate it behind

@@ -22,7 +22,7 @@ Values are median (± population standard deviation where more than one run was 
 |---|---|
 | Naïve | Eight threads across all online CPU cores. The out-of-the-box default. |
 | Threads only | The same thread count Auto derives, with affinity off: no `sched_setaffinity`, no pinned thread pool, placement left to the Linux scheduler. This is what an upstream llama.cpp `-t N` run does. |
-| ENTITY Auto | CPU cores are ranked by maximum frequency; both phases run on the fastest two to four cores. |
+| ENTITY Auto | Decode pins to the fastest cores by frequency (2 to 6, clamped); since v3.5.0 prompt processing pins separately, by per-core capacity - usually wider, never narrower than decode. |
 | Efficiency (Bench only) | Auto's thread count pinned to the LITTLE cluster instead. Answers a tok/W question — are the little cores energy-efficient for decode, or only slow? |
 
 ### Why three arms
@@ -43,8 +43,10 @@ Each arm logs the CPU mask the kernel actually applied (`effective cpus` in logc
 
 ## The current result: four-arm exports (ENTITY Bench v1.1.0, 2026-07-18)
 
-The standalone [ENTITY Bench](../apk/ENTITY-Bench-v1.2.1-release.apk) app runs a fourth
-arm the chat app's three-arm ablation never had (these exports were taken with v1.1.0): **efficiency** — the same four threads as Auto,
+The standalone [ENTITY Bench](../apk/ENTITY-Bench-v2.1.1-release.apk) app (these exports were
+taken with v1.1.0; the current release adds an `adpf` arm and the Contribute-to-dataset flow, but
+the four ablation arms below are unchanged) runs a fourth arm the chat app's three-arm ablation
+never had: **efficiency** — the same four threads as Auto,
 but pinned to the LITTLE cluster instead of the performance cluster. It exists to measure what the
 slow cores can and cannot do, so the affinity policy is chosen from data rather than assumption.
 
@@ -293,6 +295,43 @@ never pairing a figure from one session with a figure from another.
 Setup, both sessions, screenshots, and the caveats (including why ENTITY's live-chat readout is
 *not* used): [competitor-comparison/](competitor-comparison/README.md).
 
+## Result 5: what four SoCs I do not own said (contributed, 2026-07-22/23)
+
+A separate measurement session, on separate hardware, by separate people. **It is not pooled with
+the four-arm exports above and must not be** - different app version, different devices, mostly
+single-pass. Full account, per-row figures and the rules for reading it:
+**[`CONTRIBUTED-DATA.md`](CONTRIBUTED-DATA.md)**. Raw export:
+[`results/contributed_ablation_q4_0_20260723.csv`](results/contributed_ablation_q4_0_20260723.csv).
+Figure: `plots/contributed_multidevice.png`.
+
+Devices: Google Tensor G5 (Pixel 10), Snapdragon 8 Gen 2 (Galaxy S23), Snapdragon 8 Gen 1
+(Galaxy S22 Ultra), MediaTek Dimensity 8300 (OPPO CPH2737), MediaTek Dimensity 7300 (Nothing A015).
+
+**a. Thread-count tuning generalises.** naive -> threads-only pays on every device measured,
+**1.65x to 3.58x**. Nothing regressed.
+
+**b. Pinning is a speed lever with a power cost, not an energy lever.** Isolated on the only axis
+that tests it - threads-only vs optimized, same thread count, affinity the sole difference:
+
+| | decode | tokens per watt |
+|---|---|---|
+| range across rows | -8.5% to +29.3% | -14.9% to +10.9% |
+| median | **+0.6%** | **-1.5%** |
+| rows where pinning wins | 4 of 6 | **3 of 6** |
+
+The Pixel 10 is the clean case: **+29.3% decode for +33.5% power, so tok/W falls 3.2%.** This is
+why core placement became a user setting in v3.5.0 rather than a default.
+
+**c. It falsified this repository's own prediction.** The thread rule counted cores within 10% of
+the fastest *clock*; every prime-core flagship puts its prime 17-20% above its big cluster, so the
+count collapsed to 1 and prefill - which inherited that number - ran on two threads on every
+flagship. Symptom: a Dimensity 7300 prefills Llama-3.2-1B-Q4_0 at **139 tok/s** against an SM8550's
+**111**. Both development phones were structurally immune. Fixed in v3.5.0.
+
+**Excluded on purpose, and stated rather than quietly dropped:** the Galaxy S23's naive arm
+(6.72 +/- 5.95 tok/s, 88.5% RSD - noise, not a measurement) and all CPH2737 power figures (produced
+by a build with the `EXTRA_VOLTAGE` unit bug fixed in v3.6.0; its throughput is unaffected).
+
 ## Interpretation and limits
 
 - One phone, two models, one quantization pair. Not a universal multiplier.
@@ -419,7 +458,7 @@ to it, and the pinned arm's three passes span just 0.2 tok/s.
 ## Contribute a device result
 
 The easiest path is the standalone [ENTITY Bench](../app/entity.bench.android/README.md) APK
-([`apk/ENTITY-Bench-v1.2.1-release.apk`](../apk/ENTITY-Bench-v1.2.1-release.apk)). It is a dedicated
+([`apk/ENTITY-Bench-v2.1.1-release.apk`](../apk/ENTITY-Bench-v2.1.1-release.apk)). It is a dedicated
 benchmark app with no chat: you import a GGUF via the file picker, run the same three-arm ablation on an
 unplugged, cooled phone, and tap **Export CSV** on the result page. Every result is autosaved on the
 device, so the CSV can also be exported later from the app's history. There is nothing to set up in the
