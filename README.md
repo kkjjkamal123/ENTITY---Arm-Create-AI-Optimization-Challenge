@@ -63,8 +63,9 @@ This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has t
 5. Auto mode plus manual controls for temperature, top k, top p, completion length, context and threads.
 6. Live statistics and a selectable graph for token count, token rate, TTFT, temperature, power, app CPU utilization and free memory.
 7. In app benchmark with a three arm ablation (naive, threads only, Auto), three run median, population standard deviation, thermal cooldown, decode attribution and CSV export. Every finished run is saved on the phone automatically, with a history screen to reopen, copy, re-export or delete any past run.
-8. Light, dark and system themes plus a theme aware app icon.
-9. GGUF model information including parameters, quantization, architecture and running context.
+8. In Entity Bench Users are able to contribute thier Benchmarks with a single click which stores in our Database, Making optimizations for various device with ease.
+9. Light, dark and system themes plus a theme aware app icon.
+10. GGUF model information including parameters, quantization, architecture and running context.
 
 ---
 
