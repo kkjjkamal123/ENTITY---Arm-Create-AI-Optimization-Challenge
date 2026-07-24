@@ -20,6 +20,14 @@ object Ui {
         tv.setTextColor(Palette.color(a, if (selected) R.attr.monoOnFill else R.attr.monoFg))
     }
 
+    // Square check box for a title+description settings row: on = solid fill, off = 1dp
+    // outline. Same vocabulary as seg(), but sized as an icon next to text rather than
+    // filling a whole button, so a persistent on/off setting reads as a checkbox and not
+    // as a fourth action button (see the Contribute row in SettingsActivity).
+    fun check(box: View, on: Boolean) {
+        box.setBackgroundResource(if (on) R.drawable.bg_fill else R.drawable.bg_inner)
+    }
+
     // Two-column label/value grid row (device card, live telemetry).
     fun gridRow(a: Activity, grid: GridLayout, label: String, value: String, boldValue: Boolean = false) {
         fun cell(text: String, end: Boolean, bold: Boolean): TextView = TextView(a).apply {

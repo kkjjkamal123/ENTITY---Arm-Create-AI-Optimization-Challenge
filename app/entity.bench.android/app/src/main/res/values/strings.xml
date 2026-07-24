@@ -114,6 +114,7 @@
     <string name="sec_contribute">Contribute results</string>
     <string name="contribute_body">ENTITY\'s finding - that thread count earns the decode speed-up and core pinning is device-dependent - was measured on two phones. Sending your result makes it a claim about Arm silicon rather than about two devices. Off by default. Summary numbers only: no telemetry trace, no accounts, no identifier that links two of your runs. Every submission records whether the phone was charging, because power readings taken while charging are the charger\'s, not the workload\'s.</string>
     <string name="contribute_toggle">Share my benchmark results</string>
+    <string name="contribute_toggle_desc">Off by default - nothing is sent until this is on. Once on, every finished benchmark uploads automatically.</string>
     <string name="contribute_show">Show exactly what gets sent</string>
     <string name="contribute_unconfigured">This build has no contribution endpoint, so nothing can be sent.</string>
     <string name="contribute_queued">%1$d result(s) waiting to send</string>

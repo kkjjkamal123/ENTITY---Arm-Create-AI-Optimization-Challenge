@@ -55,7 +55,7 @@ class SettingsActivity : AppCompatActivity() {
 
     private fun buildContribute() {
         val card = findViewById<View>(R.id.card_contribute)
-        val toggle = findViewById<TextView>(R.id.row_contribute)
+        val toggle = findViewById<View>(R.id.row_contribute)
         // A build with no endpoint cannot send anything, so say so rather than offering a
         // switch that silently does nothing.
         if (!ResultUploader.configured) {
@@ -80,7 +80,7 @@ class SettingsActivity : AppCompatActivity() {
     }
 
     private fun paintContribute() {
-        Ui.seg(this, findViewById(R.id.row_contribute), ResultUploader.enabled(this))
+        Ui.check(findViewById(R.id.contribute_check), ResultUploader.enabled(this))
         val q = ResultUploader.queuedCount(this)
         findViewById<TextView>(R.id.contribute_value).text =
             if (q > 0) getString(R.string.contribute_queued, q) else getString(R.string.contribute_none)

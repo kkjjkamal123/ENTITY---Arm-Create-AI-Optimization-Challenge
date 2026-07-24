@@ -76,6 +76,10 @@ static int   g_n_threads = 0;
 static float g_temp      = DEFAULT_SAMPLER_TEMP;
 static int   g_top_k     = 40;
 static float g_top_p     = 0.95f;
+// temp=0.3 alone sharpens the distribution enough to loop on small on-device models;
+// repetition penalty (not a higher temp, which trades against hallucination) is the fix.
+// Not user-tunable yet - fixed at the standard mitigation value. Mirrors entity.android.
+static float g_penalty_repeat = 1.1f;
 
 // Core-affinity policy. True (the shipped path) pins inference to the fastest
 // cores and attaches the pinned split thread pools. False leaves placement to
@@ -489,9 +493,10 @@ static llama_context *init_context(llama_model *model, int n_ctx_override = -1) 
 
 static common_sampler *new_sampler() {
     common_params_sampling sparams;
-    sparams.temp  = g_temp;
-    sparams.top_k = g_top_k;
-    sparams.top_p = g_top_p;
+    sparams.temp           = g_temp;
+    sparams.top_k          = g_top_k;
+    sparams.top_p          = g_top_p;
+    sparams.penalty_repeat = g_penalty_repeat;
     return common_sampler_init(g_model, sparams);
 }
 

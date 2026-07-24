@@ -5,6 +5,8 @@ the matching APK filename, an intro paragraph, and Added/Changed/Fixed bullets f
 
 | File | Version | APK |
 |---|---|---|
+| [`RELEASE-v3.6.1.md`](RELEASE-v3.6.1.md) | 3.6.1 | `ENTITY-v23-repeat-penalty-20260724-release.apk` (release) |
+| [`RELEASE-Bench-v2.1.1.md`](RELEASE-Bench-v2.1.1.md) | Bench 2.1.1 | `ENTITY-Bench-v2.1.1-release.apk` (release) |
 | [`RELEASE-v3.6.0.md`](RELEASE-v3.6.0.md) | 3.6.0 | `ENTITY-v22-adpf-power-fix-20260723-release.apk` (release) |
 | [`RELEASE-Bench-v2.1.0.md`](RELEASE-Bench-v2.1.0.md) | Bench 2.1.0 | `ENTITY-Bench-v2.1.0-release.apk` (release) |
 | [`RELEASE-v3.5.0.md`](RELEASE-v3.5.0.md) | 3.5.0 | `ENTITY-v21-prefill-threads-placement-latex-20260723-release.apk` (release) |

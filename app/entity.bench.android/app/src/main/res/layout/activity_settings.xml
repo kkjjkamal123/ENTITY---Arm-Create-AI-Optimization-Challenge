@@ -266,24 +266,57 @@
                 android:lineSpacingMultiplier="1.45"
                 android:text="@string/contribute_body" />
 
-            <TextView
+            <!-- The on/off control: a checkbox row, not a fourth outline button, so it
+                 reads as a persistent switch rather than another action to tap. -->
+            <LinearLayout
                 android:id="@+id/row_contribute"
-                style="@style/Bench.ButtonOutline"
-                android:layout_marginTop="12dp"
-                android:textSize="11sp"
-                android:text="@string/contribute_toggle" />
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="14dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="top">
+
+                <View
+                    android:id="@+id/contribute_check"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginTop="1dp"
+                    android:background="@drawable/bg_inner" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:layout_marginStart="10dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textColor="?attr/monoFg"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:fontFamily="monospace"
+                        android:text="@string/contribute_toggle" />
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="2dp"
+                        android:textColor="?attr/monoDim"
+                        android:textSize="10sp"
+                        android:fontFamily="monospace"
+                        android:lineSpacingMultiplier="1.35"
+                        android:text="@string/contribute_toggle_desc" />
+                </LinearLayout>
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/row_contribute_pick"
                 style="@style/Bench.ButtonOutline"
-                android:layout_marginTop="6dp"
-                android:textSize="11sp"
-                android:text="@string/contribute_open" />
-
-            <TextView
-                android:id="@+id/row_contribute_open"
-                style="@style/Bench.Button"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="16dp"
                 android:textSize="11sp"
                 android:text="@string/contribute_open" />
 

@@ -9,6 +9,49 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [3.6.1] - 2026-07-24
+
+**Repetition penalty was off.** `new_sampler()` only ever set `temp`, `top_k` and `top_p` from the
+user's config; everything else - `min_p`, DRY, XTC, and critically `penalty_repeat` - rode
+llama.cpp's own `common_params_sampling` defaults, and that struct's own default for
+`penalty_repeat` is `1.0`, i.e. disabled. Paired with ENTITY's own `temp = 0.3` (deliberately low,
+for grounded answers over creative ones), the sampler ran close to greedy decoding: whichever token
+was already most likely stayed most likely, with nothing to break a loop once one started.
+
+That is the textbook setup behind two complaints that came back together - a chat that repeats
+itself and a chat that reads bland are not opposite symptoms calling for opposite fixes, they are
+the same collapse (Holtzman et al., *The Curious Case of Neural Text Degeneration*, 2019). Fixing
+it does not require raising temperature, which would trade directly against the factual grounding
+`temp = 0.3` was chosen for.
+
+### Fixed
+
+- **Repetition penalty enabled** (`ai_chat.cpp`). `penalty_repeat = 1.1`, the standard mitigation
+  value, fixed internally - not yet a user-facing setting. `top_k`, `top_p`, `temp`, and `min_p`
+  (already active at the library default of `0.05`) are untouched, so if this measurably helps, the
+  improvement is attributable to this one lever alone.
+
+### Verification
+
+| Claim | How |
+|---|---|
+| Compiles clean, native + Kotlin, both apps | `assembleRelease` + `testReleaseUnitTest`, both green |
+| **Reduces looping or blandness in real chat** | **not yet observed - no device available this session** |
+
+**This is lever one of a diagnosis, not a confirmed fix.** Four symptoms were reported: looping,
+blandness, ignoring instructions/format, and losing coherence deep into a long chat. This release
+addresses the first two directly, and the third only if it was the same collapse read differently
+(a model stuck looping also reads as ignoring the requested format). The fourth is a different
+subsystem - `shift_context()` discards the oldest half of the conversation in one shot on context
+overflow, already flagged as a TODO in the code - and is untouched here. Treat all four as open
+until this is tried on-device.
+
+### File comparison (3.6.0 -> 3.6.1)
+
+| File | Change |
+|---|---|
+| `ai_chat.cpp` | `g_penalty_repeat = 1.1f`; `new_sampler()` sets `sparams.penalty_repeat`. Mirrored identically in ENTITY Bench v2.1.1 - see its own release notes. |
+
 ## [3.6.0] - 2026-07-23
 
 **Two things: the app now tells the kernel its deadline instead of only telling it which cores to
@@ -1063,6 +1106,9 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 3.6.1 | `ENTITY-v23-repeat-penalty-20260724-release.apk` (release-signed, ~10 MB) |
+| 3.6.0 | `ENTITY-v22-adpf-power-fix-20260723-release.apk` (release-signed, ~10 MB) |
+| 3.5.0 | `ENTITY-v21-prefill-threads-placement-latex-20260723-release.apk` (release-signed, ~10 MB) |
 | 3.4.1 | `ENTITY-v20-edge-insets-20260722-release.apk` (release-signed, ~10.4 MB) |
 | 3.4.0 | `ENTITY-v19-models-screen-colour-20260722-release.apk` (release-signed, ~10.4 MB) |
 | 3.3.0 | superseded by v3.4.0 (same day) |
