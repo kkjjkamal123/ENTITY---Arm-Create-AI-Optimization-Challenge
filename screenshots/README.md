@@ -1,6 +1,6 @@
 # Screenshots
 
-Split by app. Filenames ending in `N` are the dark theme.
+Split by app. Filenames ending in `N` are the new version.
 
 | Folder | App |
 |---|---|
