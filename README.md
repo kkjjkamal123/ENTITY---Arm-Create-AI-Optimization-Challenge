@@ -73,7 +73,7 @@ This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has t
 
 | Chat | Benchmark | Settings |
 |---|---|---|
-| ![Chat](screenshots/Entity%20Chat/Chat.png) | ![Benchmark](screenshots/Entity%20Chat/Benchmark.png) | ![Settings](screenshots/Entity%20Chat/Settings.png) |
+| ![Chat](screenshots/Entity%20Chat/ChatOld.png) | ![Benchmark](screenshots/Entity%20Chat/BenchmarkOld.png) | ![Settings](screenshots/Entity%20Chat/SettingsOld.png) |
 
 ---
 
