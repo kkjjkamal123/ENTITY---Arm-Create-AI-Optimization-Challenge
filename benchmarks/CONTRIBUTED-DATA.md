@@ -36,6 +36,11 @@ MT6886 ships under several Dimensity marketing names, so it stays raw here and o
 configuration to the derived thread count pays on every SoC measured, now across nine of them:
 **1.34x to 4.25x**. No device has regressed, including the one with no Arm ISA extensions at all.
 
+That range is the thread step in isolation (naive -> threads-only). The full naive -> optimized
+ratio, which is what the leaderboard's multiplier column shows, runs 1.34x-4.27x; the difference
+between the two ranges is exactly what pinning contributed, and it is small on purpose - see
+finding 2.
+
 The four SoCs added after 2026-07-23 (best clean unplugged row each, Llama-3.2-1B-Q4_0, decode
 tok/s):
 
