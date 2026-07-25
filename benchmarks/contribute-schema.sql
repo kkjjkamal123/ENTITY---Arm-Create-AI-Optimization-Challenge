@@ -58,14 +58,26 @@ create table if not exists public.bench_results (
 
 alter table public.bench_results enable row level security;
 
--- Append-only for the anonymous key: no select, no update, no delete.
--- Combined with the app sending "Prefer: return=minimal", no select policy is needed.
+-- Insert and read for the anonymous key: no update, no delete.
+-- The APK never reads back (it sends "Prefer: return=minimal"), so the insert policy is
+-- all the app needs. The select policy exists for the project site's live leaderboard
+-- (ENTITY-WEB), which fetches this table from the browser with the same publishable key.
+-- Every row it can read is already published in the site's committed snapshot and in
+-- benchmarks/results/, so the read grants no new visibility - but it does mean this table
+-- is public, and nothing private may ever be inserted into it.
 drop policy if exists "anon can insert results" on public.bench_results;
 create policy "anon can insert results"
   on public.bench_results
   for insert
   to anon
   with check (true);
+
+drop policy if exists "anon can read results" on public.bench_results;
+create policy "anon can read results"
+  on public.bench_results
+  for select
+  to anon
+  using (true);
 
 -- Handy views for pulling the dataset back into benchmarks/results/ as CSV.
 

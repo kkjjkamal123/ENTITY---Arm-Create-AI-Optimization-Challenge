@@ -304,23 +304,31 @@ single-pass. Full account, per-row figures and the rules for reading it:
 [`results/contributed_ablation_q4_0_20260723.csv`](results/contributed_ablation_q4_0_20260723.csv).
 Figure: `plots/contributed_multidevice.png`.
 
-Devices: Google Tensor G5 (Pixel 10), Snapdragon 8 Gen 2 (Galaxy S23), Snapdragon 8 Gen 1
-(Galaxy S22 Ultra), MediaTek Dimensity 8300 (OPPO CPH2737), MediaTek Dimensity 7300 (Nothing A015).
+Devices in the figure: Google Tensor G5 (Pixel 10), Snapdragon 8 Gen 2 (Galaxy S23), Snapdragon
+8 Gen 1 (Galaxy S22 Ultra), MediaTek Dimensity 8300 (OPPO CPH2737), MediaTek Dimensity 7300
+(Nothing A015). Since that export the dataset has added Snapdragon 865 (Galaxy S20 FE 5G),
+MediaTek MT6886 (vivo I2301), Dimensity 700 (OPPO CPH2553) and Helio G37 (TECNO KI5q) - **9 SoCs,
+22 rows**. The figure has not been regenerated; the numbers below are current, the image is not.
 
 **a. Thread-count tuning generalises.** naive -> threads-only pays on every device measured,
-**1.65x to 3.58x**. Nothing regressed.
+**1.34x to 4.25x** across nine SoCs. Nothing has regressed. The widest multiplier is the
+Snapdragon 865, which has no i8mm - the lever is scheduling, not a kernel.
 
-**b. Pinning is a speed lever with a power cost, not an energy lever.** Isolated on the only axis
-that tests it - threads-only vs optimized, same thread count, affinity the sole difference:
+**b. Pinning is device-dependent in both speed and energy.** Isolated on the only axis that tests
+it - threads-only vs optimized, same thread count, affinity the sole difference:
 
 | | decode | tokens per watt |
 |---|---|---|
-| range across rows | -8.5% to +29.3% | -14.9% to +10.9% |
-| median | **+0.6%** | **-1.5%** |
-| rows where pinning wins | 4 of 6 | **3 of 6** |
+| rows carrying both arms | 15 | 14 (one excluded on implausible power) |
+| range across rows | -8.5% to +29.3% | -14.9% to +34.4% |
+| median | **+0.7%** | **+2.0%** |
+| rows where pinning wins | 9 of 15 | 9 of 14 |
 
-The Pixel 10 is the clean case: **+29.3% decode for +33.5% power, so tok/W falls 3.2%.** This is
-why core placement became a user setting in v3.5.0 rather than a default.
+Both extremes are real measurements, not noise. The Pixel 10 is the clean **cost** case:
+**+29.3% decode for +33.5% power, so tok/W falls 3.2%.** The Dimensity 7300 on app 2.1.1 is the
+clean **benefit** case: **+24.0% decode while drawing 7.9% less power, so tok/W rises 34.4%.** No
+property available before running it predicts which one a given phone will be, which is why core
+placement became a user setting in v3.5.0 rather than a default.
 
 **c. It falsified this repository's own prediction.** The thread rule counted cores within 10% of
 the fastest *clock*; every prime-core flagship puts its prime 17-20% above its big cluster, so the
@@ -329,8 +337,12 @@ flagship. Symptom: a Dimensity 7300 prefills Llama-3.2-1B-Q4_0 at **139 tok/s** 
 **111**. Both development phones were structurally immune. Fixed in v3.5.0.
 
 **Excluded on purpose, and stated rather than quietly dropped:** the Galaxy S23's naive arm
-(6.72 +/- 5.95 tok/s, 88.5% RSD - noise, not a measurement) and all CPH2737 power figures (produced
-by a build with the `EXTRA_VOLTAGE` unit bug fixed in v3.6.0; its throughput is unaffected).
+(6.72 +/- 5.95 tok/s, 88.5% RSD - noise, not a measurement) and all CPH2737 power figures. The
+earlier CPH2737 rows came from a build with the `EXTRA_VOLTAGE` unit bug fixed in v3.6.0; its
+newest row, on app 2.1.1 after that fix, reports `power_valid = true` and still reads 0.52-0.66 W
+while decoding at 33 tok/s, which is not physical. So the exclusion stands for a *different* reason
+than before, and the honest reading is that this device's battery telemetry remains untrusted while
+its throughput - the fastest decode in the dataset - is fine.
 
 ## Interpretation and limits
 

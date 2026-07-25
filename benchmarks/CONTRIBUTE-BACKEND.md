@@ -64,12 +64,21 @@ create table public.bench_results (
 
 alter table public.bench_results enable row level security;
 
--- Append-only for the anonymous key: no select, no update, no delete.
+-- Insert and read for the anonymous key: no update, no delete.
 create policy "anon can insert results"
   on public.bench_results
   for insert
   to anon
   with check (true);
+
+-- Read is for the project site's live leaderboard, not the app: the APK sends
+-- "Prefer: return=minimal" and never selects. Consequence to keep in mind - this table
+-- is world-readable, so nothing private may be inserted into it.
+create policy "anon can read results"
+  on public.bench_results
+  for select
+  to anon
+  using (true);
 ```
 
 `submission_id` is `unique`, so a retried upload from a queued offline run cannot create a

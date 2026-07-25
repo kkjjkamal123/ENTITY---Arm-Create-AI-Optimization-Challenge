@@ -24,3 +24,10 @@
 Measurements are in [`../benchmarks/`](../benchmarks/), not here - starting with
 [`../benchmarks/README.md`](../benchmarks/README.md) and
 [`../benchmarks/CONTRIBUTED-DATA.md`](../benchmarks/CONTRIBUTED-DATA.md).
+
+## Prefer to read it as a site
+
+The same material, written to be read rather than audited, is at
+**<https://kkjjkamal123.github.io/ENTITY-WEB/>** - animated explainers of each optimization, a
+live device leaderboard over the contributed dataset, and the falsification record. Source:
+[kkjjkamal123/ENTITY-WEB](https://github.com/kkjjkamal123/ENTITY-WEB).

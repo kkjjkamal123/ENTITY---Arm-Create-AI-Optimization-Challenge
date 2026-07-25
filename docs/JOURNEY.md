@@ -171,10 +171,17 @@ wrong vendor would have sent the next person looking in entirely the wrong place
 
 After all of the above, the findings that survived contact with silicon nobody here owns:
 
-- **Thread-count tuning is the lever.** It pays on every SoC measured, 1.65x to 3.58x. It is the
-  only thing in this project that has never regressed on a new device.
-- **Pinning is a speed lever with a power cost**, device-dependent in sign, roughly neutral-to-
-  negative on energy. Correctly a setting, not a default.
+- **Thread-count tuning is the lever.** It pays on every SoC measured - now nine of them, 1.34x to
+  4.25x. It is the only thing in this project that has never regressed on a new device, and it
+  holds at both ends: on SVE2 flagship silicon and on an all-Cortex-A53 Helio G37 with no Arm ISA
+  extensions whatsoever.
+- **Pinning is device-dependent in both speed and energy**, and the sign cannot be predicted from
+  the spec sheet. Across the 15 rows that isolate it the median is +0.7% decode, but the range runs
+  -8.5% to +29.3%, and both extremes are real: the Pixel 10 buys +29.3% decode for +33.5% power
+  (tok/W falls), while the Dimensity 7300 on app 2.1.1 gets +24.0% decode for 7.9% *less* power
+  (tok/W rises 34.4%). Correctly a setting, not a default - and the earlier "roughly neutral-to-
+  negative on energy" summary in this file was itself too confident, corrected here on the wider
+  dataset.
 - **The two inference phases want different thread widths**, and conflating them costs prefill
   badly on any chip with a prime core.
 - **Frequency cannot rank cores.** `cpu_capacity` can. An A55 at 2.0 GHz and an A78 at 2.5 GHz are

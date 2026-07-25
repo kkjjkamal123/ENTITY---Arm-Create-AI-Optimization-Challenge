@@ -4,6 +4,12 @@
 
 **Track 1: Optimization Output** (prize category: Edge AI)
 
+**Project site: <https://kkjjkamal123.github.io/ENTITY-WEB/>** — the same material as an
+interactive read: animated explainers of every optimization, a **live device leaderboard** that
+queries the contributed benchmark table from the browser, and the falsification record. Every
+figure there is labelled `measured` or `schematic` and traces to a named file in this repository.
+Source: [kkjjkamal123/ENTITY-WEB](https://github.com/kkjjkamal123/ENTITY-WEB).
+
 ---
 
 ## Project Overview
@@ -389,6 +395,7 @@ to this project's own patch.
 
 ## Repository & License
 
+- **Project site:** <https://kkjjkamal123.github.io/ENTITY-WEB/>, built from [kkjjkamal123/ENTITY-WEB](https://github.com/kkjjkamal123/ENTITY-WEB) (Astro, static, deployed by GitHub Actions). Its leaderboard reads the contributed benchmark table live; `CONTENT-SOURCES.md` there maps every page back to a file in this repository.
 - **Public repository:** [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge). It contains the Gradle project in `app/entity.android/`, the standalone benchmark app in `app/entity.bench.android/`, prebuilt APKs in `apk/`, versioned release notes in `releases/`, measurements in `benchmarks/`, technical documentation in `docs/`, and Termux helpers in `scripts/`.
 - **Apache License 2.0** — see `LICENSE` file. Built on [llama.cpp](https://github.com/ggml-org/llama.cpp) (MIT) and Arm [KleidiAI](https://gitlab.arm.com/kleidi/kleidiai) (Apache-2.0).
 

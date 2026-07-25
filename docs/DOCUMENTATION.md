@@ -39,6 +39,18 @@ are not interchangeable with the current Android app result.
 
 Source repository: [kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge).
 
+## The project site
+
+**<https://kkjjkamal123.github.io/ENTITY-WEB/>** presents the same material for reading rather
+than for auditing: animated explainers of each optimization, a **live device leaderboard** that
+queries the contributed dataset directly, and the falsification record. Nothing there is a new
+claim - every figure is labelled `measured` or `schematic` and traces to a named file in this
+repository, and the map from page to source file is
+[`CONTENT-SOURCES.md`](https://github.com/kkjjkamal123/ENTITY-WEB/blob/main/CONTENT-SOURCES.md)
+in [kkjjkamal123/ENTITY-WEB](https://github.com/kkjjkamal123/ENTITY-WEB).
+
+Read the site to understand the project. Read this repository to check it.
+
 ## Current release
 
 ENTITY is a fully offline Android LLM runtime for arm64 phones. It combines a Kotlin interface,
