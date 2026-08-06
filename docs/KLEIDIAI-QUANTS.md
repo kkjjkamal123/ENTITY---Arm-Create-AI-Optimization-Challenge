@@ -79,9 +79,6 @@ this project does not claim the split.
 
 Two independent measurements suggest the KleidiAI flag contributes little **at Q4_0**:
 
-- [PocketTune](https://github.com/ayanbag/PocketTune) measured a KleidiAI build against an
-  Arm-arch-flags build on a Pixel 7a at Q4_0: 138.4 vs 143.5 tok/s prefill - the KleidiAI build
-  slightly *slower*.
 - [KleidiBench](https://github.com/yannan000/kleidibench) measured ~1.0x at Q4_0 across 13 models
   on Neoverse N2, and found KleidiAI's real prefill win at **Q8_0 (1.73x)**.
 
