@@ -77,10 +77,6 @@ Separating them needs a different experiment: hold the quantization at Q4_0 and 
 `GGML_CPU_KLEIDIAI` **ON** versus **OFF**. That experiment has not been run on this phone yet, so
 this project does not claim the split.
 
-Two independent measurements suggest the KleidiAI flag contributes little **at Q4_0**:
-
-- [KleidiBench](https://github.com/yannan000/kleidibench) measured ~1.0x at Q4_0 across 13 models
-  on Neoverse N2, and found KleidiAI's real prefill win at **Q8_0 (1.73x)**.
 
 Both are consistent with the structural claim this page is really about, which is unchanged and
 verified in Arm's kernel source: **a K-quant reaches neither path, and nothing tells you.** They
