@@ -23,7 +23,19 @@ object ModelCatalog {
         val quant: String,
         val sizeBytes: Long,
     ) {
-        /** KleidiAI ships kernels for Q4_0 and Q8_0 only; everything else falls back. */
+        /**
+         * Expected KleidiAI eligibility, from the catalog's declared quantization.
+         *
+         * A prediction, not a measurement: a catalog row describes a file that has not been
+         * downloaded yet, so there is no tensor table to count. KleidiAI ships kernels for
+         * Q4_0 and Q8_0 only and everything else falls back, but a file labelled Q4_0 still
+         * routinely holds tensors of other types - bartowski's Llama-3.2-1B Q4_0 has 24.0%
+         * of its weights off the KleidiAI path, including the output projection.
+         *
+         * Once a model is on disk, the model info card reads
+         * [com.arm.aichat.gguf.GgufMetadata.TensorCensus] and reports the measured
+         * coverage instead. Treat this as "should reach Arm's kernels", not "does".
+         */
         val kleidiAccelerated: Boolean get() = quant == "Q4_0" || quant == "Q8_0"
     }
 

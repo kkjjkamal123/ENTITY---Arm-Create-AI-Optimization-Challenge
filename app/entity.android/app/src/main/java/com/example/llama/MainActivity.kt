@@ -860,13 +860,52 @@ class MainActivity : AppCompatActivity() {
             append("Compute: CPU · $cores perf core${if (cores == 1) "" else "s"}")
             if (features.isNotEmpty()) append(" · ${features.joinToString(", ")}")
 
-            // Only claim KleidiAI when the loaded quantization can actually reach it.
-            // KleidiAI ships kernels for Q4_0 and Q8_0 only; anything else runs on generic
-            // ggml no matter which backend variant was loaded. Saying "KleidiAI" regardless
-            // would be telling the user their model is Arm-accelerated when it is not.
+            // Only claim KleidiAI when the loaded weights can actually reach it, and say how
+            // much of the model does. KleidiAI ships kernels for Q4_0 and Q8_0 only; anything
+            // else runs on generic ggml no matter which backend variant was loaded.
+            //
+            // `general.file_type` is a nominal label and is routinely wrong about the file's
+            // contents, so it is the fallback, not the source of truth. bartowski's published
+            // Llama-3.2-1B "Q4_0" carries token_embd at Q6_K plus two ffn_down tensors at
+            // Q4_1: 24.0% of its quantized weights are off the KleidiAI path. Because Llama
+            // 3.2 ties its embeddings, that Q6_K tensor is also the output projection, so the
+            // model's largest matmul is the part that misses Arm's kernels. Reporting
+            // "KleidiAI active" for that file is the exact over-claim this block exists to
+            // prevent, one level finer than the file-type check could see.
+            val census = meta?.tensors
             when {
+                census != null && census.fullyAccelerated ->
+                    append(" · KleidiAI active (all weights)")
+
+                census != null && census.ineligibleParams > 0L && census.eligibleParams > 0L -> {
+                    append(" · KleidiAI partial (${census.kleidiCoveragePercent}% of weights)")
+                    appendLine()
+                    appendLine()
+                    val worst = census.ineligible.first()
+                    appendLine(
+                        "${census.kleidiCoveragePercent}% of this model's quantized weights reach " +
+                            "Arm's kernels. The rest fall back to generic ggml — largest is " +
+                            "${worst.name} at ${worst.type.label} " +
+                            "(${"%.1f".format(worst.params / 1e6)}M parameters)."
+                    )
+                    append(
+                        "A file named ${fileType?.label ?: "this quantization"} is not required to " +
+                            "be that type throughout; quantizers keep selected tensors at higher " +
+                            "precision. This figure is read from the file's tensor table, not its label."
+                    )
+                }
+
+                // A census showing zero eligible weights deliberately falls through to the
+                // else branch below, which already explains the fix. Short-circuiting here
+                // would report the problem and withhold the remedy.
+
+                // No readable tensor table: fall back to the nominal file type. Weaker, and
+                // labelled as such rather than presented as a measurement. Guarded on
+                // census == null so a measured zero can never be overridden by an optimistic
+                // label.
                 fileType == null -> Unit
-                fileType.kleidiAiAccelerated -> append(" · KleidiAI active")
+                census == null && fileType.kleidiAiAccelerated ->
+                    append(" · KleidiAI expected (by file type)")
                 else -> {
                     append(" · KleidiAI NOT used")
                     appendLine()
