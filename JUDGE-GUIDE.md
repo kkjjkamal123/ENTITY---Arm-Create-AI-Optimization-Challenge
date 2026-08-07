@@ -95,7 +95,7 @@ what the optimization is *for*; ENTITY Bench is how it is proved.
 | What are the raw numbers? | [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md) + per-pass CSVs in [`benchmarks/results/`](benchmarks/results/) |
 | What did the project get **wrong**? | [`docs/JOURNEY.md`](docs/JOURNEY.md) — every withdrawn claim, including the headline the ablation disproved |
 | What did contributors' devices show? | [`benchmarks/CONTRIBUTED-DATA.md`](benchmarks/CONTRIBUTED-DATA.md) — 22 rows, 9 SoCs, devices the author does not own |
-| How does it compare to other apps? | [`benchmarks/competitor-comparison/`](benchmarks/competitor-comparison/) — same phone, same model file, same workload |
+| What does quantization cost in quality? | [`docs/QUANTIZATION-QUALITY.md`](docs/QUANTIZATION-QUALITY.md) — perplexity and KleidiAI coverage across six quants |
 
 Live leaderboard: <https://kkjjkamal123.github.io/ENTITY-WEB/>
 Demo video: <https://youtu.be/ZD_jpyBqkF8>

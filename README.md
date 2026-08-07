@@ -17,7 +17,7 @@
 
 ## Navigation
 
-[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
+[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [Quantization quality](docs/QUANTIZATION-QUALITY.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
 
 ## What ENTITY is
 
@@ -133,7 +133,7 @@ This isolates the **quantization**, not KleidiAI specifically: moving to Q4_0 sw
 
 ![KleidiAI](benchmarks/plots/kleidiai_prompt_ttft.png)
 
-Prompt evaluation is a compute bound GEMM, which is what KleidiAI accelerates. Decode is memory bandwidth bound and tracks bytes per weight rather than kernel quality, so it does not improve: Q4_0 is about 6% more bytes and lands slightly slower. Q4_0 is also a quality tradeoff, so ENTITY recommends it rather than switching silently.
+Prompt evaluation is a compute bound GEMM, which is what KleidiAI accelerates. Decode is memory bandwidth bound and tracks bytes per weight rather than kernel quality, so it does not improve: Q4_0 is about 6% more bytes and lands slightly slower. Q4_0 is also a quality tradeoff, and the cost is now measured rather than asserted: **+5.6% perplexity against Q4_K_M** on Llama-3.2-1B (15.6159 vs 14.7346, wikitext-2 test, 200 chunks), for 4.5% fewer bytes and a prompt path Q4_K_M cannot reach at all. ENTITY recommends rather than switching silently, and the model card now reports both sides. Full table: [`docs/QUANTIZATION-QUALITY.md`](docs/QUANTIZATION-QUALITY.md).
 
 ### What the user actually gets
 
@@ -146,22 +146,6 @@ Llama 3.2 1B, ENTITY Auto, unplugged:
 | Decode throughput | 16.7 tok per s | 14.7 tok per s |
 
 Time to first token, the latency a user feels on a long prompt, drops 3.4 times. Decode gives up about 12%, the bandwidth cost of the larger quantization, and the benchmark screen shows both sides of the trade.
-
-### Against the competition
-
-Same phone, same `Llama-3.2-1B-Instruct-Q4_0`, same PP 512 / TG 128 workload, all three apps' own benchmark screens. All three re-measured in one session on 2026-07-20, five runs each, 30 minute cooldown between apps:
-
-| App | Prompt | Token generation | Threads |
-|---|---:|---:|---|
-| PocketPal AI | 88.32 tok per s | 13.9 tok per s | 6 |
-| Arm AI Chat (Arm's own app) | 121 tok per s | 12.4 tok per s | not reported |
-| **ENTITY** | **128 tok per s** | **18.2 tok per s** | 4, pinned |
-
-![Competitor comparison](benchmarks/competitor-comparison/three_app_comparison.png)
-
-Against Arm's own reference app, on Arm's own silicon: 6% on prompt and **47% on token generation**. Against PocketPal: 45% and 31%. Decode is where the thread count policy acts and where the margin is; the prompt column is close because all three apps run Q4_0 and reach the same KleidiAI kernels.
-
-The same three apps were measured on 2026-07-14 and the repeat did not agree with it. PocketPal and Arm swapped places on decode, and ENTITY's prompt margin over Arm narrowed from 11% to 6%. Both sessions are published with their dates, because PocketPal's decode swinging about 27% between sessions on identical hardware, while Arm's held within about 4%, is exactly why a figure from one session must never be paired with a figure from another. Full setup, both sessions, screenshots and caveats: [competitor comparison](benchmarks/competitor-comparison/README.md).
 
 TTFT here is derived from prompt evaluation plus one decode step. It is not a live chat first token measurement. Full method, the historical two arm v2.0.0 record, and every limit: [benchmarks](benchmarks/BENCHMARKS.md).
 

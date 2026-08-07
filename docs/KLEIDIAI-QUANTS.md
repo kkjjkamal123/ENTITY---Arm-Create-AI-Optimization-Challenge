@@ -77,12 +77,23 @@ Separating them needs a different experiment: hold the quantization at Q4_0 and 
 `GGML_CPU_KLEIDIAI` **ON** versus **OFF**. That experiment has not been run on this phone yet, so
 this project does not claim the split.
 
+So the +183% above is most likely the repack path and KleidiAI *together*, and this page does not
+apportion it. The structural claim it is really about is unchanged and verified in Arm's kernel
+source: **a K-quant reaches neither path, and nothing tells you.**
 
-Both are consistent with the structural claim this page is really about, which is unchanged and
-verified in Arm's kernel source: **a K-quant reaches neither path, and nothing tells you.** They
-just mean the +183% above is most likely the repack path and KleidiAI *together*, with the split
-still unmeasured here. The advice to users does not change: if your model is not Q4_0 or Q8_0, you
-are leaving Arm's fast paths on the table.
+What has since been measured here is one level finer, and it complicates the picture in a way
+worth stating plainly. Reading the tensor tables rather than the file-type label shows that a file
+named `Q4_0` is only **76% Q4_0** - `token_embd.weight` is Q6_K and two `ffn_down` tensors are
+Q4_1, so a quarter of the weights never reach KleidiAI whatever the label says.
+
+Rebuilding the same model with that embedding promoted to Q8_0 raises coverage to 97% and made the
+model **slower on both prefill and decode** on the reference phone. Coverage is not throughput.
+The full measurement, the prediction it falsified, and the perplexity cost of every quantization
+are in [`QUANTIZATION-QUALITY.md`](QUANTIZATION-QUALITY.md).
+
+The advice to users does not change: if your model is not Q4_0 or Q8_0, you are leaving Arm's fast
+paths on the table. What changes is that the app now reports the fraction of weights that reach
+them instead of asserting a yes or no from the filename.
 
 ## How to check and fix your own app
 

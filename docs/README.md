@@ -9,6 +9,7 @@
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | Module layout, threading model, file-by-file inventory. |
 | [`OPTIMIZATIONS.md`](OPTIMIZATIONS.md) | The algorithms - core selection, thread widths, deadline hints, context admission, thermal policy, power math - and the limit of each claim. The deepest file here. |
 | [`KLEIDIAI-QUANTS.md`](KLEIDIAI-QUANTS.md) | Which quantizations reach which Arm kernels. |
+| [`QUANTIZATION-QUALITY.md`](QUANTIZATION-QUALITY.md) | What each quantization costs in perplexity, how much of a file actually reaches KleidiAI, and the prediction about coverage that the measurement disproved. |
 | [`BUILD.md`](BUILD.md) | Toolchain and build. Neither app builds standalone. |
 | [`CONTRIBUTING.md`](CONTRIBUTING.md) | Conventions and validation. |
 | [`FAQ.md`](FAQ.md) | Short answers, including what is deliberately *not* claimed. |

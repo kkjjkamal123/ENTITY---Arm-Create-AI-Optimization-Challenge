@@ -167,6 +167,36 @@ wrong vendor would have sent the next person looking in entirely the wrong place
 
 ---
 
+## 9. "More KleidiAI coverage will be faster"
+
+**The belief.** §4 established that KleidiAI only serves Q4_0 and Q8_0. Reading the tensor tables
+instead of the `file_type` label showed that the shipped `Llama-3.2-1B-Instruct-Q4_0.gguf` is only
+**76% Q4_0** - `token_embd.weight` is Q6_K, two `ffn_down` tensors are Q4_1. Because Llama 3.2 ties
+its embeddings, that Q6_K tensor is also the output projection, the largest matmul in the model. A
+quarter of the weights, including the biggest one, never reach the kernels the quantization was
+chosen for. Obviously worth fixing.
+
+**What broke it.** Rebuilding with `--token-embedding-type q8_0` - still an eligible type - took
+coverage to 97% for 8.2% more file and no quality change. The prediction was written down first:
+prefill faster (compute-bound GEMM, which is what KleidiAI accelerates), decode slower (bandwidth-
+bound, and the tensor got ~30% heavier). Measured on the reference phone, three reps, pinned:
+prefill **125.69 to 121.84 tok/s** and decode **17.99 to 15.94**. Slower on both.
+
+**What it cost.** A day, and a recommendation that would have shipped a worse model to every user
+if the prediction had been trusted instead of tested.
+
+**What replaced it.** llama.cpp computes logits only for the last position of a prompt, so the
+output projection runs once per prefill rather than once per token - promoting it buys nothing
+there. In decode it does run every token, and decode is bandwidth-bound, so a bigger tensor is a
+straight loss. **Coverage is not throughput.** The 24% figure is true and is not costing this model
+any speed. The rebuilt file is published as a negative result and kept out of the catalog.
+
+What survives is narrower: the app now reports the measured fraction rather than asserting a
+boolean from a filename. Full record in
+[`QUANTIZATION-QUALITY.md`](QUANTIZATION-QUALITY.md).
+
+---
+
 ## What actually generalised
 
 After all of the above, the findings that survived contact with silicon nobody here owns:
@@ -200,4 +230,8 @@ Every correction above came from the same four habits, and they are cheaper than
 The open questions are kept in the same spirit - see
 [`../benchmarks/CONTRIBUTED-DATA.md`](../benchmarks/CONTRIBUTED-DATA.md). The current one: decode
 width sits on the `N_THREADS_MIN` floor on prime-core flagships, and nobody has swept it there. It
-is written down precisely so it can become §9.
+is written down precisely so it can become §10.
+
+§9 is the newest and the cleanest example of habit 4. The coverage fix was obviously correct, cost
+nothing in quality, and would have shipped on reasoning alone. Measuring it took an afternoon and
+turned it into a negative result. Nothing else here would have caught it.

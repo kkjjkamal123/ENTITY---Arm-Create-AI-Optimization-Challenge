@@ -199,6 +199,29 @@ Q4_0 is a quality tradeoff as well as a speed one, so ENTITY **recommends** rath
 switches: the model-info card now reports whether the loaded quantization can reach KleidiAI, and
 what it costs when it cannot.
 
+The size of that tradeoff was asserted here for four releases without a number. It is now
+measured — Llama-3.2-1B, wikitext-2 raw test, 200 chunks, every quant produced from one F16
+source:
+
+| Quant | Perplexity | vs F16 | Bytes | Weights on a KleidiAI path |
+|---|---:|---:|---:|---:|
+| F16 (reference) | 14.2580 ± 0.177 | — | 2,479,595,360 | n/a |
+| **Q8_0** | 14.2705 ± 0.177 | +0.09% | 1,321,082,720 | **100%** |
+| Q4_K_M | 14.7346 ± 0.182 | +3.34% | 807,694,176 | 0% |
+| Q4_0 (imatrix, catalog) | 15.6159 ± 0.194 | +9.52% | 773,025,856 | 76% |
+| Q3_K_L | 16.0927 ± 0.200 | +12.87% | 732,524,384 | 0% |
+| Q4_0 (no imatrix) | 16.5272 ± 0.209 | +15.92% | 770,928,480 | 79% |
+
+Three things fall out of it. **Q4_0 costs 5.6% perplexity against Q4_K_M** — that is the price of
+the prompt speedup above. **Q8_0 costs 0.09% and reaches KleidiAI on every weight**, which makes it
+the right recommendation on any device with the memory. And **a naive `llama-quantize … Q4_0` is
+5.5% worse than the imatrix-calibrated Q4_0 the catalog ships**, while carrying the same filename
+and the same `general.file_type`.
+
+The coverage column is read from each file's tensor table, not its label; see
+[`docs/QUANTIZATION-QUALITY.md`](../docs/QUANTIZATION-QUALITY.md) for why a file named Q4_0 is only
+76% Q4_0.
+
 ## Result 3: widening prompt processing to all cores was a regression
 
 Until v2.1.0, Auto used split thread pools: generation on the fast cores, prompt processing widened
@@ -267,33 +290,6 @@ python3 benchmarks/plot_energy.py benchmarks/results/entity_1b-q4_0_unplugged_3r
 
 The script refuses to run on a charging export, because the battery current would be the charger's
 rather than the workload's.
-
-## Against other apps
-
-ENTITY was measured against Arm's own AI Chat and PocketPal AI on the same phone, the same GGUF and
-the same PP 512 / TG 128 workload. The current session is 2026-07-20: all three apps re-measured the
-same day, five runs each, 30-minute cooldown between apps.
-
-| App | Prompt (pp 512) | Token generation (tg 128) | Threads |
-|---|---:|---:|---|
-| PocketPal AI | 88.32 tok/s | 13.9 tok/s | 6 |
-| Arm AI Chat (Arm's own app) | 121 ± 2.99 tok/s | 12.4 ± 0.0751 tok/s | not reported |
-| **ENTITY** | **128 tok/s** | **18.2 tok/s** | 4, pinned |
-
-**Against Arm's own reference app, on Arm's own silicon: +6% prompt, +47% token generation.**
-Against PocketPal: +45% prompt, +31% token generation. Decode is where the thread-count policy acts
-and where the margin is; the prompt column is close because all three apps run Q4_0 and therefore
-all three reach the same KleidiAI kernels.
-
-The July 2026-07-14 session is retained beside it, and the two disagree in ways worth publishing:
-PocketPal and Arm swapped places on decode (Arm led 12.9 to 10.9 in July; PocketPal leads 13.9 to
-12.4 now), ENTITY's prompt margin over Arm narrowed from +11% to +6%, and its decode margin widened
-from +21% to +47%. PocketPal's decode swung about 27% between sessions on identical hardware while
-Arm's held within about 4%, and that swing is what flipped the ranking — which is the argument for
-never pairing a figure from one session with a figure from another.
-
-Setup, both sessions, screenshots, and the caveats (including why ENTITY's live-chat readout is
-*not* used): [competitor-comparison/](competitor-comparison/README.md).
 
 ## Result 5: what four SoCs I do not own said (contributed, 2026-07-22/23)
 

@@ -128,7 +128,24 @@ object ModelCatalog {
         return Assessment(fit, notes.joinToString(" · "))
     }
 
-    /** The single best starting model for this phone, or null when nothing fits. */
+    /**
+     * The single best starting model for this phone, or null when nothing fits.
+     *
+     * Deliberately does NOT bias toward higher-precision quantizations on quality grounds,
+     * even though the quality gap is large and measured - Q8_0 costs +0.09% perplexity
+     * against F16 where Q4_0 costs +9.52% (`docs/QUANTIZATION-QUALITY.md`).
+     *
+     * The reason is bytes. Decode is memory-bandwidth-bound on this class of hardware, so
+     * the same model in Q8_0 is 71% larger and decodes correspondingly slower. Measured on
+     * the reference phone, promoting a single 262M-parameter tensor from Q6_K to Q8_0 -
+     * 8% more file - cost 11.4% of decode throughput (17.99 to 15.94 tok/s). Extrapolating
+     * that to a whole-model precision bump would trade away the thing this app exists to
+     * deliver.
+     *
+     * Quality is surfaced to the user on the model card instead, where they can weigh it
+     * themselves against a token rate they can see. It is not silently spent on their
+     * behalf.
+     */
     fun recommended(totalRamBytes: Long, flags: Set<String>): Entry? =
         ALL.filter { assess(it, totalRamBytes, flags).fit != Fit.TOO_BIG }
             .maxByOrNull { e ->

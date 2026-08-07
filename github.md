@@ -26,15 +26,22 @@ per-pass CSVs in [`benchmarks/results/`](benchmarks/results/).
 | Time to first token, Q3_K_L → Q4_0 | 13.4 s → 3.9 s | — |
 | Tokens per watt, naive → Auto | 2.61 → 4.59 | 3.37 → 9.85 |
 
-Against the two most credible on-device chat apps, same phone, same model file, same workload,
-medians over five runs ([full method and caveats](benchmarks/competitor-comparison/README.md)):
-**+6% prompt and +47% token generation over Arm's own AI Chat app**, +45% prompt and +31%
-generation over PocketPal AI.
+Quantization, same model, one F16 source, wikitext-2 test at 200 chunks
+([full table](docs/QUANTIZATION-QUALITY.md)):
 
-The ablation that produced the attribution row also **disproved this project's own original
-headline** (+121% from core pinning). That record is kept in [`docs/JOURNEY.md`](docs/JOURNEY.md)
-rather than removed. The KleidiAI fallback finding was fixed upstream in
-[llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701), **merged 2026-07-21**.
+| Quant | Perplexity | vs F16 | Weights reaching KleidiAI |
+|---|---:|---:|---:|
+| Q8_0 | 14.2705 | +0.09% | 100% |
+| Q4_K_M | 14.7346 | +3.34% | 0% |
+| Q4_0 *(shipped)* | 15.6159 | +9.52% | 76% |
+| Q4_0 without an imatrix | 16.5272 | +15.92% | 79% |
+
+The ablation that produced the attribution row **disproved this project's own original headline**
+(+121% from core pinning), and the quantization work above disproved a second prediction made
+during it - that raising KleidiAI coverage would raise throughput. It lowered it. Both records are
+kept in [`docs/JOURNEY.md`](docs/JOURNEY.md) rather than removed. The KleidiAI fallback finding was
+fixed upstream in [llama.cpp PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701),
+**merged 2026-07-21**.
 
 ---
 
@@ -208,6 +215,44 @@ See [`benchmarks/BENCHMARKS.md`](benchmarks/BENCHMARKS.md) for the complete curr
 its limits. The raw historical Termux output remains separate because it uses different models,
 flags, workloads, and CLI-only realtime priority.
 
+### The third finding: a file named Q4_0 is only 76% Q4_0, and fixing that made it slower
+
+The KleidiAI gate above is a claim about *types*. Checking it properly meant reading the tensor
+tables rather than the `general.file_type` label, and the label turns out to be wrong about its own
+file. In the exact `Llama-3.2-1B-Instruct-Q4_0.gguf` this project's catalog ships,
+`token_embd.weight` is Q6_K and two `ffn_down` tensors are Q4_1 - **24.0% of the quantized weights
+cannot reach KleidiAI.** Llama 3.2 ties its embeddings, so that Q6_K tensor is also the output
+projection: the largest matmul in the model sits off the fast path, in a quantization chosen
+because it reaches the fast path.
+
+That looked like an obvious thing to fix. `llama-quantize --token-embedding-type q8_0` promotes the
+embedding into the *other* type KleidiAI serves, taking coverage from 76% to 97% for 8.2% more
+file and no measurable quality change (perplexity 15.6084 against 15.6159). The prediction, written
+down before measuring: prefill faster, decode slower.
+
+| CMF Phone 1, 4 threads pinned, 3 reps | Q4_0 (76% eligible) | rebuilt (97% eligible) |
+|---|---:|---:|
+| Prefill pp512 | 125.69 ± 1.43 tok/s | **121.84 ± 3.00** (-3.1%) |
+| Decode tg128 | 17.99 ± 0.15 tok/s | **15.94 ± 0.77** (-11.4%) |
+
+**Half that prediction was backwards.** llama.cpp computes logits only for the final position of a
+prompt, so the output projection runs once across a 512-token prefill rather than 512 times -
+promoting it buys almost nothing there and the extra bytes cost a little. In decode it does run
+every token, but decode is bandwidth-bound, so enlarging the single biggest tensor is a straight
+loss. **Coverage is not throughput.** The rebuilt model is published as a negative result and is
+deliberately not in the catalog.
+
+What survives is smaller and still worth shipping: the app now reads the tensor table and reports
+"KleidiAI partial (76% of weights)" where it used to assert "KleidiAI active" from a filename. That
+is the same per-tensor discipline as the upstream patch below, applied one level up.
+
+The same work closed a number this repository had asserted four times without measuring: **Q4_0
+costs 5.6% perplexity against Q4_K_M** (15.6159 vs 14.7346, wikitext-2 test, 200 chunks, every
+quant built from one F16 source). And a plain `llama-quantize … Q4_0` - the documented command -
+produces a file 2 MB smaller and **5.5% worse** than the imatrix-calibrated Q4_0 the catalog ships,
+with the same filename and the same `file_type`. Full table, method and the falsified prediction:
+[`docs/QUANTIZATION-QUALITY.md`](docs/QUANTIZATION-QUALITY.md).
+
 ---
 
 ## How It's Optimized for Arm
@@ -348,6 +393,8 @@ single-backend build but removes the portability of the normal v2 release. See
 
 ENTITY was **newly created during the hackathon submission period**, built from scratch. The version history demonstrates rapid iteration:
 
+- **v3.7.0** (2026-08-06): **the KleidiAI badge was measuring a filename.** `general.file_type` is one metadata key describing what a model was broadly quantized to; it does not constrain individual tensors, and the file the catalog ships disagrees with its own label. `GgufMetadataReaderImpl` now parses the tensor-info table it previously skipped and returns a `TensorCensus` - eligible and ineligible parameter counts, coverage percentage, offending tensors largest-first - so the model card reports "KleidiAI partial (76% of weights)" and names `token_embd.weight` at Q6_K instead of asserting a boolean. Still streaming (info records only, never tensor data), and it returns null on any parse failure so a model always still loads. Six unit tests, fixtures taken from the real tensor tables. The attempt to *fix* the 24% gap by promoting the embedding to Q8_0 raised coverage to 97% and made the model slower on both prefill and decode - published as [§9 of the falsification record](docs/JOURNEY.md) rather than shipped, and the catalog deliberately does not bias toward higher-precision quants because decode is bandwidth-bound. Also closes the quality figure this repository had asserted four times without measuring: Q4_0 costs 5.6% perplexity against Q4_K_M, and a plain `llama-quantize … Q4_0` is 5.5% worse than the imatrix-calibrated file the catalog ships ([`docs/QUANTIZATION-QUALITY.md`](docs/QUANTIZATION-QUALITY.md)).
+
 - **v1.0.0** (2026-07-02): Initial release. Core optimizations (big-core affinity, device-tuned backend, adaptive context) + chat UI + live metrics.
 - **v1.1.0** (2026-07-03): Added live metrics graph (6 independently toggleable series), settings screen with Auto/manual tuning, Stop/New Chat buttons, and About/Optimizations page.
 - **v1.2.0** (2026-07-03): In-app model import via Storage Access Framework; model info card reading GGUF headers; fixed model loading on modern Android (scoped storage).
@@ -429,6 +476,6 @@ to this project's own patch.
 
 ## Summary
 
-ENTITY proves that **optimization for real Arm hardware is the leverage point** for on-device AI on phones. By treating the phone as an asymmetric big.LITTLE SoC with thermal and power constraints - instead of a small desktop - the shipped Auto path decodes **up to 2x faster than the out-of-the-box eight-thread default** (+39% to +106% across the record, +68% and +81% in the current five-run two-device exports), a gain its own ablation attributes primarily to the thread count - with pinning's extra contribution measured per device: +21% decode on the Dimensity 7300, ~30% lower median power on the Snapdragon 6 Gen 4. The KleidiAI Q4_0 finding cut **time-to-first-token from 13.4 s to 3.9 s**, and on the same phone and model ENTITY beats **Arm's own AI Chat app by 6% on prompt and 47% on token generation** (matched 2026-07-20 session, medians over five runs per app; the superseded 2026-07-14 session read +11% and +21% and is retained rather than deleted) - while the adaptive runtime still fits a 3B model into 2 GB of free RAM on a $200 phone.
+ENTITY proves that **optimization for real Arm hardware is the leverage point** for on-device AI on phones. By treating the phone as an asymmetric big.LITTLE SoC with thermal and power constraints - instead of a small desktop - the shipped Auto path decodes **up to 2x faster than the out-of-the-box eight-thread default** (+39% to +106% across the record, +68% and +81% in the current five-run two-device exports), a gain its own ablation attributes primarily to the thread count - with pinning's extra contribution measured per device: +21% decode on the Dimensity 7300, ~30% lower median power on the Snapdragon 6 Gen 4. The KleidiAI Q4_0 finding cut **time-to-first-token from 13.4 s to 3.9 s**, and the adaptive runtime still fits a 3B model into 2 GB of free RAM on a $200 phone.
 
 The submission is reproducible, measured, and honest about trade-offs. The code is open-source. The results are on-device.

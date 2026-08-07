@@ -64,14 +64,6 @@ Full context, per-run numbers and the July history this supersedes:
 | ![Memory usage](plots/memory_usage.png) | ![Summary comparison](plots/summary_comparison.png) |
 | **memory_usage.png** - free-RAM floor through each pass. | **summary_comparison.png** - the one-glance roll-up of a full export. |
 
-### Against other apps
-
-![Three-app comparison](competitor-comparison/three_app_comparison.png)
-
-**three_app_comparison.png** - ENTITY vs Arm's AI Chat vs PocketPal AI, same phone, same
-Llama-3.2-1B Q4_0, same prompt. Screenshots of all three runs are retained beside it in
-[`competitor-comparison/`](competitor-comparison/).
-
 ---
 
 ## What is in this folder
@@ -84,7 +76,6 @@ Llama-3.2-1B Q4_0, same prompt. Screenshots of all three runs are retained besid
 | [`results/`](results/) | Retained, unmodified app exports - one CSV per published run (per-pass rows plus 150 ms telemetry samples). |
 | [`device-result-template.csv`](device-result-template.csv) | The aggregated device-results table: one row per published run, `not-measured` where an arm was never run. Contribute your device here. |
 | [`plots/`](plots/) | Every figure above, regenerated from the CSVs by the scripts below - nothing hand-drawn. |
-| [`competitor-comparison/`](competitor-comparison/) | The three-app evidence: screenshots plus the comparison figure. |
 | [`proof-logs/`](proof-logs/), [`termux_master_results.txt`](termux_master_results.txt) | Historical CLI-era raw logs, kept for the record and clearly separate from in-app numbers. |
 
 ## Regenerate any figure
@@ -97,7 +88,6 @@ All scripts read the retained CSVs; none invent data. Requires `python3 -m pip i
 | [`plot_results.py`](plot_results.py) | `decode_attribution.png`, `kleidiai_prompt_ttft.png`, `energy_efficiency.png` | `device-result-template.csv` |
 | [`plot_energy.py`](plot_energy.py) | `energy_per_task.png` | an unplugged export from `results/` |
 | [`plot_telemetry.py`](plot_telemetry.py) | the six telemetry figures | any raw app export |
-| [`plot_competitors.py`](plot_competitors.py) | `competitor-comparison/three_app_comparison.png` | the recorded three-app numbers |
 
 ### Across five SoCs (the contributed dataset, as of the committed export)
 
