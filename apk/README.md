@@ -2,9 +2,23 @@
 
 One prebuilt debug or release-signed APK per version, ready to install on any arm64-v8a Android 13+ device.
 
+> **The signing certificate changed at chat 3.7.0 / Bench 2.2.0.** The keystore used for every
+> earlier release was lost and cannot be reissued — see [`../docs/JOURNEY.md`](../docs/JOURNEY.md)
+> §11. Installing either new APK on a clean device works normally. Installing **over** an older
+> build fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`; uninstall first, which deletes saved
+> conversations (chat) or saved benchmark history (Bench) — export them beforehand. A certificate
+> mismatch is normally the signature of a tampered build, so it is called out here rather than left
+> to look like one.
+>
+> | build | certificate SHA-256 |
+> |---|---|
+> | chat ≤ 3.6.2, Bench ≤ 2.1.1 | `f34cd27cf31cb54df78560f83ab2a43e43ab5baba754b600bd95f057f580cde3` |
+> | chat ≥ 3.7.0, Bench ≥ 2.2.0 | `5033b539d09d24f6e77c49e541c99a706b42210883d95e637bc1bb6031cafe0f` |
+
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-v24-entity-identity-prompt-20260724-release.apk` | **3.6.2** (current) | release-signed | 10 MB |
+| `ENTITY-v25-device-probe-20260808-release.apk` | **3.7.0** (current) | release-signed, **new cert** | 10.0 MB |
+| `ENTITY-v24-entity-identity-prompt-20260724-release.apk` | 3.6.2 | release-signed | 10 MB |
 | `ENTITY-v23-repeat-penalty-20260724-release.apk` | 3.6.1 | release-signed | 10 MB |
 | `ENTITY-v22-adpf-power-fix-20260723-release.apk` | 3.6.0 | release-signed | 10 MB |
 | `ENTITY-v21-prefill-threads-placement-latex-20260723-release.apk` | 3.5.0 | release-signed | 10 MB |
@@ -40,7 +54,8 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-Bench-v2.1.1-release.apk` | **2.1.1** (current) | release-signed | 9.9 MB |
+| `ENTITY-Bench-v2.2.0-release.apk` | **2.2.0** (current) | release-signed, **new cert** | 9.9 MB |
+| `ENTITY-Bench-v2.1.1-release.apk` | 2.1.1 | release-signed | 9.9 MB |
 | `ENTITY-Bench-v2.1.0-release.apk` | 2.1.0 | release-signed | 9.9 MB |
 | `ENTITY-Bench-v2.0.0-release.apk` | 2.0.0 | release-signed | 9.9 MB |
 | `ENTITY-Bench-v1.5.0-release.apk` | 1.5.0 | release-signed | 10.2 MB |
