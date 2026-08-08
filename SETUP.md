@@ -26,7 +26,7 @@ cp -r app/entity.android llama.cpp-master/examples/entity.android
   - platform android-35 or android-36
   - build-tools 35+
   - **NDK 27.1.12297006**
-  - **CMake 3.31.6**
+  - **CMake 3.22.1**
 
 Point Gradle at the SDK (either export `ANDROID_HOME`, or create
 `llama.cpp-master/examples/entity.android/local.properties` with `sdk.dir=/path/to/Android/sdk`).

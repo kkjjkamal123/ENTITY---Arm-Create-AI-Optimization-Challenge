@@ -15,7 +15,7 @@ short version, `SETUP.md` is a fine quick reference.
 | Kotlin | 2.3.0 | `gradle/libs.versions.toml` (`kotlin`) |
 | NDK | 27.1.12297006 | `lib/build.gradle.kts` (`ndkVersion`) |
 | C/C++ compiler | clang 18.0.2 (bundled with NDK 27.1) | determined by the NDK version; cross-compiles to `aarch64-linux-android` |
-| CMake | 3.31.6 | `lib/build.gradle.kts` (`externalNativeBuild.cmake.version`) |
+| CMake | 3.22.1 | `lib/build.gradle.kts` (`externalNativeBuild.cmake.version`) |
 | llama.cpp | upstream `master` | fetched separately, not vendored in this repo |
 
 The native library targets **`arm64-v8a` only** (`abiFilters += listOf("arm64-v8a")` in
@@ -44,8 +44,8 @@ sdk.dir=/path/to/Android/sdk
 ```
 
 Make sure the SDK has: platform-tools, an Android 36 platform + build-tools, **NDK
-27.1.12297006**, and **CMake 3.31.6** installed (`sdkmanager --install "ndk;27.1.12297006"
-"cmake;3.31.6"`).
+27.1.12297006**, and **CMake 3.22.1** installed (`sdkmanager --install "ndk;27.1.12297006"
+"cmake;3.22.1"`).
 
 ## 3. Build
 
@@ -230,7 +230,12 @@ optimizations without recompilation.
   `examples/entity.android/` of a llama.cpp checkout. Re-run step 1.
 - **`SIGILL` on first inference** — `GGML_CPU_ARM_ARCH` requests an instruction the physical CPU
   doesn't have (commonly `+dotprod` on a core without `SDOT`). Lower the arch flag.
-- **NDK/CMake version mismatch errors** — install the exact pinned versions
-  (`27.1.12297006` / `3.31.6`); newer versions usually work but aren't what this repo is tested
-  against.
+- **NDK/CMake version mismatch errors** — install the exact pinned NDK (`27.1.12297006`). CMake is
+  pinned to `3.22.1`, the version bundled with the Android SDK, so a stock SDK install needs
+  nothing extra.
 - **Gradle can't find the SDK** — set `local.properties` or `ANDROID_HOME` as in step 2.
+- **`FAILURE: ... What went wrong: 26.0.2`** (or any other bare version number) — the Gradle daemon
+  is running on a JDK newer than the Kotlin compiler can describe, and it dies parsing the version
+  string itself. The message names no file and points at nothing. Set `JAVA_HOME` to a JDK 17
+  installation as in step 3. Both modules also pin `kotlin { jvmToolchain(17) }`, but that governs
+  the compiler, not the daemon that compiles the `.gradle.kts` scripts.
