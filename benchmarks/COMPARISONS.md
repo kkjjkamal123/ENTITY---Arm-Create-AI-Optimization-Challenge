@@ -6,14 +6,17 @@ before publishing that stronger claim.
 
 ## Status
 
-No head-to-head result versus another runtime or another application is published here. The
-repository contains the runnable upstream llama.cpp baseline script below so that the first such
-result, if one is ever captured, is reproducible rather than reported from unlike-for-like settings.
+No result versus upstream llama.cpp, ExecuTorch, or MLC-LLM is published here yet. The repository
+contains the runnable upstream llama.cpp baseline script below so that the first result can be
+captured reproducibly rather than reported from unlike-for-like settings.
 
-Every performance claim in this project is therefore a comparison of ENTITY against **itself** -
-the shipped Auto path against the out-of-the-box default, on the same device, in the same session.
-That is what the in-app ablation measures, and it is the only kind of claim the evidence here
-supports.
+An **application** comparison is published, and it is a different claim from a **runtime**
+comparison. ENTITY against Arm AI Chat and PocketPal AI, same phone, same GGUF, same workload, both
+sessions retained because the repeat disagreed with the first:
+[competitor-comparison/README.md](competitor-comparison/README.md). It clears the bar this page
+sets — same model, weights, quantization, token counts, backend and device — which is why it is
+published. What it cannot isolate is *why* another app is slower, since those apps expose only a
+results screen and no per-run export.
 
 ## Upstream llama.cpp baseline
 
@@ -73,21 +76,19 @@ The result is published: the thread count earns the decode multiplier on every d
 in the current five-run exports, +1% decode but ~30% lower median power on the Snapdragon 6 Gen 4;
 July's three-run sets read it at ~0%. See [BENCHMARKS.md](BENCHMARKS.md).
 
-## Other inference runtimes
+## ExecuTorch and MLC-LLM
 
 Do not add a comparison just because the runtime name is recognizable. A valid head-to-head run
 must use the same model architecture, weights, quantization/precision, prompt and generated-token
 counts, context/KV-cache type, CPU-vs-GPU backend, thread policy, device state, and repeated-run
-statistic.
+statistic. GGUF is a llama.cpp format; ExecuTorch and MLC-LLM normally need separately converted or
+compiled artifacts. A result with different model conversion or a GPU delegate measures the whole
+deployment stack, not only ENTITY's CPU policy.
 
-The practical obstacle is the model artifact. GGUF is a llama.cpp format, and most other runtimes
-need separately converted or compiled weights. A result taken across a different conversion, or
-against a GPU delegate, measures the whole deployment stack rather than ENTITY's CPU policy - which
-is the only thing this repository claims to have optimized.
-
-If another runtime is available for the exact model on the same phone, retain its native log and
-record the conversion command, runtime version, backend, and every setting beside the ENTITY CSV.
-Otherwise the upstream llama.cpp baseline above is the honest and immediately useful comparison.
+If one of those runtimes is available for the exact model on the same phone, retain its native log
+and record the conversion command, runtime version, backend, and all settings beside the ENTITY
+CSV. Otherwise, the upstream llama.cpp baseline above is the honest and immediately useful
+comparison.
 
 ## Arm Performix scope
 

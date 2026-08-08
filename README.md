@@ -151,6 +151,24 @@ TTFT here is derived from prompt evaluation plus one decode step. It is not a li
 
 The same ablation now ships as a standalone app, [ENTITY Bench](app/entity.bench.android/README.md), so a developer can run it on their own SoC and contribute a device row without installing the full chat app.
 
+### Against the competition
+
+Same phone, same `Llama-3.2-1B-Instruct-Q4_0`, same PP 512 / TG 128 workload, each app's own benchmark screen. All three re-measured in one session on 2026-07-20, five runs each, 30 minute cooldown between apps so nobody inherits another's heat:
+
+| App | Prompt | Token generation | Threads |
+|---|---:|---:|---|
+| PocketPal AI | 88.32 tok per s | 13.9 tok per s | 6 |
+| Arm AI Chat (Arm's own app) | 121 tok per s | 12.4 tok per s | not reported |
+| **ENTITY** | **128 tok per s** | **18.2 tok per s** | 4, pinned |
+
+![Competitor comparison](benchmarks/competitor-comparison/three_app_comparison.png)
+
+Against Arm's own reference app, on Arm's own silicon: 6% on prompt and **47% on token generation**. Against PocketPal: 45% and 31%.
+
+Decode is where the thread count policy acts and where the margin is. The prompt column is close because all three apps run Q4_0 and reach the same KleidiAI kernels, so that column mostly measures whether an app got the quantization right, and here everyone did. The decode margin has a named mechanism rather than a mystery: PocketPal runs **6 threads on a 4+4 chip**, so two of them land on Cortex-A55s at roughly a third of an A78's throughput and every decode step waits on them. That is the straggler bound this project's own ablation measures, just less severe than the naive 8 thread arm.
+
+The same three apps were measured on 2026-07-14 and the repeat did not agree with it. PocketPal and Arm swapped places on decode, and ENTITY's prompt margin over Arm narrowed from 11% to 6%. Both sessions are published with their dates, because PocketPal's decode swinging about 27% between sessions on identical hardware, while Arm's held within about 4%, is exactly why a figure from one session must never be paired with a figure from another. Full setup, both sessions, screenshots and caveats: [competitor comparison](benchmarks/competitor-comparison/README.md).
+
 ## Get started
 
 Ninety seconds from clone to chatting, on any arm64 phone with Android 13+:
