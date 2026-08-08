@@ -769,6 +769,12 @@ static std::vector<common_chat_msg> chat_msgs;
 static llama_pos system_prompt_position;
 static llama_pos current_position;
 
+// Tokenizer's count for the last user turn, taken after the chat template is applied and
+// after any truncation, so it is what the model actually prefilled - not what the raw user
+// text would have tokenized to. The UI reports this per answer; deriving it from a position
+// delta instead would be wrong whenever a long conversation triggers a context shift.
+static int last_prompt_tokens = 0;
+
 static void reset_long_term_states(const bool clear_kv_cache = true) {
     chat_msgs.clear();
     system_prompt_position = 0;
@@ -952,6 +958,7 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_processUserPrompt(
         user_tokens.resize(max_batch_size);
         LOGw("%s: User prompt too long! Skipped %d tokens!", __func__, skipped_tokens);
     }
+    last_prompt_tokens = (int) user_tokens.size();
 
     // Decode user tokens in batches (advances current_position)
     if (decode_tokens_in_batches(g_context, g_batch, user_tokens, true)) {
@@ -962,6 +969,29 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_processUserPrompt(
     // Cap generation at exactly n_predict new tokens from the current position.
     stop_generation_position = current_position + n_predict;
     return 0;
+}
+
+/**
+ * Token accounting for the answer just produced. Three separate numbers because they answer
+ * three different questions: how much the prompt cost to prefill, how full the context now
+ * is, and how much room is left before a shift starts discarding history.
+ */
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_arm_aichat_internal_InferenceEngineImpl_promptTokenCount(JNIEnv * /*unused*/, jobject /*unused*/) {
+    return (jint) last_prompt_tokens;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_arm_aichat_internal_InferenceEngineImpl_contextPosition(JNIEnv * /*unused*/, jobject /*unused*/) {
+    return (jint) current_position;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_com_arm_aichat_internal_InferenceEngineImpl_contextSize(JNIEnv * /*unused*/, jobject /*unused*/) {
+    return (jint) g_n_ctx;
 }
 
 extern "C"

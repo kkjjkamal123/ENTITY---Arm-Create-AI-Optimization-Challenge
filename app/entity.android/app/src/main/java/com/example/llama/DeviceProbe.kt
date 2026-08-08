@@ -57,8 +57,17 @@ object DeviceProbe {
     /** Decode bytes-per-second actually achieved on the anchor device: 0.773 GB x 18.2 tok/s. */
     private const val ANCHOR_DECODE_BYTES_PER_S = 773_025_920.0 * 18.2
 
-    /** Bandwidth this probe measures on the anchor device. Ratio to it scales the estimate. */
-    private const val ANCHOR_BANDWIDTH_GBS = 6.4
+    /**
+     * Bandwidth this probe measures on the anchor device. Ratio to it scales the estimate.
+     *
+     * 26.2 GB/s, read off the anchor phone itself rather than assumed. Note how far this is
+     * from the ~14 GB/s that decode actually achieves there (0.773 GB x 18.2 tok/s): a
+     * linear `arraycopy` sees near-peak DRAM throughput, while decode walks many separate
+     * tensors and pays for it. The gap is real and is exactly why this constant has to be
+     * the probe's own reading on a known device instead of a datasheet figure - the ratio
+     * cancels it out, the absolute number would not.
+     */
+    private const val ANCHOR_BANDWIDTH_GBS = 26.2
 
     /** Anchor prefill: 128.2 tok/s on 1.24B params, Q4_0. */
     private const val ANCHOR_PREFILL_TOKS = 128.2
@@ -88,12 +97,20 @@ object DeviceProbe {
         /** Integer multiply-accumulate throughput relative to the anchor device. Predicts prefill. */
         val computeScore: Double,
         val perfCores: Int,
+        /**
+         * Memory the system reports as available at probe time, not installed RAM. This is
+         * what a model has to fit into; installed RAM would recommend against capacity the
+         * phone is already spending on everything else the user has open.
+         */
+        val availableRamBytes: Long,
+        /** Installed RAM. Reported alongside the free figure so the gap is visible, never sized against. */
         val totalRamBytes: Long,
         val flags: Set<String>,
         /** Wall time the probe itself took, so the UI can be honest about how cheap it was. */
         val elapsedMs: Long,
     ) {
-        val ramGb: Double get() = totalRamBytes / 1_073_741_824.0
+        val availableRamGb: Double get() = availableRamBytes / 1_073_741_824.0
+        val totalRamGb: Double get() = totalRamBytes / 1_073_741_824.0
     }
 
     /** What the user is optimising for. Changes which quantization wins, not which model. */
@@ -122,14 +139,21 @@ object DeviceProbe {
      * Runs the probe. Blocking, roughly 300-600 ms, no allocation beyond the two buffers.
      * Call off the main thread.
      */
-    fun measure(totalRamBytes: Long, perfCores: Int, flags: Set<String>): Profile {
+    fun measure(
+        availableRamBytes: Long,
+        totalRamBytes: Long,
+        perfCores: Int,
+        flags: Set<String>,
+    ): Profile {
         var bandwidth = 0.0
         var compute = 0.0
         val elapsed = measureNanoTime {
             bandwidth = measureBandwidthGBs()
             compute = measureComputeScore(max(1, perfCores))
         } / 1_000_000L
-        return Profile(bandwidth, compute, perfCores, totalRamBytes, flags, elapsed)
+        return Profile(
+            bandwidth, compute, perfCores, availableRamBytes, totalRamBytes, flags, elapsed,
+        )
     }
 
     /**
@@ -182,8 +206,13 @@ object DeviceProbe {
         val slowestNs = (results.maxOrNull() ?: 0L).toDouble()
         if (slowestNs <= 0.0) return ANCHOR_COMPUTE_SCORE
         val opsPerNs = (iterations.toDouble() * threads) / slowestNs
-        // 2.6 ops/ns is what the anchor device produces on four A78s.
-        return opsPerNs / 2.6
+        // 1.042 ops/ns is what the anchor device actually produces on four A78s - measured by
+        // running this probe on it, not estimated. An earlier 2.6 was a guess, and it made the
+        // anchor score 0.40 instead of 1.0, deflating every prefill estimate by the same 2.5x.
+        // The divisor has to come from this loop on that phone: it is a dependency-chained
+        // scalar MAC, so its absolute rate says nothing about the device's peak integer
+        // throughput, only about how one device compares to another under the same loop.
+        return opsPerNs / 1.042
     }
 
     // ---------------------------------------------------------------- prediction (pure)
@@ -224,7 +253,7 @@ object DeviceProbe {
      */
     fun recommend(p: Profile, workload: Workload = Workload.BALANCED): Recommendation? {
         val viable = ModelCatalog.ALL
-            .filter { ModelCatalog.assess(it, p.totalRamBytes, p.flags).fit != ModelCatalog.Fit.TOO_BIG }
+            .filter { ModelCatalog.assess(it, p.availableRamBytes, p.flags).fit != ModelCatalog.Fit.TOO_BIG }
             .map { it to estimate(it, p) }
             .filter { (_, est) -> est.decodeToksPerS >= MIN_USABLE_DECODE }
 
@@ -287,7 +316,7 @@ object DeviceProbe {
         // Fitting is not the same as fitting comfortably. assess() marks an entry TIGHT
         // when it leaves little headroom, and a model with no headroom gets killed by the
         // OS mid-conversation - which is worse for a user than a smaller model would be.
-        if (ModelCatalog.assess(e, p.totalRamBytes, p.flags).fit == ModelCatalog.Fit.TIGHT) s -= 1.5
+        if (ModelCatalog.assess(e, p.availableRamBytes, p.flags).fit == ModelCatalog.Fit.TIGHT) s -= 1.5
         return s
     }
 

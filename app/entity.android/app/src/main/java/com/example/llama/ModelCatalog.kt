@@ -208,22 +208,35 @@ object ModelCatalog {
     data class Assessment(val fit: Fit, val reason: String)
 
     /**
-     * Device-aware fit. Weights are mmap'd rather than read into the heap, but the KV
-     * cache, the app and the OS still need room, so total RAM - not free RAM - sets the
-     * ceiling: free RAM swings with whatever else is running and would make the same
-     * phone report a different verdict minute to minute.
+     * Device-aware fit, judged against memory the phone can actually hand out right now -
+     * ActivityManager's availMem - rather than the RAM printed on the box.
+     *
+     * Total RAM systematically overstates what a model gets. A 6 GB phone with the launcher,
+     * the browser and three background apps resident may have well under 2 GB to give, and a
+     * rule written against 6 GB will happily recommend a model that then thrashes. What a
+     * download has to fit into is what is free when it runs.
+     *
+     * The thresholds below are therefore fractions of *available* memory and are much less
+     * conservative than fractions of total would be: a model whose weights are 70% of free
+     * memory is flagged tight, not rejected. That is not a fudge - weights are mmap'd, so
+     * they live in the page cache and the kernel can evict them under pressure instead of
+     * failing an allocation. The KV cache, which is ordinary anonymous memory and cannot be
+     * evicted, is what genuinely has to fit, and it is the smaller of the two.
+     *
+     * The cost of this choice is that the verdict moves with whatever else is running. That
+     * is the honest answer: the same phone really does have less room when it is busy.
      *
      * [flags] is lower-case ISA feature names ("dotprod", "i8mm"); see [featureFlags].
      */
-    fun assess(e: Entry, totalRamBytes: Long, flags: Set<String>): Assessment {
-        val ramGb = totalRamBytes / 1_073_741_824.0
+    fun assess(e: Entry, availableRamBytes: Long, flags: Set<String>): Assessment {
+        val ramGb = availableRamBytes / 1_073_741_824.0
         val sizeGb = e.sizeBytes / 1_073_741_824.0
-        if (ramGb <= 0) return Assessment(Fit.OK, "device RAM unknown")
+        if (ramGb <= 0) return Assessment(Fit.OK, "available memory unknown")
 
-        if (sizeGb > ramGb * 0.5) {
+        if (sizeGb > ramGb) {
             return Assessment(
                 Fit.TOO_BIG,
-                "%.1f GB of weights on a %.0f GB phone leaves no room for the KV cache".format(sizeGb, ramGb),
+                "%.1f GB of weights with only %.1f GB free right now".format(sizeGb, ramGb),
             )
         }
 
@@ -239,19 +252,21 @@ object ModelCatalog {
             "${e.quant} misses KleidiAI - runs ggml's Arm repack kernels instead"
         }
 
-        if (sizeGb > ramGb * 0.35) {
-            notes += "leaves little headroom"
+        if (sizeGb > ramGb * 0.7) {
+            notes += "%.1f GB of weights against %.1f GB free leaves little headroom"
+                .format(sizeGb, ramGb)
             return Assessment(Fit.TIGHT, notes.joinToString(" · "))
         }
 
-        // Within budget the larger model is the more capable one, so a roomy phone should
-        // be pointed at 3B rather than handed the same 1B a 4 GB phone gets. The 14 GB tier
-        // exists because the catalog now carries 7B models and a 16 GB flagship should not
-        // be capped at 3B on a rule written for a 6 GB reference device.
+        // Within budget the larger model is the more capable one, so a roomy phone should be
+        // pointed at 3B rather than handed the same 1B a cramped one gets. These tiers are
+        // free memory, not total, and so sit far below the numbers a spec sheet would
+        // suggest: a 16 GB flagship with apps open commonly reports 6-8 GB available, which
+        // is what puts it in the top tier here.
         val budgetB = when {
-            ramGb >= 14 -> 8.0
-            ramGb >= 10 -> 4.0
-            ramGb >= 6 -> 2.0
+            ramGb >= 8 -> 8.0
+            ramGb >= 5 -> 4.0
+            ramGb >= 3 -> 2.0
             else -> 1.3
         }
         val fit = if (e.kleidiAccelerated && e.paramsB <= budgetB) Fit.GREAT else Fit.OK
@@ -277,10 +292,10 @@ object ModelCatalog {
      * themselves against a token rate they can see. It is not silently spent on their
      * behalf.
      */
-    fun recommended(totalRamBytes: Long, flags: Set<String>): Entry? =
-        ALL.filter { assess(it, totalRamBytes, flags).fit != Fit.TOO_BIG }
+    fun recommended(availableRamBytes: Long, flags: Set<String>): Entry? =
+        ALL.filter { assess(it, availableRamBytes, flags).fit != Fit.TOO_BIG }
             .maxByOrNull { e ->
-                val a = assess(e, totalRamBytes, flags)
+                val a = assess(e, availableRamBytes, flags)
                 var s = if (e.kleidiAccelerated) 3.0 else 0.0
                 if (a.fit == Fit.GREAT) s += 3.0 else if (a.fit == Fit.TIGHT) s -= 2.0
                 s + e.paramsB

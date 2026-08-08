@@ -197,6 +197,46 @@ boolean from a filename. Full record in
 
 ---
 
+## 10. "The device probe's anchor constants can be reasoned about"
+
+**The belief.** The model-free probe predicts decode and prefill from two microbenchmarks scaled
+against one calibration device. Scaling needs that device's own readings as denominators. Two of
+them were filled in by reasoning rather than by running the probe: memory bandwidth was set to
+**6.4 GB/s**, derived from the throughput decode actually achieves there (0.773 GB x 18.2 tok/s
+= 14 GB/s, discounted), and the integer-throughput divisor to **2.6 ops/ns**, from what four
+Cortex-A78s at 2.5 GHz ought to sustain. Both are defensible numbers. Neither was measured.
+
+**What broke it.** Running the probe on the anchor phone. It reads **26.2 GB/s** - 4.1x the
+assumed figure - because a linear `arraycopy` sees near-peak DRAM throughput while decode walks
+many separate tensors and pays for it. The gap is real; the mistake was putting the decode-side
+number where the probe-side number belongs. The compute divisor was wrong the other way: inverting
+a measured 3B time-to-first-token showed the anchor scoring **0.40** where it must score 1.0, so
+the true rate is **1.042 ops/ns**, not 2.6. A dependency-chained scalar MAC loop does not run at
+anything like a core's peak integer throughput.
+
+The two errors did not cancel. Decode estimates came out 4.1x too fast and prefill 2.5x too slow.
+On screen a 360M model was projected at ~251 tok/s, which is what made it obvious.
+
+**What it cost.** Nothing shipped - the absurd number was visible the first time the probe ran on
+hardware. But the feature was complete, tested and reviewed in that state, and 72 unit tests passed
+against it, because the tests assert internal consistency and both constants were consistent with
+themselves.
+
+**What replaced it.** Both constants now carry the reading they came from and a note that they are
+the probe's own output on a known device, not a datasheet or a derivation. The rule underneath is
+narrow and worth stating: **a ratio is only dimensionless if both sides were measured the same
+way.** Substituting a physically-related quantity for one side silently rescales everything
+downstream, and no amount of self-consistency testing can see it.
+
+The same review corrected a second assumption in that feature: fit was judged against installed
+RAM, on the reasoning that free RAM swings minute to minute. True, but the swing is the point - a
+6 GB phone with the browser and a few apps resident has well under 2 GB to give, and sizing against
+6 GB recommends models into memory that is already spoken for. Fit now uses what the system reports
+available, with thresholds re-derived rather than reused, since fractions calibrated against total
+would reject models that do run.
+
+---
+
 ## What actually generalised
 
 After all of the above, the findings that survived contact with silicon nobody here owns:

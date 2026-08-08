@@ -5,6 +5,10 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val hasReleaseKeystore = keystorePropertiesFile.exists()
 val keystoreProperties = Properties().apply {
@@ -30,8 +34,8 @@ android {
         minSdk = 33
         targetSdk = 36
 
-        versionCode = 21
-        versionName = "3.6.2"
+        versionCode = 22
+        versionName = "3.7.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -52,6 +56,13 @@ android {
 
     buildTypes {
         debug {
+            // Distinct package so a debug build installs alongside a release one instead of
+            // colliding with it. Release APKs are signed with a keystore deliberately kept
+            // out of this repository, so a debug build can never replace one in place - and
+            // the only alternative is uninstalling first, which throws away the user's saved
+            // conversations just to look at a UI change.
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

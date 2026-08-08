@@ -9,6 +9,13 @@ class ModelCatalogTest {
 
     private val gb = 1_073_741_824L
 
+    /**
+     * assess() sizes against memory the system reports free, not installed RAM, so every
+     * figure in this class is a free-memory figure. 2.3 GB is what a 6 GB phone typically
+     * has left once the launcher and a few background apps are resident.
+     */
+    private val freeOnAnchor = 2304L * 1024 * 1024
+
     @Test
     fun `every catalog entry has a resolvable shape`() {
         for (e in ModelCatalog.ALL) {
@@ -22,38 +29,39 @@ class ModelCatalogTest {
     }
 
     @Test
-    fun `a 3B model does not fit a 4 GB phone`() {
+    fun `a 3B Q8_0 does not fit when only 1_5 GB is free`() {
         val e = ModelCatalog.ALL.first { it.id == "llama3.2-3b-q8_0" }
-        assertEquals(ModelCatalog.Fit.TOO_BIG, ModelCatalog.assess(e, 4 * gb, setOf("dotprod")).fit)
+        val free = 1536L * 1024 * 1024
+        assertEquals(ModelCatalog.Fit.TOO_BIG, ModelCatalog.assess(e, free, setOf("dotprod")).fit)
     }
 
     @Test
     fun `the reference 1B Q4_0 is a great fit on a 6 GB phone and names the ISA`() {
         val e = ModelCatalog.ALL.first { it.id == "llama3.2-1b-q4_0" }
-        val onI8mm = ModelCatalog.assess(e, 6 * gb, setOf("dotprod", "i8mm"))
+        val onI8mm = ModelCatalog.assess(e, freeOnAnchor, setOf("dotprod", "i8mm"))
         assertEquals(ModelCatalog.Fit.GREAT, onI8mm.fit)
         assertTrue(onI8mm.reason.contains("i8mm"))
 
-        val onDotprod = ModelCatalog.assess(e, 6 * gb, setOf("dotprod"))
+        val onDotprod = ModelCatalog.assess(e, freeOnAnchor, setOf("dotprod"))
         assertTrue(onDotprod.reason.contains("dotprod"))
     }
 
     @Test
     fun `a K-quant is flagged as missing KleidiAI`() {
         val e = ModelCatalog.ALL.first { it.id == "llama3.2-1b-q4_k_m" }
-        val a = ModelCatalog.assess(e, 6 * gb, setOf("dotprod", "i8mm"))
+        val a = ModelCatalog.assess(e, freeOnAnchor, setOf("dotprod", "i8mm"))
         assertTrue(a.reason.contains("misses KleidiAI"))
         // it still runs - it just does not reach Arm's kernels
         assertTrue(a.fit != ModelCatalog.Fit.TOO_BIG)
     }
 
     @Test
-    fun `recommendation scales with device RAM`() {
-        val small = ModelCatalog.recommended(4 * gb, setOf("dotprod"))
-        val large = ModelCatalog.recommended(12 * gb, setOf("dotprod", "i8mm"))
+    fun `recommendation scales with free memory`() {
+        val small = ModelCatalog.recommended(1536L * 1024 * 1024, setOf("dotprod"))
+        val large = ModelCatalog.recommended(9 * gb, setOf("dotprod", "i8mm"))
         assertNotNull(small)
         assertNotNull(large)
-        assertTrue("a roomy phone should be pointed at a bigger model",
+        assertTrue("a phone with more free memory should be pointed at a bigger model",
             large!!.paramsB >= small!!.paramsB)
         assertTrue("a recommendation should reach Arm's kernels", large.kleidiAccelerated)
     }
@@ -73,6 +81,6 @@ class ModelCatalogTest {
         val none = ModelCatalog.featureFlags("")
         assertTrue(none.isEmpty())
         val e = ModelCatalog.ALL.first { it.id == "llama3.2-1b-q4_0" }
-        assertTrue(ModelCatalog.assess(e, 6 * gb, none).reason.contains("no dotprod"))
+        assertTrue(ModelCatalog.assess(e, freeOnAnchor, none).reason.contains("no dotprod"))
     }
 }

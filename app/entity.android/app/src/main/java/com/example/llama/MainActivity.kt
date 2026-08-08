@@ -152,7 +152,8 @@ class MainActivity : AppCompatActivity() {
         messageAdapter = MessageAdapter(
             vm.messages,
             onCopy = { copyToClipboard(it) },
-            onRegenerate = { vm.regenerateLastAnswer() }
+            onRegenerate = { vm.regenerateLastAnswer() },
+            onStats = { showTurnStats(it) },
         )
         messageAdapter.textSizeSp = Settings.textSizeSp(prefs)
         messagesRv = findViewById(R.id.messages)
@@ -469,6 +470,52 @@ class MainActivity : AppCompatActivity() {
                 refreshConversations()
             }
             .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    /**
+     * What one answer cost, from a long press on it.
+     *
+     * Prompt and generated tokens are shown apart rather than as one total because they are
+     * produced by two different regimes - the prompt goes through the machine in batches and
+     * is compute-bound, each generated token re-reads every weight and is bandwidth-bound.
+     * A single "tokens/second" over both would average two unrelated numbers, and is the
+     * reason speed claims about local models are so often incomparable.
+     */
+    private fun showTurnStats(msg: Message) {
+        val s = msg.stats
+        if (s == null) {
+            AlertDialog.Builder(this)
+                .setTitle(R.string.stats_title)
+                .setMessage(R.string.stats_unavailable)
+                .setPositiveButton(android.R.string.ok, null)
+                .show()
+            return
+        }
+        val ctxPercent = if (s.contextSize > 0) s.contextUsed * 100 / s.contextSize else 0
+        val body = buildString {
+            append("Prompt\n")
+            append("  %,d tokens read".format(s.promptTokens))
+            if (s.prefillMs > 0) {
+                append(" in %,d ms · %.1f tok/s".format(s.prefillMs, s.prefillToksPerS))
+            }
+            append("\n\nGenerated\n")
+            append("  %,d tokens written".format(s.generatedTokens))
+            if (s.decodeMs > 0) {
+                append(" in %,d ms · %.1f tok/s".format(s.decodeMs, s.decodeToksPerS))
+            }
+            append("\n\nTotal\n")
+            append("  %,d tokens · %,d ms".format(s.totalTokens, s.prefillMs + s.decodeMs))
+            append("\n\nContext\n")
+            append("  %,d of %,d used (%d%%)".format(s.contextUsed, s.contextSize, ctxPercent))
+            append("\n\n")
+            append(getString(R.string.stats_footnote))
+        }
+        AlertDialog.Builder(this)
+            .setTitle(R.string.stats_title)
+            .setMessage(body)
+            .setPositiveButton(android.R.string.ok, null)
+            .setNeutralButton(R.string.action_copy) { _, _ -> copyToClipboard(body) }
             .show()
     }
 

@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.arm.aichat.ChatTurn
 import com.arm.aichat.InferenceEngine
+import com.arm.aichat.TurnStats
 import com.arm.aichat.UnsupportedArchitectureException
 import com.arm.aichat.internal.InferenceEngineImpl.Companion.getInstance
 import dalvik.annotation.optimization.FastNative
@@ -126,6 +127,12 @@ internal class InferenceEngineImpl private constructor(
     @FastNative
     private external fun generateNextToken(): String?
 
+    private external fun promptTokenCount(): Int
+
+    private external fun contextPosition(): Int
+
+    private external fun contextSize(): Int
+
     private external fun unload()
 
     private external fun shutdown()
@@ -137,6 +144,12 @@ internal class InferenceEngineImpl private constructor(
     private var _readyForSystemPrompt = false
     @Volatile
     private var _cancelGeneration = false
+
+    // Written on llamaDispatcher at the end of a turn, read from the main thread when the UI
+    // asks for it. @Volatile rather than a lock: it is a single reference assignment to an
+    // immutable value, and the reader only needs to not see a stale one.
+    @Volatile
+    private var _lastTurnStats: TurnStats? = null
 
     /**
      * Single-threaded coroutine dispatcher & scope for LLama asynchronous operations
@@ -247,22 +260,43 @@ internal class InferenceEngineImpl private constructor(
         try {
             Log.i(TAG, "Sending user prompt...")
             _readyForSystemPrompt = false
+            _lastTurnStats = null
             _state.value = InferenceEngine.State.ProcessingUserPrompt
 
+            val prefillNs = System.nanoTime()
             processUserPrompt(message, predictLength).let { result ->
                 if (result != 0) {
                     Log.e(TAG, "Failed to process user prompt: $result")
                     return@flow
                 }
             }
+            val prefillElapsedNs = System.nanoTime() - prefillNs
 
             Log.i(TAG, "User prompt processed. Generating assistant prompt...")
             _state.value = InferenceEngine.State.Generating
+            // Only the native call is timed. Everything after the emit - markdown, the
+            // RecyclerView, the database write - happens on the collector's clock, and
+            // folding that into decodeNs would report the UI's speed as the model's.
+            var decodeNs = 0L
+            var generated = 0
             while (!_cancelGeneration) {
-                generateNextToken()?.let { utf8token ->
-                    if (utf8token.isNotEmpty()) emit(utf8token)
-                } ?: break
+                val t0 = System.nanoTime()
+                val token = generateNextToken()
+                decodeNs += System.nanoTime() - t0
+                if (token == null) break
+                generated++
+                // An empty piece is a partial multi-byte character, not a missing token: it
+                // still cost a full decode, so it counts here even though nothing is emitted.
+                if (token.isNotEmpty()) emit(token)
             }
+            _lastTurnStats = TurnStats(
+                promptTokens = promptTokenCount(),
+                generatedTokens = generated,
+                prefillMs = prefillElapsedNs / 1_000_000L,
+                decodeMs = decodeNs / 1_000_000L,
+                contextUsed = contextPosition(),
+                contextSize = contextSize(),
+            )
             if (_cancelGeneration) {
                 Log.i(TAG, "Assistant generation aborted per requested.")
             } else {
@@ -279,6 +313,8 @@ internal class InferenceEngineImpl private constructor(
             throw e
         }
     }.flowOn(llamaDispatcher)
+
+    override fun lastTurnStats(): TurnStats? = _lastTurnStats
 
     /**
      * Benchmark the model

@@ -201,11 +201,23 @@
                     android:textSize="10sp"
                     android:lineSpacingMultiplier="1.4" />
 
+                <!--
+                    Entity.Button carries no horizontal padding because every other button in
+                    the app is match_parent, where centred text never reaches the border. This
+                    one is wrap_content, so the background shrinks to the text and the padding
+                    has to be supplied here. paddingEnd is larger than paddingStart on purpose:
+                    letterSpacing appends a trailing gap after the final glyph, which visually
+                    shifts centred text left unless the right side is given more room.
+                -->
                 <TextView
                     android:id="@+id/probe_run"
                     style="@style/Entity.Button"
                     android:layout_width="wrap_content"
                     android:layout_marginTop="10dp"
+                    android:paddingStart="20dp"
+                    android:paddingEnd="16dp"
+                    android:paddingTop="11dp"
+                    android:paddingBottom="11dp"
                     android:textSize="11sp"
                     android:text="@string/probe_run" />
             </LinearLayout>

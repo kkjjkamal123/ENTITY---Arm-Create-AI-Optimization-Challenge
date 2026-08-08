@@ -18,10 +18,20 @@ class DeviceProbeTest {
 
     private val gb = 1_073_741_824L
 
+    /**
+     * 26.2 GB/s is what the probe's own arraycopy loop reads on the anchor, not the memory
+     * controller's rated figure and not what decode achieves - decode on this phone moves
+     * closer to 14 GB/s. Every other device in these tests is expressed on the same scale,
+     * because the estimate only ever uses the ratio between two probe readings.
+     */
     private fun anchor() = DeviceProbe.Profile(
-        bandwidthGBs = 6.4,
+        bandwidthGBs = 26.2,
         computeScore = 1.0,
         perfCores = 4,
+        // 6 GB installed, and roughly what such a phone actually reports free with a
+        // launcher and a few background apps resident. Fit is judged against the free
+        // figure, so that is the one the fixtures vary.
+        availableRamBytes = 2304L * 1024 * 1024,
         totalRamBytes = 6 * gb,
         flags = setOf("dotprod"),
         elapsedMs = 500,
@@ -88,11 +98,15 @@ class DeviceProbeTest {
     @Test
     fun `a flagship is recommended a larger model than a budget phone`() {
         val budget = DeviceProbe.recommend(
-            anchor().copy(totalRamBytes = 4 * gb, bandwidthGBs = 4.0, computeScore = 0.6),
+            anchor().copy(
+                availableRamBytes = 1536L * 1024 * 1024, totalRamBytes = 4 * gb,
+                bandwidthGBs = 16.0, computeScore = 0.6,
+            ),
         )
         val flagship = DeviceProbe.recommend(
             anchor().copy(
-                totalRamBytes = 16 * gb, bandwidthGBs = 24.0, computeScore = 2.4,
+                availableRamBytes = 9 * gb, totalRamBytes = 16 * gb,
+                bandwidthGBs = 72.0, computeScore = 2.4,
                 flags = setOf("dotprod", "i8mm", "sve"),
             ),
         )
@@ -107,11 +121,13 @@ class DeviceProbeTest {
     /** Never recommend something that will not actually be usable once downloaded. */
     @Test
     fun `recommendation always clears the usability floor`() {
-        for (ram in listOf(3, 4, 6, 8, 12, 16)) {
-            val rec = DeviceProbe.recommend(anchor().copy(totalRamBytes = ram.toLong() * gb))
+        for (ram in listOf(1, 2, 3, 4, 6, 9)) {
+            val rec = DeviceProbe.recommend(
+                anchor().copy(availableRamBytes = ram.toLong() * gb, totalRamBytes = 16 * gb),
+            )
             rec?.let {
                 assertTrue(
-                    "recommended ${it.entry.id} at ${ram}GB decodes below the usable floor",
+                    "recommended ${it.entry.id} at ${ram}GB free decodes below the usable floor",
                     it.estimate.decodeToksPerS >= DeviceProbe.MIN_USABLE_DECODE,
                 )
             }
@@ -122,7 +138,8 @@ class DeviceProbeTest {
     @Test
     fun `an unusably slow device gets no recommendation`() {
         val potato = anchor().copy(
-            bandwidthGBs = 0.05, computeScore = 0.05, totalRamBytes = 2 * gb, flags = emptySet(),
+            bandwidthGBs = 0.2, computeScore = 0.05, availableRamBytes = 2 * gb,
+            totalRamBytes = 2 * gb, flags = emptySet(),
         )
         assertNull(DeviceProbe.recommend(potato))
     }
@@ -130,7 +147,10 @@ class DeviceProbeTest {
     /** Workload preference changes the quantization, not the family. */
     @Test
     fun `asking for fast first token prefers the higher-precision quant`() {
-        val p = anchor().copy(totalRamBytes = 12 * gb, bandwidthGBs = 18.0, computeScore = 2.0)
+        val p = anchor().copy(
+            availableRamBytes = 6 * gb, totalRamBytes = 12 * gb,
+            bandwidthGBs = 54.0, computeScore = 2.0,
+        )
         val prompt = DeviceProbe.recommend(p, DeviceProbe.Workload.LONG_PROMPT)
         val generation = DeviceProbe.recommend(p, DeviceProbe.Workload.LONG_GENERATION)
         assertNotNull(prompt)

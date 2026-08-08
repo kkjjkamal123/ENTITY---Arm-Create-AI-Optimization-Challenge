@@ -142,7 +142,12 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
         val stored = withContext(Dispatchers.IO) { db.messagesFor(id) }
         _messages.clear()
         stored.forEach {
-            _messages.add(Message(UUID.randomUUID().toString(), it.content, it.role == ROLE_USER))
+            _messages.add(
+                Message(
+                    UUID.randomUUID().toString(), it.content, it.role == ROLE_USER,
+                    stats = TurnStatsCodec.decode(it.stats),
+                )
+            )
         }
         primedConversationId = null
         bump()
@@ -266,9 +271,22 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 engine.sendUserPrompt(promptToSend, v.maxTokens)
                     .onCompletion { cause ->
                         completed = true
+                        // Read after the flow finishes: mid-flight the decode half is still
+                        // accumulating. Attached to the message and persisted in the same
+                        // step as the text, so a restored conversation keeps both.
+                        val turn = engine.lastTurnStats()
+                        if (turn != null && conversationId == convId &&
+                            assistantIndex in _messages.indices && !_messages[assistantIndex].isUser
+                        ) {
+                            _messages[assistantIndex] = _messages[assistantIndex].copy(stats = turn)
+                        }
                         withContext(NonCancellable + Dispatchers.IO) {
                             runCatching {
-                                db.insertMessage(convId, ROLE_ASSISTANT, sb.toString(), System.currentTimeMillis())
+                                db.insertMessage(
+                                    convId, ROLE_ASSISTANT, sb.toString(),
+                                    System.currentTimeMillis(),
+                                    turn?.let { TurnStatsCodec.encode(it) },
+                                )
                             }
                         }
                         if (cause != null) primedConversationId = null

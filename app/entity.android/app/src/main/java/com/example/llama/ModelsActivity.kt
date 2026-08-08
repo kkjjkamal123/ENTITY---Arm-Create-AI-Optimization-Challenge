@@ -119,7 +119,7 @@ class ModelsActivity : AppCompatActivity() {
             )
             val cores = DeviceOptimizer.topClusterCoreCount(DeviceOptimizer.maxFreqsKhz())
             val p = withContext(Dispatchers.Default) {
-                DeviceProbe.measure(mem.totalMem, cores, flags)
+                DeviceProbe.measure(mem.availMem, mem.totalMem, cores, flags)
             }
             probe = p
             renderProbe(p)
@@ -141,9 +141,13 @@ class ModelsActivity : AppCompatActivity() {
         }
         probeDevice.visibility = View.VISIBLE
         val isa = if (p.flags.isEmpty()) "no ISA extensions detected" else p.flags.joinToString(", ")
+        // Both memory figures are shown. Sizing uses the free one, but printing only that
+        // would read as a wrong RAM spec to anyone who knows what their phone has.
         probeDevice.text =
-            "Measured in %d ms · %.1f GB/s memory bandwidth · %d performance core%s · %.1f GB RAM · %s".format(
-                p.elapsedMs, p.bandwidthGBs, p.perfCores, if (p.perfCores == 1) "" else "s", p.ramGb, isa,
+            ("Measured in %d ms · %.1f GB/s memory bandwidth · %d performance core%s · " +
+                "%.1f GB free of %.1f GB RAM · %s").format(
+                p.elapsedMs, p.bandwidthGBs, p.perfCores, if (p.perfCores == 1) "" else "s",
+                p.availableRamGb, p.totalRamGb, isa,
             ) + (rec?.runnerUp?.let { "\nRunner-up: ${it.name} ${it.quant}" } ?: "")
     }
 
@@ -208,9 +212,9 @@ class ModelsActivity : AppCompatActivity() {
         val flags = ModelCatalog.featureFlags(
             runCatching { AiChat.getInferenceEngine(applicationContext).cpuInfo() }.getOrDefault("")
         )
-        val recommended = ModelCatalog.recommended(mem.totalMem, flags)
+        val recommended = ModelCatalog.recommended(mem.availMem, flags)
         val entries = ModelCatalog.ALL.sortedByDescending {
-            when (ModelCatalog.assess(it, mem.totalMem, flags).fit) {
+            when (ModelCatalog.assess(it, mem.availMem, flags).fit) {
                 ModelCatalog.Fit.GREAT -> 3; ModelCatalog.Fit.OK -> 2
                 ModelCatalog.Fit.TIGHT -> 1; ModelCatalog.Fit.TOO_BIG -> 0
             }
@@ -223,7 +227,7 @@ class ModelsActivity : AppCompatActivity() {
             // too would show the same file twice with two different actions.
             if (target.exists() && target.length() == e.sizeBytes) continue
 
-            val a = ModelCatalog.assess(e, mem.totalMem, flags)
+            val a = ModelCatalog.assess(e, mem.availMem, flags)
             val partial = ModelDownloader.partFileFor(modelDir, e).exists()
 
             val card = inflate(catalogList)

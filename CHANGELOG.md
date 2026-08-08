@@ -9,6 +9,65 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [3.7.0] - 2026-08-08
+
+**Recommending a model used to mean guessing, and reading an answer's cost was impossible.** The
+catalog ranked models on RAM and ISA flags, which answers "will it fit" and not "will it be
+usable" - a phone could be told a 3B model fits and still find it decodes at 3 tok/s, after a 2 GB
+download. And once a reply arrived there was no way to see what it cost.
+
+### Added
+
+- **Model-free device probe.** `DeviceProbe` predicts decode and prefill for every catalog entry in
+  about 60 ms with no model present. Decode reads essentially every weight once per token, so
+  `tok/s ~= bandwidth / model_bytes`; bandwidth is measured with a 32 MB `arraycopy`, too large for
+  any phone's last-level cache, so the reading is DRAM rather than SRAM. Prefill is a GEMM over the
+  whole prompt and tracks integer throughput, measured with a dependency-chained multiply-accumulate
+  loop - integer rather than float on purpose, since a float benchmark would rank a phone with
+  strong FP and weak integer units far too highly. Both are scaled against one anchor device
+  measured with `llama-bench`, which is what lets the estimate carry the Q4_0/Q8_0 trade instead of
+  treating "reaches KleidiAI" as a single good thing. Presented as an estimate, and labelled as one.
+- **Per-answer token accounting.** Long-press any reply for prompt tokens read, tokens written, both
+  rates, and context used. Counts come from the native layer rather than from counting streamed
+  tokens, because a partial multi-byte character emits an empty piece and would undercount. Timings
+  wrap the native calls only, so markdown rendering and list redraws cannot show up as a slow model
+  - which also makes these figures comparable with the benchmark screen's pp/tg.
+- **Catalog expanded to 19 entries** across seven vendors, 0.36B to 7B, each tagged with vendor and
+  role, so a flagship is not offered the same shortlist as a 4 GB phone.
+
+### Changed
+
+- **Model fit is judged against memory the system reports free, not installed RAM.** A 6 GB phone
+  with a browser and background apps resident often has under 2 GB to give, and sizing against 6 GB
+  recommends models into memory that is already spoken for. Thresholds were re-derived rather than
+  reused: fractions calibrated against total RAM would reject models that genuinely run. A model is
+  flagged tight above 70% of free memory rather than rejected, because weights are mmap'd page cache
+  the kernel can evict, while the KV cache is the anonymous memory that must actually fit. Both
+  figures are displayed, so the number never reads as a wrong spec. The trade-off is stated on
+  screen: the verdict moves with whatever else is running.
+- Model cards report KleidiAI coverage measured from the file's own tensor table, naming the largest
+  tensor that misses, instead of asserting a boolean from the `file_type` label.
+- `messages` gains a `stats` column (schema 1 to 2, migrated in place). The previous `onUpgrade` was
+  an empty stub, which would have silently dropped the migration on every existing install.
+
+### Fixed
+
+- **Two device-probe anchor constants were derived rather than measured, and were wrong by 4.1x and
+  2.5x.** Memory bandwidth had been set from what decode achieves (14 GB/s, discounted to 6.4) where
+  the probe's own reading on that device is 26.2; the integer divisor had been set from what four
+  Cortex-A78s ought to sustain (2.6 ops/ns) where the real figure is 1.042. Decode estimates came
+  out 4.1x too fast and prefill 2.5x too slow - a 360M model was projected at 251 tok/s. Nothing
+  shipped in that state, but the feature was complete and passing its full unit-test suite, because
+  the tests assert internal consistency and both wrong constants were consistent with themselves.
+  Recorded as entry 10 in `docs/JOURNEY.md`. A ratio is only dimensionless if both sides were
+  measured the same way.
+- MEASURE AGAIN overflowed its background. `Entity.Button` carries no horizontal padding because
+  every other button in the app is `match_parent`, where centred text never reaches the border; this
+  one is `wrap_content`, so the background shrank to the glyphs and `letterSpacing` pushed the last
+  character past the edge.
+- `lib` build: `jvmToolchain(17)` was nested inside the `android` block, and the CMake version was
+  pinned above what a stock Android SDK ships. Both blocked a clean checkout from building.
+
 ## [3.6.2] - 2026-07-24
 
 **The assistant had no idea it was ENTITY.** The default system prompt said only that it was "a

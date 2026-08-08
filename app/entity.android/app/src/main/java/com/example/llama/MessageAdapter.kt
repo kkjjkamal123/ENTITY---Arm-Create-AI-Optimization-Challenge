@@ -8,17 +8,22 @@ import android.view.ViewGroup
 import android.widget.PopupMenu
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
+import com.arm.aichat.TurnStats
 
 data class Message(
     val id: String,
     val content: String,
-    val isUser: Boolean
+    val isUser: Boolean,
+    /** Token accounting for this answer. Null on user turns, on an answer still being
+     *  generated, and on answers written before the app recorded stats. */
+    val stats: TurnStats? = null,
 )
 
 class MessageAdapter(
     private val messages: List<Message>,
     private val onCopy: (String) -> Unit,
     private val onRegenerate: () -> Unit,
+    private val onStats: (Message) -> Unit,
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -110,10 +115,16 @@ class MessageAdapter(
         if (!msg.isUser && position == messages.size - 1) {
             popup.menu.add(0, 2, 1, R.string.action_regenerate)
         }
+        // Offered on every answer, including ones with no stats recorded - a generated reply
+        // that silently lacks the entry would read as a bug. The dialog explains the absence.
+        if (!msg.isUser && msg.content.isNotEmpty()) {
+            popup.menu.add(0, 3, 2, R.string.action_stats)
+        }
         popup.setOnMenuItemClickListener {
             when (it.itemId) {
                 1 -> onCopy(msg.content)
                 2 -> onRegenerate()
+                3 -> onStats(msg)
             }
             true
         }

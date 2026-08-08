@@ -15,6 +15,9 @@ data class ConversationRow(
 data class StoredMessage(
     val role: String,
     val content: String,
+    /** Encoded [TurnStatsCodec] blob, or null for user turns and for answers written
+     *  before this column existed. */
+    val stats: String?,
 )
 
 class ChatDb(context: Context) :
@@ -39,11 +42,19 @@ class ChatDb(context: Context) :
                 "role TEXT, " +
                 "content TEXT, " +
                 "created_at INTEGER, " +
+                "stats TEXT, " +
                 "FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE)"
         )
     }
 
-    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+    // Existing installs hold real conversations, so a schema change has to migrate them
+    // rather than recreate the table. Adding a nullable column is the whole migration:
+    // answers generated before this version simply have no stats to show.
+    override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE messages ADD COLUMN stats TEXT")
+        }
+    }
 
     fun createConversation(now: Long): Long {
         val values = ContentValues().apply {
@@ -74,13 +85,20 @@ class ChatDb(context: Context) :
         writableDatabase.delete("conversations", null, null)
     }
 
-    fun insertMessage(conversationId: Long, role: String, content: String, now: Long): Long {
+    fun insertMessage(
+        conversationId: Long,
+        role: String,
+        content: String,
+        now: Long,
+        stats: String? = null,
+    ): Long {
         val db = writableDatabase
         val values = ContentValues().apply {
             put("conversation_id", conversationId)
             put("role", role)
             put("content", content)
             put("created_at", now)
+            put("stats", stats)
         }
         val id = db.insert("messages", null, values)
         db.execSQL(
@@ -121,16 +139,19 @@ class ChatDb(context: Context) :
     fun messagesFor(conversationId: Long): List<StoredMessage> {
         val out = mutableListOf<StoredMessage>()
         readableDatabase.rawQuery(
-            "SELECT role, content FROM messages WHERE conversation_id = ? ORDER BY id ASC",
+            "SELECT role, content, stats FROM messages WHERE conversation_id = ? ORDER BY id ASC",
             arrayOf(conversationId.toString())
         ).use { c ->
-            while (c.moveToNext()) out.add(StoredMessage(c.getString(0), c.getString(1)))
+            while (c.moveToNext()) {
+                out.add(StoredMessage(c.getString(0), c.getString(1), c.getString(2)))
+            }
         }
         return out
     }
 
     companion object {
         private const val DB_NAME = "chats.db"
-        private const val DB_VERSION = 1
+        // 2 added messages.stats.
+        private const val DB_VERSION = 2
     }
 }

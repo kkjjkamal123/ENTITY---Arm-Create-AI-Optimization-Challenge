@@ -162,6 +162,10 @@
     <!-- Message actions -->
     <string name="action_copy">Copy</string>
     <string name="action_regenerate">Regenerate</string>
+    <string name="action_stats">Token details</string>
+    <string name="stats_title">Token details</string>
+    <string name="stats_unavailable">No measurements were recorded for this answer. Stats are captured as an answer is generated, so replies from before this feature shipped do not have them.</string>
+    <string name="stats_footnote">Timings cover model execution only, not rendering. Reading the prompt and writing the reply are limited by different things, so their rates are not comparable to each other.</string>
     <string name="copied_confirmation">Copied to clipboard</string>
 
     <!-- Benchmark -->

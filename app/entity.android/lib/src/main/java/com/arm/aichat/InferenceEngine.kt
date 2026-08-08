@@ -10,6 +10,37 @@ import kotlinx.coroutines.flow.StateFlow
 data class ChatTurn(val role: String, val text: String)
 
 /**
+ * What one generated answer actually cost.
+ *
+ * [prefillMs] and [decodeMs] are the time spent inside the native calls only, so neither
+ * includes markdown rendering or any other UI work on the collecting side - a slow list
+ * redraw must not be able to show up as a slow model. That makes the two rates comparable
+ * with the benchmark screen's pp/tg figures, which are measured the same way.
+ *
+ * The split matters because the two halves are bound by different things: prefill is a
+ * compute-bound GEMM over the whole prompt at once, decode is bandwidth-bound and reads
+ * every weight once per token. A quantization that helps one usually hurts the other.
+ */
+data class TurnStats(
+    val promptTokens: Int,
+    val generatedTokens: Int,
+    val prefillMs: Long,
+    val decodeMs: Long,
+    val contextUsed: Int,
+    val contextSize: Int,
+) {
+    /** Prompt processing rate, tokens/second. 0 when the prompt was already cached. */
+    val prefillToksPerS: Double
+        get() = if (prefillMs <= 0L) 0.0 else promptTokens * 1000.0 / prefillMs
+
+    /** Generation rate, tokens/second - the number a user perceives as "speed". */
+    val decodeToksPerS: Double
+        get() = if (decodeMs <= 0L) 0.0 else generatedTokens * 1000.0 / decodeMs
+
+    val totalTokens: Int get() = promptTokens + generatedTokens
+}
+
+/**
  * Interface defining the core LLM inference operations.
  */
 interface InferenceEngine {
@@ -34,6 +65,14 @@ interface InferenceEngine {
      * Sends a user prompt to the loaded model and returns a Flow of generated tokens.
      */
     fun sendUserPrompt(message: String, predictLength: Int = DEFAULT_PREDICT_LENGTH): Flow<String>
+
+    /**
+     * Token accounting for the most recently completed [sendUserPrompt], or null before one
+     * has run. Valid once the flow completes; read it earlier and the decode half is still
+     * accumulating. Overwritten by the next turn, so a caller that wants to keep it must
+     * copy it out.
+     */
+    fun lastTurnStats(): TurnStats?
 
     /**
      * Runs a benchmark with the specified parameters.
