@@ -191,4 +191,14 @@
     <string name="history_sustained_caption">no cooldown</string>
 
     <string name="back">Back</string>
+    <!-- Recommended-model section, driven by the model-free DeviceProbe -->
+    <string name="models_recommended">Recommended for this phone</string>
+    <string name="probe_idle">Not measured yet</string>
+    <string name="probe_idle_note">Run a half-second check of this device: memory bandwidth and integer throughput. Generation speed is bandwidth-bound and prompt speed is compute-bound, so both can be estimated before downloading anything.</string>
+    <string name="probe_run">MEASURE THIS PHONE</string>
+    <string name="probe_running">Measuring…</string>
+    <string name="probe_rerun">MEASURE AGAIN</string>
+    <string name="probe_none">No model in the catalog will run well here</string>
+    <string name="probe_run_note">Estimates come from a half-second probe, not a benchmark. The full four-arm benchmark is in the menu.</string>
+    <string name="probe_none_note">Every catalog entry either exceeds this device memory or is estimated below 5 tokens per second, which is slower than most people read. Importing a smaller GGUF by hand is the remaining option.</string>
 </resources>

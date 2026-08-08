@@ -59,6 +59,19 @@ class ModelsActivity : AppCompatActivity() {
     private lateinit var dlProgress: ProgressBar
     private var downloadJob: Job? = null
 
+    private lateinit var probeHeadline: TextView
+    private lateinit var probeDetail: TextView
+    private lateinit var probeDevice: TextView
+    private lateinit var probeRun: TextView
+
+    /**
+     * Result of the model-free device probe, kept for the lifetime of the screen so the
+     * catalog cards below can show per-model estimates once it has run. Null until the
+     * user asks for it - the probe pins every performance core for about half a second,
+     * which is not something to do unannounced on someone's phone.
+     */
+    private var probe: DeviceProbe.Profile? = null
+
     private val prefs by lazy { getSharedPreferences(Settings.PREFS, Context.MODE_PRIVATE) }
     private val modelDir by lazy { ModelStore.dirs(this).first() }
 
@@ -76,9 +89,62 @@ class ModelsActivity : AppCompatActivity() {
         dlLabel = findViewById(R.id.dl_label)
         dlProgress = findViewById(R.id.dl_progress)
 
+        probeHeadline = findViewById(R.id.probe_headline)
+        probeDetail = findViewById(R.id.probe_detail)
+        probeDevice = findViewById(R.id.probe_device)
+        probeRun = findViewById(R.id.probe_run)
+
         findViewById<View>(R.id.btn_back).setOnClickListener { finish() }
         findViewById<View>(R.id.btn_import).setOnClickListener { getContent.launch(arrayOf("*/*")) }
         findViewById<View>(R.id.dl_cancel).setOnClickListener { downloadJob?.cancel() }
+        probeRun.setOnClickListener { runProbe() }
+    }
+
+    /**
+     * Measures the device and recommends a model, without downloading one.
+     *
+     * The probe saturates the performance cores, so it runs on Dispatchers.Default and the
+     * button is disabled while it works rather than letting a second run pile on top of the
+     * first and measure the contention instead of the hardware.
+     */
+    private fun runProbe() {
+        probeRun.isEnabled = false
+        probeRun.text = getString(R.string.probe_running)
+        lifecycleScope.launch {
+            val mem = ActivityManager.MemoryInfo().also {
+                (getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(it)
+            }
+            val flags = ModelCatalog.featureFlags(
+                runCatching { AiChat.getInferenceEngine(applicationContext).cpuInfo() }.getOrDefault("")
+            )
+            val cores = DeviceOptimizer.topClusterCoreCount(DeviceOptimizer.maxFreqsKhz())
+            val p = withContext(Dispatchers.Default) {
+                DeviceProbe.measure(mem.totalMem, cores, flags)
+            }
+            probe = p
+            renderProbe(p)
+            // Catalog cards gain per-model estimates once a profile exists.
+            renderCatalog()
+            probeRun.isEnabled = true
+            probeRun.text = getString(R.string.probe_rerun)
+        }
+    }
+
+    private fun renderProbe(p: DeviceProbe.Profile) {
+        val rec = DeviceProbe.recommend(p)
+        if (rec == null) {
+            probeHeadline.text = getString(R.string.probe_none)
+            probeDetail.text = getString(R.string.probe_none_note)
+        } else {
+            probeHeadline.text = rec.headline
+            probeDetail.text = rec.why
+        }
+        probeDevice.visibility = View.VISIBLE
+        val isa = if (p.flags.isEmpty()) "no ISA extensions detected" else p.flags.joinToString(", ")
+        probeDevice.text =
+            "Measured in %d ms · %.1f GB/s memory bandwidth · %d performance core%s · %.1f GB RAM · %s".format(
+                p.elapsedMs, p.bandwidthGBs, p.perfCores, if (p.perfCores == 1) "" else "s", p.ramGb, isa,
+            ) + (rec?.runnerUp?.let { "\nRunner-up: ${it.name} ${it.quant}" } ?: "")
     }
 
     override fun onResume() {
@@ -162,7 +228,13 @@ class ModelsActivity : AppCompatActivity() {
 
             val card = inflate(catalogList)
             card.name.text = e.name
-            card.meta.text = "%.2fB · %s · %s".format(e.paramsB, e.quant, ModelCatalog.humanSize(e.sizeBytes))
+            // Vendor and role were missing before: a catalog spanning seven organisations
+            // reads as one vendor's list without them, and a coding or reasoning model is
+            // not interchangeable with a chat model at the same size.
+            val role = if (e.role == ModelCatalog.Role.GENERAL) "" else " · ${e.role.label}"
+            card.meta.text = "%s · %.2fB · %s · %s%s".format(
+                e.vendor, e.paramsB, e.quant, ModelCatalog.humanSize(e.sizeBytes), role,
+            )
 
             kleidiPill(card.kleidi, e.quant)
             // Solid inversion is this design's strongest emphasis, so a card gets at most
@@ -181,7 +253,15 @@ class ModelsActivity : AppCompatActivity() {
             }
 
             card.reason.visibility = View.VISIBLE
-            card.reason.text = a.reason
+            // Once the device has been probed, every row carries its own estimate. Before
+            // that it carries only the fit note, because an estimate with no measurement
+            // behind it would be a guess dressed as a number.
+            card.reason.text = probe?.let { p ->
+                val est = DeviceProbe.estimate(e, p)
+                "%s\nEstimated ~%.0f tok/s generation · ~%.1fs to first token on a 512-token prompt".format(
+                    a.reason, est.decodeToksPerS, est.ttftSeconds,
+                )
+            } ?: a.reason
 
             card.primary.text =
                 getString(if (partial) R.string.models_resume else R.string.models_download)

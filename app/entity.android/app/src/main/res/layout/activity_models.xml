@@ -150,6 +150,66 @@
                 android:textSize="11sp"
                 android:text="@string/model_import" />
 
+            <!-- RECOMMENDED FOR THIS PHONE -->
+            <!--
+              Driven by DeviceProbe: a sub-second bandwidth and integer-throughput
+              measurement that needs no model downloaded. Decode is bandwidth-bound and
+              prefill is compute-bound, so both can be predicted before committing to a
+              multi-gigabyte transfer.
+            -->
+
+            <TextView
+                style="@style/Entity.Label"
+                android:layout_marginTop="22dp"
+                android:text="@string/models_recommended" />
+
+            <LinearLayout
+                android:id="@+id/probe_box"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="8dp"
+                android:padding="12dp"
+                android:background="@drawable/bg_box">
+
+                <TextView
+                    android:id="@+id/probe_headline"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="?attr/monoFg"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:text="@string/probe_idle" />
+
+                <TextView
+                    android:id="@+id/probe_detail"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textColor="?attr/monoDim"
+                    android:textSize="10sp"
+                    android:lineSpacingMultiplier="1.4"
+                    android:text="@string/probe_idle_note" />
+
+                <TextView
+                    android:id="@+id/probe_device"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:visibility="gone"
+                    android:textColor="?attr/monoDim"
+                    android:textSize="10sp"
+                    android:lineSpacingMultiplier="1.4" />
+
+                <TextView
+                    android:id="@+id/probe_run"
+                    style="@style/Entity.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_marginTop="10dp"
+                    android:textSize="11sp"
+                    android:text="@string/probe_run" />
+            </LinearLayout>
+
             <!-- AVAILABLE TO DOWNLOAD -->
 
             <TextView
