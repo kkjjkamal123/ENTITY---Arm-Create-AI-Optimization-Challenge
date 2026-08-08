@@ -2,6 +2,12 @@
 
 **Status: source-tagged, APK not yet published.** versionCode 12. Unit tests pass.
 
+**The signing key changed.** Same cause as chat v3.7.0 - the keystore used for prior releases was
+lost and cannot be reissued ([`docs/JOURNEY.md`](../docs/JOURNEY.md) §11). Installing fresh is
+unaffected; upgrading over v2.1.1 fails with `INSTALL_FAILED_UPDATE_INCOMPATIBLE` and needs an
+uninstall first, **which deletes saved benchmark history.** Open each result you want to keep and
+export it to CSV before uninstalling.
+
 ## The gap
 
 Bench and chat ship the same curated GGUF catalog on purpose - a benchmark tool is useless if it

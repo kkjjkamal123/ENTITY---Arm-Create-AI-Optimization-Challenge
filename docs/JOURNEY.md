@@ -237,6 +237,44 @@ would reject models that do run.
 
 ---
 
+## 11. "The release keystore is somewhere safe"
+
+**The belief.** Never stated, which is the point. [`BUILD.md`](BUILD.md) says the keystore "lives
+**outside the repo** so it can be managed securely," and that sentence was treated as a plan. Every
+release from v3.0.0 to v3.6.2 was signed with it - `CN=ENTITY, OU=Mobile, O=ENTITY, C=IN`,
+SHA-256 `f34cd27c…`.
+
+**What broke it.** Preparing the v3.7.0 release on a different machine. The keystore is not on it,
+and not anywhere else that could be checked: no `.jks` on the whole drive, nothing in either repo's
+history, no CI holding it as a secret, nothing in the recycle bin or cloud storage. Being outside
+the repo turned out to mean not backed up at all - the `.gitignore` entry was doing the whole job,
+and a `.gitignore` entry is not a backup strategy.
+
+**What it cost.** The signing identity, permanently. This is worth stating precisely, because every
+obvious escape route fails for the same reason - the private key is gone and nothing else stands in
+for it:
+
+- A released APK carries only the public certificate, so the key cannot be recovered from one.
+- APK Signature Scheme v3 key rotation exists for exactly this situation, but rotating requires
+  signing the proof with the **old** key.
+- Play App Signing could have escrowed a copy, but distribution here is GitHub Releases, so Google
+  never held one.
+
+The practical cost is narrower than the permanence suggests. Anyone installing fresh - including
+judges - is unaffected. Anyone already on v3.6.2 gets `INSTALL_FAILED_UPDATE_INCOMPATIBLE` and has
+to uninstall first, losing saved conversations. Export via **SHARE CHAT** before upgrading.
+
+**What replaced it.** A new keystore, and the rule the old sentence should have contained: *outside
+the repo* has to name where, in three places - a password manager, an encrypted cloud copy, and an
+offline copy. A secret that exists in exactly one location on one machine has the durability of that
+machine, and no warning fires when it stops existing.
+
+The general shape of this is the same one as §7 and §10: **the thing that failed was never
+measured.** A backup nobody has restored from is not known to be a backup, in the same way a
+constant nobody read off the device is not known to be a measurement.
+
+---
+
 ## What actually generalised
 
 After all of the above, the findings that survived contact with silicon nobody here owns:

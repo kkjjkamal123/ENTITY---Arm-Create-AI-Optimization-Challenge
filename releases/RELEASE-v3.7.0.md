@@ -1,8 +1,24 @@
 # ENTITY v3.7.0 - predicting a model before downloading it
 
-**Status: source-tagged, APK not yet published.** versionCode 22. Unit tests pass (72). A
-release-signed APK will follow under the same cert as every release since v3.0.0, so
-`adb install -r` will upgrade in place.
+**Status: source-tagged, APK not yet published.** versionCode 22. Unit tests pass (72).
+
+## Read this before upgrading: the signing key changed
+
+Every release from v3.0.0 to v3.6.2 was signed with a keystore that has since been lost. It cannot
+be recovered or reissued - an APK carries only the public certificate, Android's key rotation
+requires the old key to sign the rotation proof, and this project distributes through GitHub rather
+than Play, so no copy was ever escrowed. Full account in
+[`docs/JOURNEY.md`](../docs/JOURNEY.md) §11.
+
+v3.7.0 is therefore signed with a **new certificate**, and the consequences are mechanical:
+
+- **Installing fresh?** Nothing changes. Download and install.
+- **Already on v3.6.2?** `adb install -r` will fail with `INSTALL_FAILED_UPDATE_INCOMPATIBLE`. You
+  have to uninstall first, **which deletes your saved conversations.** Export anything you want to
+  keep with **SHARE CHAT** in the drawer before you do.
+
+A certificate mismatch normally signals a tampered build, so it is worth being explicit: this one is
+expected, and this note is the only reason you should accept it.
 
 ## The gap
 
