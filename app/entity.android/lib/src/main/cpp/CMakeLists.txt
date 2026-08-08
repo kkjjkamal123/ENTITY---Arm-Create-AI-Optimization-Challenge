@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.31.6)
+cmake_minimum_required(VERSION 3.22.1)
 
 project("ai-chat" VERSION 1.0.0 LANGUAGES C CXX)
 
@@ -30,7 +30,25 @@ if(DEFINED ANDROID_ABI)
     endif()
 endif()
 
+# Where llama.cpp lives. Two layouts are supported, checked in this order:
+#
+#   1. The documented one, which SETUP.md and setup.sh produce - this project sits inside a
+#      llama.cpp checkout at examples/entity.android/, so the root is six levels up.
+#   2. A sibling checkout, ../llama.cpp next to the project. Convenient when the app is
+#      cloned on its own and llama.cpp is fetched beside it.
+#
+# Probing rather than hardcoding matters because judges and contributors follow SETUP.md,
+# while a local working copy is often laid out the other way. Hardcoding either one silently
+# breaks the other.
 set(LLAMA_SRC ${CMAKE_CURRENT_LIST_DIR}/../../../../../../)
+if(NOT EXISTS ${LLAMA_SRC}/ggml/CMakeLists.txt)
+    set(LLAMA_SRC ${CMAKE_CURRENT_LIST_DIR}/../../../../../../../llama.cpp)
+endif()
+if(NOT EXISTS ${LLAMA_SRC}/ggml/CMakeLists.txt)
+    message(FATAL_ERROR
+        "llama.cpp not found. Place this project at <llama.cpp>/examples/entity.android "
+        "(see SETUP.md, or run setup.sh), or clone llama.cpp as a sibling directory.")
+endif()
 add_subdirectory(${LLAMA_SRC} build-llama)
 
 add_library(${CMAKE_PROJECT_NAME} SHARED
