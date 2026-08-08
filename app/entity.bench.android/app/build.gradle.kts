@@ -5,6 +5,14 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
+// Pins the compiler to a JDK this Kotlin version can describe. Without it the build
+// inherits whatever JDK runs the Gradle daemon, and on a modern one the Kotlin frontend
+// dies parsing the version string itself - "IllegalArgumentException: 26.0.2", which names
+// no file and points at nothing. The chat module carries the same block for the same reason.
+kotlin {
+    jvmToolchain(17)
+}
+
 // Contribution endpoint. Kept out of the repo so a fork builds and runs with uploading
 // switched off rather than posting into someone else's database. Create
 // `results.properties` (gitignored) with RESULTS_ENDPOINT and RESULTS_KEY to enable it.
@@ -38,8 +46,8 @@ android {
         minSdk = 33
         targetSdk = 36
 
-        versionCode = 11
-        versionName = "2.1.1"
+        versionCode = 12
+        versionName = "2.2.0"
 
         buildConfigField("String", "RESULTS_ENDPOINT",
             "\"${resultsProperties.getProperty("RESULTS_ENDPOINT", "")}\"")

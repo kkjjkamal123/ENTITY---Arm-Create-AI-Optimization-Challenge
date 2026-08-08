@@ -3,6 +3,10 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
 }
 
+kotlin {
+    jvmToolchain(17)
+}
+
 android {
     namespace = "com.arm.aichat"
     compileSdk = 36
@@ -46,19 +50,14 @@ android {
     externalNativeBuild {
         cmake {
             path("src/main/cpp/CMakeLists.txt")
-            version = "3.31.6"
+            // The version bundled with the Android SDK. Pinning above it makes a clean
+            // checkout fail on a stock SDK install with nothing to tell the reader why.
+            version = "3.22.1"
         }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-    kotlin {
-        jvmToolchain(17)
-
-        compileOptions {
-            targetCompatibility = JavaVersion.VERSION_17
-        }
     }
 
     packaging {

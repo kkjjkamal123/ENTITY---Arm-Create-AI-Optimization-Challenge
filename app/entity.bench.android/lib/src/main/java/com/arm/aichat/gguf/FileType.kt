@@ -54,7 +54,20 @@ enum class FileType(val code: Int, val label: String) {
     UNKNOWN(-1, "unknown");
 
     /**
-     * Whether Arm's KleidiAI kernels can accelerate this quantization.
+     * Whether Arm's KleidiAI kernels can accelerate this **nominal** quantization.
+     *
+     * This is a prediction from a single metadata key, not a measurement of the file.
+     * `general.file_type` says what a model was broadly quantized to; it does not
+     * constrain individual tensors, and real files disagree with it. bartowski's
+     * `Llama-3.2-1B-Instruct-Q4_0.gguf` reports `MOSTLY_Q4_0` here while carrying
+     * `token_embd.weight` at Q6_K and two `ffn_down` tensors at Q4_1 - 24.0% of its
+     * quantized weights, none of which KleidiAI can serve. Llama 3.2 ties its embeddings,
+     * so that Q6_K tensor is also the output projection: the largest matmul in the model.
+     *
+     * **Prefer [GgufMetadata.TensorCensus] whenever a file has been read.** It counts the
+     * tensor table directly and reports the fraction of weights actually on a KleidiAI
+     * path. Use this property only where no file exists yet - a download catalog listing,
+     * for example - and present it as an expectation rather than a fact.
      *
      * KleidiAI registers matmul kernels for exactly two GGML types, Q4_0 and Q8_0
      * (see `ggml/src/ggml-cpu/kleidiai/kleidiai.cpp`). Every other type - including

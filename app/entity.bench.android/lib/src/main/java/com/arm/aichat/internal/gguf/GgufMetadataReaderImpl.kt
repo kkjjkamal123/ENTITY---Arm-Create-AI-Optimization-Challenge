@@ -2,6 +2,7 @@ package com.arm.aichat.internal.gguf
 
 import android.content.Context
 import android.net.Uri
+import com.arm.aichat.gguf.GgmlType
 import com.arm.aichat.gguf.GgufMetadata
 import com.arm.aichat.gguf.GgufMetadataReader
 import com.arm.aichat.gguf.InvalidFileFormatException
@@ -20,6 +21,15 @@ internal class GgufMetadataReaderImpl(
 ) : GgufMetadataReader {
     companion object {
         private const val ARCH_LLAMA = "llama"
+
+        /**
+         * Sanity bounds on the tensor-info table. A corrupt or misaligned header can
+         * otherwise ask us to loop billions of times or allocate a nonsense dim list.
+         * Real GGUF models are in the low thousands of tensors; ggml itself caps rank
+         * at 4 (`GGML_MAX_DIMS`).
+         */
+        private const val MAX_TENSORS = 100_000L
+        private const val MAX_TENSOR_DIMS = 4
     }
 
     /** Enum corresponding to GGUF metadata value types (for convenience and array element typing). */
@@ -126,9 +136,68 @@ internal class GgufMetadataReaderImpl(
         // ── 2. metadata map (reuse our raw parser, but we need access to the stream) ──
         val meta = readMetaMap(input, kvCount)    // <String, MetadataValue>
 
-        // ── 3. build structured object ────────────────────────────────────────
-        return buildStructured(meta, version, tensorCount, kvCount)
+        // ── 3. tensor-info table ──────────────────────────────────────────────
+        // Sits immediately after the KV block. Still streaming: only the info records
+        // are read, never the tensor data that follows them.
+        val census = readTensorCensus(input, tensorCount)
+
+        // ── 4. build structured object ────────────────────────────────────────
+        return buildStructured(meta, version, tensorCount, kvCount, census)
     }
+
+    /**
+     * Reads the GGUF tensor-info table and summarises which tensors KleidiAI can serve.
+     *
+     * Each record is: name (u64 length + UTF-8 bytes), n_dims (u32), dims (n_dims × u64),
+     * type (u32 `ggml_type`), offset (u64). Tensor *data* is never touched.
+     *
+     * Only quantized tensors are counted. F32/F64 norms and biases are excluded because
+     * they are never candidates for a matmul kernel in the first place, so including them
+     * would dilute the coverage figure with parameters that were never at stake.
+     *
+     * Returns null rather than throwing: a model whose tensor table cannot be parsed must
+     * still load and run. The advisor simply falls back to saying nothing, which is
+     * preferable to blocking a working model or - worse - asserting coverage it did not
+     * measure.
+     */
+    private fun readTensorCensus(input: InputStream, tensorCount: Long): GgufMetadata.TensorCensus? =
+        runCatching {
+            if (tensorCount <= 0L || tensorCount > MAX_TENSORS) return null
+
+            var eligible = 0L
+            var ineligible = 0L
+            val offenders = mutableListOf<GgufMetadata.TensorInfo>()
+            val counts = mutableMapOf<GgmlType, Int>()
+
+            repeat(tensorCount.toInt()) {
+                val name = readString(input)
+                val nDims = readLEUInt32(input)
+                if (nDims < 0 || nDims > MAX_TENSOR_DIMS) throw IOException("Bad tensor rank $nDims")
+                val dims = List(nDims) { readLittleLong(input) }
+                val type = GgmlType.fromCode(readLEUInt32(input))
+                readLittleLong(input)                 // data offset, unused here
+
+                counts[type] = (counts[type] ?: 0) + 1
+                if (!type.isFullPrecision) {
+                    val info = GgufMetadata.TensorInfo(name, type, dims)
+                    if (type.kleidiAiAccelerated) {
+                        eligible += info.params
+                    } else {
+                        ineligible += info.params
+                        offenders += info
+                    }
+                }
+            }
+
+            GgufMetadata.TensorCensus(
+                eligibleParams = eligible,
+                ineligibleParams = ineligible,
+                // Largest first: on a tied-embedding model the single worst offender is
+                // usually token_embd, and it dwarfs everything else.
+                ineligible = offenders.sortedByDescending { it.params },
+                typeCounts = counts,
+            )
+        }.getOrNull()
 
     /** Reads the 4‑byte magic + 4‑byte version; throws if magic ≠ "GGUF". */
     private fun ensureMagicAndVersion(input: InputStream): GgufMetadata.GgufVersion {
@@ -190,7 +259,8 @@ internal class GgufMetadataReaderImpl(
         m: Map<String, MetadataValue>,
         version: GgufMetadata.GgufVersion,
         tensorCnt: Long,
-        kvCnt: Long
+        kvCnt: Long,
+        census: GgufMetadata.TensorCensus? = null
     ): GgufMetadata {
         // ---------- helpers ----------
         fun String.str()  = (m[this] as? MetadataValue.StringVal)?.value
@@ -326,7 +396,8 @@ internal class GgufMetadataReaderImpl(
             dimensions = dimensions,
             attention = attention,
             rope = rope,
-            experts = experts
+            experts = experts,
+            tensors = census
         )
     }
 

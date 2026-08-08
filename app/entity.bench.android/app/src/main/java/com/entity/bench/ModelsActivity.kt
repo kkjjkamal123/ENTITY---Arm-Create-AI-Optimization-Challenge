@@ -139,9 +139,9 @@ class ModelsActivity : AppCompatActivity() {
         // The bench app reads ISA support straight from /proc/cpuinfo; it has no engine
         // handle to ask, and this is the same source the optimization chips use.
         val flags = DeviceInfo.readCpuFlags()
-        val recommended = ModelCatalog.recommended(mem.totalMem, flags)
+        val recommended = ModelCatalog.recommended(mem.availMem, flags)
         val entries = ModelCatalog.ALL.sortedByDescending {
-            when (ModelCatalog.assess(it, mem.totalMem, flags).fit) {
+            when (ModelCatalog.assess(it, mem.availMem, flags).fit) {
                 ModelCatalog.Fit.GREAT -> 3; ModelCatalog.Fit.OK -> 2
                 ModelCatalog.Fit.TIGHT -> 1; ModelCatalog.Fit.TOO_BIG -> 0
             }
@@ -154,12 +154,17 @@ class ModelsActivity : AppCompatActivity() {
             // too would show the same file twice with two different actions.
             if (target.exists() && target.length() == e.sizeBytes) continue
 
-            val a = ModelCatalog.assess(e, mem.totalMem, flags)
+            val a = ModelCatalog.assess(e, mem.availMem, flags)
             val partial = ModelDownloader.partFileFor(modelDir, e).exists()
 
             val card = inflate(catalogList)
             card.name.text = e.name
-            card.meta.text = "%.2fB · %s · %s".format(e.paramsB, e.quant, ModelCatalog.humanSize(e.sizeBytes))
+            // Vendor and role were missing before. A catalog spanning seven organisations
+            // reads as one vendor's list without them, and "which of these is a coding
+            // model" is otherwise only answerable from the name.
+            card.meta.text = "%s · %.2fB · %s · %s · %s".format(
+                e.vendor, e.paramsB, e.quant, e.role.label, ModelCatalog.humanSize(e.sizeBytes),
+            )
 
             kleidiPill(card.kleidi, e.quant)
             // Solid inversion is this design's strongest emphasis, so a card gets at most
