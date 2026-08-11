@@ -250,16 +250,35 @@ object DeviceProbe {
      * if it will still be usable: below [MIN_USABLE_DECODE] tok/s a reply arrives slower
      * than most people read, and parameter count stops buying anything the user will wait
      * for.
+     *
+     * A TIGHT fit is excluded outright rather than penalised. It used to cost -1.5 in
+     * [score], which the capability term - 2.2 per parameter-billion, up to 4B - simply
+     * outbid: on the reference phone with 2.25 GB free this recommended Phi-3.5 Mini, a
+     * 2.18 GB download flagged TIGHT and estimated at 6.3 tok/s, over a 1.7B model at
+     * 14.6 tok/s that fits comfortably. That is the exact failure [MIN_USABLE_DECODE]
+     * documents itself as existing to prevent, one size class up, and the floor cannot
+     * catch it because 6.3 clears 5.0.
+     *
+     * Headroom is not a preference to be traded against capability: weights are mmap'd
+     * and evictable, but the KV cache is not, so a model with no headroom is the one the
+     * OS kills mid-conversation. If nothing roomy is viable the tight set is used anyway -
+     * a cramped recommendation still beats no recommendation - but only then.
      */
     fun recommend(p: Profile, workload: Workload = Workload.BALANCED): Recommendation? {
         val viable = ModelCatalog.ALL
-            .filter { ModelCatalog.assess(it, p.availableRamBytes, p.flags).fit != ModelCatalog.Fit.TOO_BIG }
-            .map { it to estimate(it, p) }
-            .filter { (_, est) -> est.decodeToksPerS >= MIN_USABLE_DECODE }
+            .map { it to ModelCatalog.assess(it, p.availableRamBytes, p.flags) }
+            .filter { (_, a) -> a.fit != ModelCatalog.Fit.TOO_BIG }
+            .map { (e, a) -> Triple(e, estimate(e, p), a) }
+            .filter { (_, est, _) -> est.decodeToksPerS >= MIN_USABLE_DECODE }
 
         if (viable.isEmpty()) return null
 
-        val scored = viable.sortedByDescending { (e, est) -> score(e, est, workload, p) }
+        val roomy = viable.filter { (_, _, a) -> a.fit != ModelCatalog.Fit.TIGHT }
+        val candidates = if (roomy.isEmpty()) viable else roomy
+
+        val scored = candidates
+            .map { (e, est, _) -> e to est }
+            .sortedByDescending { (e, est) -> score(e, est, workload, p) }
         val (best, bestEst) = scored.first()
         val runnerUp = scored.drop(1).firstOrNull { (e, _) -> e.id != best.id }?.first
 
@@ -316,6 +335,12 @@ object DeviceProbe {
         // Fitting is not the same as fitting comfortably. assess() marks an entry TIGHT
         // when it leaves little headroom, and a model with no headroom gets killed by the
         // OS mid-conversation - which is worse for a user than a smaller model would be.
+        //
+        // [recommend] now drops TIGHT entries before scoring, because this penalty was
+        // never large enough to outweigh the capability term and a price that does not
+        // change the decision is not a price. It is kept for callers that rank the whole
+        // catalog - the model card lists every entry, tight ones included - where it still
+        // sorts a cramped model below a comfortable one of equal capability.
         if (ModelCatalog.assess(e, p.availableRamBytes, p.flags).fit == ModelCatalog.Fit.TIGHT) s -= 1.5
         return s
     }
