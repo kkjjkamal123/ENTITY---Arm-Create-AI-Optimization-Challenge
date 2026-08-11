@@ -1,0 +1,21 @@
+[run ] f16  (2479595360 bytes)
+Final estimate: PPL = 14.2580 +/- 0.17724
+[run ] q8_0  (1321082720 bytes)
+Final estimate: PPL = 14.2705 +/- 0.17741
+[run ] q4_0-stock  (770928480 bytes)
+Final estimate: PPL = 16.5272 +/- 0.20912
+[run ] q4_0-imat  (773025856 bytes)
+Final estimate: PPL = 15.6159 +/- 0.19391
+[run ] q4_k_m  (807694176 bytes)
+Final estimate: PPL = 14.7346 +/- 0.18241
+[run ] q3_k_l  (732524384 bytes)
+Final estimate: PPL = 16.0927 +/- 0.20031
+
+================ RESULTS ================
+TAG          PPL        SIZE_BYTES   KLEIDIAI
+f16          14.2580    2479595360   n/a
+q8_0         14.2705    1321082720   yes
+q4_0-stock   16.5272    770928480    yes
+q4_0-imat    15.6159    773025856    yes
+q4_k_m       14.7346    807694176    NO
+q3_k_l       16.0927    732524384    NO

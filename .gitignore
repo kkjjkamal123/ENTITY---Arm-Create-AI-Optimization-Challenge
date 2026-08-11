@@ -13,6 +13,12 @@ llama.tar.gz
 # OS
 .DS_Store
 
+# IDE scratch. The plan artefact carries absolute file:///C:/... paths from the machine
+# that produced it, and the daemon JVM file pins one vendor's JDK for everyone who clones -
+# neither belongs in a repository whose build instructions are meant to work anywhere.
+app/entity.android/implementation_plan.artifact.md
+app/entity.android/gradle/gradle-daemon-jvm.properties
+
 # Note: the 6 APKs in apk/ are ~100 MB each and exceed GitHub's 100 MB per-file
 # limit for a normal push. Pick one before your first push of apk/*.apk:
 #   1) Attach them to GitHub Releases instead (see releases/), and uncomment:

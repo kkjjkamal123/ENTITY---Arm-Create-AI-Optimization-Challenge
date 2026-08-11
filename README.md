@@ -198,6 +198,7 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 | app/entity.bench.android | Standalone benchmark app: runs the three arm ablation on any arm64 phone and exports the result to CSV |
 | apk | Debug and release signed APKs |
 | benchmarks | Current app measurement, historical command line results and raw records |
+| quant-lab | Quantization quality lab and the output equivalence measurement: the runners, `RESULTS.md`, and every raw output they produced |
 | docs | Architecture, build instructions, optimization details and contributor guidance |
 | releases | Release notes for every version |
 | scripts | Termux benchmark and chat helpers |
@@ -214,9 +215,10 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 5. [Benchmarks](benchmarks/BENCHMARKS.md): current method, cross device values, and caveats.
 6. [Reproducibility](benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
 7. [Runtime comparisons](benchmarks/COMPARISONS.md): a fair upstream llama.cpp baseline and the requirements for any ExecuTorch or MLC-LLM claim.
-8. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
-9. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
-10. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
+8. [Quantization and output equivalence lab](quant-lab/RESULTS.md): what each quantization costs in quality, and the measurement showing the scheduling speedups leave the model's output unchanged - four arms, three controls, raw files included.
+9. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
+10. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
+11. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
 
 ## License
 

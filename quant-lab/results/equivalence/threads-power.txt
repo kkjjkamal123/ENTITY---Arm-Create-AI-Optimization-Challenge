@@ -1,0 +1,3 @@
+  level: 9
+  temperature: 380
+  Capacity level: 2

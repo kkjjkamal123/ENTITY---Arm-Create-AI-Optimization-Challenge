@@ -1,0 +1,18 @@
+# The evaluation corpus and the model files are inputs, not evidence: wikitext-2 is a
+# public download and the GGUFs are built from it by the scripts here. Committing 18 MB of
+# retrievable text to carry a 100 KB result would make the repository worse at the one job
+# it has, which is letting someone read what was measured.
+#
+# Everything that IS evidence - the runners, RESULTS.md and every raw output under
+# results/ - stays tracked.
+wikitext-2-raw/
+wikitext-2-raw-v1.zip
+
+# Quantized model files, produced by ppl-sweep.sh from a downloaded F16. Hundreds of MB.
+models/
+out/
+*.gguf
+
+# Kept: llama-1b.imatrix and calibration_datav3.txt. Both are small, and the imatrix is the
+# calibration artefact that makes the imatrix-vs-stock comparison in RESULTS.md
+# reproducible rather than merely described.

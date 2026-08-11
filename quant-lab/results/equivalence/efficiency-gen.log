@@ -1,0 +1,24 @@
+0.00.080.591 I llama_completion: llama backend init
+0.00.080.620 I llama_completion: load the model and apply lora adapter, if any
+0.16.348.162 I llama_completion: llama threadpool init, n_threads = 4
+0.16.348.293 I 
+0.16.349.150 I system_info: n_threads = 4 (n_threads_batch = 4) / 8 | CPU : NEON = 1 | ARM_FMA = 1 | FP16_VA = 1 | DOTPROD = 1 | LLAMAFILE = 1 | OPENMP = 1 | KLEIDIAI = 1 | REPACK = 1 | 
+0.16.349.153 I 
+0.16.352.811 I sampler seed: 42
+0.16.352.864 I sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.16.352.976 I sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> dist 
+0.16.352.981 I generate: n_ctx = 125440, n_batch = 2048, n_predict = 96, n_keep = 1
+0.16.352.983 I 
+0.16.356.412 W kleidiai: no kernel for tensor type q6_K, not accelerated by KleidiAI (kernels available for Q4_0 and Q8_0)
+0.27.960.472 I common_perf_print:    sampling time =      98.45 ms
+0.27.960.695 I common_perf_print:    samplers time =      49.29 ms /   114 tokens
+0.27.960.699 I common_perf_print:        load time =    1420.91 ms
+0.27.960.702 I common_perf_print: prompt eval time =    1414.90 ms /    18 tokens (   78.61 ms per token,    12.72 tokens per second)
+0.27.960.706 I common_perf_print:        eval time =   10068.20 ms /    95 runs   (  105.98 ms per token,     9.44 tokens per second)
+0.27.960.708 I common_perf_print:       total time =   11612.62 ms /   113 tokens
+0.27.960.711 I common_perf_print: unaccounted time =      31.07 ms /   0.3 %      (total - sampling - prompt eval - eval) / (total)
+0.27.960.712 I common_perf_print:    graphs reused =         94

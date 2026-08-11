@@ -4,7 +4,9 @@ No build, no toolchain, no SDK. One APK, one model, one tap. Everything below ru
 offline on any arm64 Android 13+ phone.
 
 If you have five minutes, do **Path A**. If you have twenty and want to check the
-central claim yourself, do **Path B**.
+central claim yourself, do **Path B**. **Path C** needs no phone at all — it checks that
+the speedup did not change the model's output, against raw files committed to this
+repository.
 
 ---
 
@@ -75,6 +77,59 @@ This finding was contributed upstream and **merged into llama.cpp**:
 [PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701), reviewed by
 `chaxu01` (Arm, KleidiAI backend maintainer), merged 2026-07-21 as `fb0e6b6`. The
 warning now ships to every llama.cpp user.
+
+---
+
+## Path C — check that the speedup does not change the answer
+
+Paths A and B need a phone. This one needs nothing but the checkout, because the raw
+outputs are committed.
+
+Every number in Path A comes from changing how work is **scheduled** — thread count and
+core placement. Nothing touches the weights or the sampler, so the assumption is that only
+the wait gets shorter. That assumption is not free: ggml splits a row's dot product across
+threads and sums the partials, so the thread count fixes the order of a floating-point
+reduction, and floating-point addition is not associative. A logit's last bits move, and a
+near-tie token can flip.
+
+```bash
+cd quant-lab/results/equivalence
+
+# 8 threads vs the shipped 4 — the only pair where the reduction width actually changes,
+# and the same pair Path A measures its decode gain across.
+cmp auto-gen.txt naive-gen.txt && echo "96 greedy tokens: byte-identical"
+
+# The sensitive instrument: per-chunk perplexity, one number per 512 tokens of wikitext.
+diff <(grep -oE '\[[0-9]+\][0-9.]+' auto-ppl.txt) \
+     <(grep -oE '\[[0-9]+\][0-9.]+' naive-ppl.txt) && echo "12/12 chunks: identical"
+```
+
+Both pass. So do the other two arms — `threads` (4 threads, no pinning) and `efficiency`
+(4 threads on the LITTLE cluster). Final perplexity is 19.2128 on all four.
+
+**Now check that the test can fail**, because an empty file compared with itself looks
+exactly like the good result:
+
+```bash
+cmp auto-gen.txt control-repeat-gen.txt      # same config twice   -> identical
+cmp auto-gen.txt control-perturbed-gen.txt   # one word added      -> differs
+
+# And the control for the perplexity half: the same reference configuration over 3 chunks
+# instead of 12. Same 512 tokens, same file, same 4 threads, same cluster.
+grep -oE '\[[0-9]+\][0-9.]+' auto-ppl.txt | head -3          # 8.3423  11.0529  13.1472
+grep -oE '\[[0-9]+\][0-9.]+' control-batch-ppl.txt | head -3 # 8.3443  11.0544  13.1479
+```
+
+That last pair is the point. `llama-perplexity` packs chunks into one batch, so the chunk
+total changes how many sequences are scored together and therefore the shape of the matmuls
+scoring them — three sequences accumulate differently from four. **Reorganising the
+arithmetic moves these numbers by about two parts in ten thousand. Doubling the thread count
+and crossing from the A78 cluster to the A55 cluster moved them by zero.**
+
+Not a claim of bit-exactness — the series prints to four decimals, and greedy decoding only
+reveals a perturbation large enough to change an argmax. Method, limits and the full table:
+`quant-lab/RESULTS.md`. To re-measure on your own device:
+`cd quant-lab && ./stage-equivalence.sh all`.
 
 ---
 

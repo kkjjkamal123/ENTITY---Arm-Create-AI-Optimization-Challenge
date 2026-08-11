@@ -1,0 +1,3 @@
+  level: 8
+  temperature: 360
+  Capacity level: 2

@@ -1,0 +1,8 @@
+Explain in detail how a CPU cache works, and why cache misses are expensive. 
+
+## Step 1: Introduction to CPU Cache
+A CPU cache is a small, fast memory that stores frequently accessed data or instructions. It's a crucial component of the CPU, as it reduces the time it takes to access data or instructions from the main memory (RAM) or the storage device.
+
+## Step 2: How the CPU Cache Works
+The CPU cache is a small, fast memory that stores a limited number of data or instruction entries. When the CPU needs
+

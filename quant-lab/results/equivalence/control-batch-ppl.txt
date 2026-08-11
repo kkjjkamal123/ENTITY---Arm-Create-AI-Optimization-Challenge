@@ -1,0 +1,10 @@
+0.02.697.437 W kleidiai: no kernel for tensor type q6_K, not accelerated by KleidiAI (kernels available for Q4_0 and Q8_0)
+0.02.765.192 I 
+0.02.765.388 I system_info: n_threads = 4 (n_threads_batch = 4) / 8 | CPU : NEON = 1 | ARM_FMA = 1 | FP16_VA = 1 | DOTPROD = 1 | LLAMAFILE = 1 | OPENMP = 1 | KLEIDIAI = 1 | REPACK = 1 | 
+0.02.765.418 I perplexity: tokenizing the input ..
+0.03.071.183 I perplexity: tokenization took 305.753 ms
+0.03.072.056 I perplexity: calculating perplexity over 3 chunks, n_ctx=512, batch_size=2048, n_seq=4
+0.17.153.910 I perplexity: 14.08 seconds per pass - ETA 0.17 minutes
+[1]8.3443,[2]11.0544,[3]13.1479,
+0.17.444.730 I Final estimate: PPL = 13.1479 +/- 1.40339
+
