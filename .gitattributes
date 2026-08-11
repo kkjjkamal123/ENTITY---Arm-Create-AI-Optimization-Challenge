@@ -1,0 +1,15 @@
+# Shell scripts must check out with LF endings on every platform, including Windows.
+#
+# The scripts under quant-lab/ and scripts/ are not run on the machine that clones them -
+# they are pushed to an Android device and executed by its /system/bin/sh, which treats a
+# trailing carriage return as part of the command and fails on the first line. A judge
+# cloning this repository on Windows with the default core.autocrlf would otherwise get
+# CRLF copies that cannot run, and the failure reads as a broken script rather than a line
+# ending.
+*.sh text eol=lf
+
+# Raw measurement outputs are compared byte for byte - by cmp in the judge guide, and by
+# stage-equivalence.sh when it decides whether two arms agree. Rewriting their line endings
+# on checkout would make a file differ from the one that was measured, which is the one
+# thing this evidence cannot afford.
+quant-lab/results/** -text
