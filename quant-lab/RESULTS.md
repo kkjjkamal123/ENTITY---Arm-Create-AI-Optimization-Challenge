@@ -199,8 +199,38 @@ moved it by zero.
   different reduction width; the other two share `auto`'s four threads and differ only in
   where those threads ran.
 
-Reproduce: `./stage-equivalence.sh all` (runner: `equivalence.sh`, raw outputs:
-`results/equivalence/`). `ARMS=` finishes an interrupted run one arm at a time.
+### Verify it without a device
+
+The raw outputs are committed, so checking this claim needs nothing but the checkout.
+
+```bash
+cd quant-lab/results/equivalence
+
+# 8 threads vs the shipped 4 - the only pair where the reduction width actually
+# changes, and the same pair the published decode gain is measured across.
+cmp auto-gen.txt naive-gen.txt && echo "96 greedy tokens: byte-identical"
+
+# The sensitive instrument: one perplexity value per 512 tokens of wikitext.
+diff <(grep -oE '\[[0-9]+\][0-9.]+' auto-ppl.txt) \
+     <(grep -oE '\[[0-9]+\][0-9.]+' naive-ppl.txt) && echo "12/12 chunks: identical"
+```
+
+Both pass, as do `threads-*` and `efficiency-*`. Then check that the test is capable of
+failing, because an empty file compared with itself looks exactly like the good result:
+
+```bash
+cmp auto-gen.txt control-repeat-gen.txt      # same config twice -> identical
+cmp auto-gen.txt control-perturbed-gen.txt   # one word added    -> differs
+
+grep -oE '\[[0-9]+\][0-9.]+' auto-ppl.txt | head -3          # 8.3423  11.0529  13.1472
+grep -oE '\[[0-9]+\][0-9.]+' control-batch-ppl.txt | head -3 # 8.3443  11.0544  13.1479
+```
+
+That last pair is the whole argument: the arithmetic can be reorganised into different
+numbers, and changing the thread count did not do it.
+
+Re-measure on your own device with `./stage-equivalence.sh all` (runner: `equivalence.sh`).
+`ARMS=` finishes an interrupted run one arm at a time.
 
 ## Pending
 
