@@ -17,7 +17,7 @@
 
 ## Navigation
 
-[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [Quantization quality](docs/QUANTIZATION-QUALITY.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
+[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [Quantization quality](docs/QUANTIZATION-QUALITY.md) · [Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
 
 ## What ENTITY is
 
@@ -51,6 +51,8 @@ The challenge names **performance-per-watt** as a judging axis, so ENTITY leads 
 | **KleidiAI only accelerates Q4_0 and Q8_0** | Verified in Arm's kernel source. Every benchmark published before v2.1.0 used Q3_K_L, so KleidiAI never ran. Switching to Q4_0, same phone and same thread config: prompt 43 to 121 tok/s, TTFT 12.1s to 4.3s. On an i8mm phone (Snapdragon 6 Gen 4) the loaded backend's MATMUL_INT8 GEMM adds a further **+32% prompt** over dotprod on Q4_0 (190.6 vs 143.7 tok/s, cold). | Decode does not improve. It is bandwidth bound and tracks bytes per weight, not kernel quality. Q4_0 is also a quality tradeoff, so ENTITY recommends rather than switches. |
 | Widening prompt processing to all cores was a regression | Prompt on 4 fast cores measures 135 tok/s; spread across all 8 it measures 86. The efficiency cores gate every GEMM. Removed in v2.1.0. | Empirical to this SoC. A tri cluster chip may prefer a wider pool, which is why the benchmark decides it, not an assumption. |
 | A developer can reproduce or challenge any of it | The app runs the ablation and exports every pass to CSV. Each arm logs the CPU mask the kernel actually applied, so a failed pin cannot pass as "pinning earns nothing". The device card's optimization indicator shows which Arm levers are live on the phone in hand. | A matching device and model are needed for a direct numerical comparison. |
+| **The speedup does not change the model's output** | Four scheduling arms, one device, greedy decoding at a fixed seed plus per-chunk perplexity. Eight threads against the shipped four - the only pair where ggml's reduction width changes, and the baseline the decode gain is measured from - produced the same 96 tokens byte for byte and the same twelve per-chunk values. Three controls, including one showing the per-chunk series *does* move when batch shape changes rather than thread count. | Not bit-exactness: the series prints to four decimals, and greedy decoding only reveals a perturbation big enough to change an argmax. One device, one model. |
+| **Six of the ten optimizations are platform, not architecture** | Ported the same intent to Apple silicon - also arm64, also big.LITTLE. Core placement, per-core frequency, ADPF hints, energy telemetry, fine thermal data and multi-variant Arm backend dispatch all cease to exist because iOS will not expose them. Measured on two iPhones: the runtime picks **one** thread, and a second costs +16.8% and +11.4%. KleidiAI still pays (1.089x, 1.045x). | Different runtime and model from the Android record (ONNX int8, not llama.cpp GGUF), so the two are never compared numerically. Two devices, one workload. |
 
 This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has the full record, the graphs, and the limits.
 
@@ -199,6 +201,7 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 | apk | Debug and release signed APKs |
 | benchmarks | Current app measurement, historical command line results and raw records |
 | quant-lab | Quantization quality lab and the output equivalence measurement: the runners, `RESULTS.md`, and every raw output they produced |
+| ios | The Apple silicon control: a SwiftUI port of the benchmark's structure, its two builds, and the reason its workload is synthetic |
 | docs | Architecture, build instructions, optimization details and contributor guidance |
 | releases | Release notes for every version |
 | scripts | Termux benchmark and chat helpers |
@@ -216,9 +219,10 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 6. [Reproducibility](benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
 7. [Runtime comparisons](benchmarks/COMPARISONS.md): a fair upstream llama.cpp baseline and the requirements for any ExecuTorch or MLC-LLM claim.
 8. [Quantization and output equivalence lab](quant-lab/RESULTS.md): what each quantization costs in quality, and the measurement showing the scheduling speedups leave the model's output unchanged - four arms, three controls, raw files included.
-9. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
-10. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
-11. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
+9. [Arm against Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md): six of ENTITY's ten optimization mechanisms cannot exist on a platform that is also arm64 - measured on two iPhones, including a thread sweep where the second thread is a straight loss.
+10. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
+11. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
+12. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
 
 ## License
 

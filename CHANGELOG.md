@@ -9,6 +9,40 @@ From v1.7.0 onward a release-signed APK is published per release (debug builds t
 beat is **Arm's own AI Chat** (`com.arm.aichat`); ENTITY adds device-specific big.LITTLE tuning and a
 tokens-per-watt efficiency axis AI Chat doesn't measure.
 
+## [Unreleased]
+
+**Two questions the project had never answered: does going faster change the answer, and how much
+of the speedup is Arm-the-architecture rather than Arm-the-platform?** Neither is a feature. Both
+are measurements, and one of them needed a second arm64 platform to make.
+
+### Added
+
+- **Output equivalence measurement** (`quant-lab/`). Every published speedup comes from changing how
+  work is scheduled, and ggml splits a row's dot product across threads — so the thread count fixes
+  the order of a floating-point reduction, and floating-point addition is not associative. Four arms
+  on a Dimensity 7300, greedy decoding at a fixed seed plus per-chunk perplexity over wikitext-2.
+  Eight threads against the shipped four produced the same 96 tokens byte for byte and the same
+  twelve per-chunk values. Three controls, the third of which shows the per-chunk series *does* move
+  — by two parts in ten thousand — when batch shape changes rather than thread count. Raw outputs
+  committed; verifiable with `cmp` and no device.
+- **Apple silicon portability analysis** (`docs/PORTABILITY-ARM-VS-APPLE-SILICON.md`). Six of
+  ENTITY's ten optimization mechanisms cannot be reproduced on a platform that is also arm64: core
+  placement, per-core frequency, ADPF hints, energy telemetry, fine-grained thermal data, and
+  multi-variant v8.0–v9.2 backend dispatch. Two of them — thread count and adaptive context — are
+  *better* on iOS. Measured on an iPhone 16 and an iPhone 17 Pro Max with a real ONNX int8 workload:
+  the runtime settles on **one** thread, and adding a second costs 16.8% and 11.4%. KleidiAI still
+  earns 1.089× and 1.045×. The base iPhone 16 is faster than the 17 Pro Max at peak and 11% slower
+  after six sustained windows.
+- **iOS artifacts** (`ios/`, `benchmarks/results/ios/`). SwiftUI port of the benchmark's structure,
+  both builds, and every raw export from three iPhones.
+
+### Notes
+
+- The iOS SwiftUI benchmark runs a synthetic Accelerate workload, not inference, and its
+  `power_w_est` column is a hardcoded constant per arm. Both facts are stated in its own README and
+  in the results README; neither number is quoted as evidence anywhere in this repository. iOS
+  exposes no battery current, so tokens-per-watt remains an Android-only claim.
+
 ## [3.7.0] - 2026-08-08
 
 **Recommending a model used to mean guessing, and reading an answer's cost was impossible.** The
