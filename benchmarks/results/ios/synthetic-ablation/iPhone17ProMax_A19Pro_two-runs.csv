@@ -1,0 +1,8 @@
+run,arm,repetitions,decode_tok_s,decode_stddev,prompt_tok_s,prompt_stddev,ttft_ms,power_w_est,tok_per_watt,app_cpu_pct,thermal_start,thermal_peak,ram_mb
+1,Naive,3,362.10,5.89,424.66,11.64,1208.4,4.00,90.53,600.0,nominal,nominal,77.3
+1,Threads Only,3,209.69,9.10,236.41,24.74,2170.2,2.20,95.31,300.0,nominal,nominal,76.8
+1,Entity Auto,3,214.16,3.25,259.23,3.94,1979.8,3.10,69.08,300.0,nominal,nominal,76.8
+1,Efficiency,3,50.95,0.35,52.44,0.91,9782.0,1.15,44.30,300.0,nominal,nominal,76.8
+2,Naive,3,354.56,9.35,416.55,16.10,1231.8,4.00,88.64,600.0,nominal,nominal,69.4
+2,Threads Only,3,214.88,2.84,257.64,10.43,1991.9,2.20,97.67,300.0,nominal,nominal,69.5
+2,Entity Auto,3,211.42,3.00,256.16,7.78,2003.4,3.10,68.20,300.0,nominal,nominal,69.7

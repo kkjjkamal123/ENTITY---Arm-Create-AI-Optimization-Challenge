@@ -1,0 +1,4 @@
+arm,repetitions,decode_tok_s,decode_stddev,prompt_tok_s,prompt_stddev,ttft_ms,power_w_est,tok_per_watt,app_cpu_pct,thermal_start,thermal_peak,ram_mb
+Naive,3,387.55,8.90,492.59,19.32,1041.9,4.00,96.89,600.0,nominal,nominal,52.0
+Threads Only,3,283.37,5.50,350.01,11.65,1466.4,2.20,128.80,300.0,nominal,nominal,52.4
+Entity Auto,3,283.55,4.71,345.40,15.29,1485.9,3.10,91.47,300.0,nominal,nominal,52.5
