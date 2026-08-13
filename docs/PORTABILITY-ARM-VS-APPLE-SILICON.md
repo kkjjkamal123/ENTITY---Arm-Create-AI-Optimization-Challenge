@@ -1,7 +1,13 @@
 # Portability: Arm/Android against Apple silicon
 
-**Six of ENTITY's ten optimization mechanisms cannot be reproduced on Apple silicon — a
+**Six of ENTITY's ten optimization mechanisms are removed or crippled on Apple silicon — a
 platform that is also arm64.**
+
+Four cease to exist outright: per-core frequency observability, ADPF deadline hints, energy
+telemetry, and multi-variant Arm v8.0–v9.2 backend dispatch. Two survive only in a degraded
+form: core placement becomes a QoS *request* that cannot be verified or read back, and
+thermal detail collapses from a temperature to four coarse levels. That distinction matters,
+and the rest of this document keeps it.
 
 That sentence is the point of this document, and it is a measurement rather than a
 complaint. Every speedup this project publishes comes from reading and steering the
@@ -25,17 +31,34 @@ steer any of it.
 | 4 | ADPF performance hints | `APerformanceHint` deadline declaration per decode step | no equivalent public API | **removed** |
 | 5 | Thermal policy | thermal status callback + battery temperature | `ProcessInfo.thermalState`, four coarse levels | **ports, degraded** |
 | 6 | Energy telemetry | `BATTERY_PROPERTY_CURRENT_NOW` × voltage, integrated over the pass | no public current or voltage API; `batteryLevel` quantized to 5% | **removed** |
-| 7 | Adaptive context | context sized from system free memory | `os_proc_available_memory()` — per-process, the number that actually matters | **improves** |
+| 7 | Adaptive context | context sized from system free memory | `os_proc_available_memory()` exists and is the better input — per-process rather than system-wide | **could improve; the port does not yet use it** |
 | 8 | Multi-variant CPU backends | seven ggml `.so` variants, v8.0 → v9.2, `dlopen`'d at startup | code outside the signed bundle cannot be loaded | **collapses to one static build** |
 | 9 | KleidiAI advisor | GGUF header read, quant type → kernel eligibility | pure logic, no platform dependency | **ports cleanly** |
-| 10 | Model-fit catalog | free RAM against model size | ports, with hard per-app jetsam limits instead of advisory ones | **ports, with a new hazard** |
+| 10 | Model-fit catalog | free RAM against model size | ports, but iOS memory limits are hard and per-app rather than advisory | **ports, with a new hazard the port has not yet handled** |
 
-Removed or crippled: 1, 3, 4, 5, 6, 8. Six of ten.
+Removed outright: 3, 4, 6, 8. Degraded to something weaker: 1 and 5. Six of ten either way,
+and the two categories should not be blurred — a QoS request is not nothing, it is just not
+verifiable.
 
-Note which ones improve. This is not an argument that Apple silicon is worse — items 2 and 7
-are *better* on iOS, because Apple reports P-core count and per-process memory headroom
-directly instead of making you infer them from `/sys`. The asymmetry is specifically about
-**steering and observing**, not about capability.
+Note which ones improve. This is not an argument that Apple silicon is worse. Item 2 is
+strictly *better* on iOS: `hw.perflevel0.logicalcpu` reports the P-core count exactly, where
+Android has to parse `cpuinfo_max_freq` per core and count what falls within 10% of the
+fastest — a heuristic this project has already had to correct once. Item 7 could be better
+for the same reason, though as noted the shipped port has not taken it up.
+
+The asymmetry is specifically about **steering and observing**, not about capability.
+
+### What the shipped port actually does, versus what it could
+
+Two rows above describe an opportunity rather than an implementation, and the difference is
+worth stating rather than leaving a reader to discover it in the source.
+
+`Telemetry.availableMemoryMB()` wraps `os_proc_available_memory()`, but the model catalog
+calls `fitTag(physicalMemoryGB:)`, which divides by `ProcessInfo.physicalMemory` — total
+installed RAM. So on an 8 GB iPhone a profile is judged against 8 GB when the process may be
+jetsammed well below that. The Android original reads *free* memory and is more careful here.
+This is the one place where the port is behind the thing it ports, and it is listed among the
+known defects in [`../ios/README.md`](../ios/README.md).
 
 ## What the hardware says about itself
 
@@ -57,7 +80,7 @@ there is exactly one binary and no runtime variant selection to perform.
 ## What the measurements show
 
 Real inference: an ONNX Runtime 1.27.0 English→Hindi translation build, int8 encoder and
-decoder, 285 MB of staged weights with SHA-256 recorded per file, 30 counterbalanced
+decoder, 285,230,912 bytes of staged weights with SHA-256 recorded per file, 30 counterbalanced
 iterations after 5 warmup rounds, two sentence lengths. Raw exports:
 [`benchmarks/results/ios/onnx/`](../benchmarks/results/ios/onnx/).
 
@@ -157,12 +180,18 @@ software is designed for the *specific* silicon underneath it rather than treate
 desktop. The strongest possible test of that claim is to take the same intent to arm64
 hardware that refuses to be steered, and see what survives.
 
-What survived: the quantization advisor, the model-fit logic, and KleidiAI — all of which
-are about *choosing well in advance*. What died: every mechanism that involves telling the
-hardware what to do at runtime, or watching what it did.
+What survived: the quantization advisor, the model-fit logic, and KleidiAI — all of which are
+about *choosing well in advance*. What died or was blunted: every mechanism that involves
+telling the hardware what to do at runtime, or watching what it did. Core placement is the
+clearest case. It did not disappear — QoS is a real lever, and the efficiency arm genuinely
+confines work to the E-cores. What disappeared is the *verification*: Android reads back the
+CPU mask the kernel actually applied, so a silently-failed pin cannot masquerade as "pinning
+earns nothing". On iOS there is no equivalent read-back, so the same experiment cannot
+distinguish a placement that failed from a placement that did not help.
 
-Sixty percent of the optimization surface was platform, not architecture. That number is the
-honest scope of the thesis, and it took a second arm64 platform to measure it.
+Four of ten mechanisms are gone outright and two more survive only as unverifiable requests.
+That is the honest scope of the thesis — the share of ENTITY's advantage that is Android
+exposing arm64 rather than arm64 itself — and it took a second arm64 platform to measure it.
 
 ---
 

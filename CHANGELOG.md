@@ -26,13 +26,15 @@ are measurements, and one of them needed a second arm64 platform to make.
   — by two parts in ten thousand — when batch shape changes rather than thread count. Raw outputs
   committed; verifiable with `cmp` and no device.
 - **Apple silicon portability analysis** (`docs/PORTABILITY-ARM-VS-APPLE-SILICON.md`). Six of
-  ENTITY's ten optimization mechanisms cannot be reproduced on a platform that is also arm64: core
-  placement, per-core frequency, ADPF hints, energy telemetry, fine-grained thermal data, and
-  multi-variant v8.0–v9.2 backend dispatch. Two of them — thread count and adaptive context — are
+  ENTITY's ten optimization mechanisms are removed or crippled on a platform that is also arm64.
+  Four are gone outright: per-core frequency, ADPF hints, energy telemetry, and multi-variant
+  v8.0–v9.2 backend dispatch. Two survive degraded: core placement becomes a QoS request that
+  cannot be read back, and thermal detail collapses to four coarse levels. One — thread count — is
   *better* on iOS. Measured on an iPhone 16 and an iPhone 17 Pro Max with a real ONNX int8 workload:
   the runtime settles on **one** thread, and adding a second costs 16.8% and 11.4%. KleidiAI still
-  earns 1.089× and 1.045×. The base iPhone 16 is faster than the 17 Pro Max at peak and 11% slower
-  after six sustained windows.
+  earns 1.089× and 1.045×. The base iPhone 16 is faster than the 17 Pro Max at peak (76.7 against
+  74.0 tok/s) and then loses that lead: across six sustained windows it degrades 11% against its own
+  first window while the Pro Max holds flat, ending 4.3% behind it.
 - **iOS artifacts** (`ios/`, `benchmarks/results/ios/`). SwiftUI port of the benchmark's structure,
   both builds, and every raw export from three iPhones.
 
