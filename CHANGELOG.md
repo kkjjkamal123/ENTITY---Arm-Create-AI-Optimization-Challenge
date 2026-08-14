@@ -45,6 +45,61 @@ are measurements, and one of them needed a second arm64 platform to make.
   in the results README; neither number is quoted as evidence anywhere in this repository. iOS
   exposes no battery current, so tokens-per-watt remains an Android-only claim.
 
+## [3.7.1] - 2026-08-14
+
+**A full-repo review over ~131k lines produced fifteen findings; this is those fixes.** No features.
+Ten were in this app, six in Bench (some shared), one in iOS. Fifteen new tests cover the ones with
+a testable seam. Same signing certificate as 3.7.0, so upgrading is in-place and conversations
+survive.
+
+### Fixed
+
+- **Heap overflow in `benchModel()`.** `g_batch` holds 512 slots and is never resized; the benchmark
+  filled it with caller-supplied `pp` and `pl` entries with no bound, unlike
+  `decode_tokens_in_batches` which chunks by `BATCH_SIZE`. The shipped UI passes exactly 512, so
+  nothing was corrupt in practice - but it is a public JNI entry point. Out-of-range arguments are
+  now rejected rather than clamped: a benchmark that silently measures a smaller workload reports a
+  number for a configuration nobody asked for.
+- **Null dereference on `GetStringUTFChars`.** It allocates, so it fails under exactly the memory
+  pressure a model load creates, returning `nullptr` with an OOM already pending. Four call sites
+  passed that to a `std::string` constructor - undefined behaviour, and a process death where a
+  recoverable error was available. One helper now covers all four and leaves the exception pending
+  for Java to see.
+- **Token positions past the end of the KV cache.** `shift_context()` frees half of what lies between
+  the system prompt and the current position, so it frees nothing when they are adjacent - the state
+  a system prompt near `max_batch_size` produces. Both callers ignored the result and decoded
+  anyway. Both now re-check and stop.
+- **GGUF header counts truncated silently.** Every count and length in the header is 64-bit and every
+  loop is `Int`-driven; the conversions were bare `toInt()`, and 2^32 truncates to 0. A corrupt
+  header reported zero pairs or a zero-element array having consumed none of the real bytes, and
+  everything after it parsed from the wrong offset with no exception. Worst case was the
+  skipped-string branch, where a negative length meant `skipFully` skipped nothing and the whole
+  tensor table was read from the wrong place. All four now go through one checked narrowing that
+  names the field.
+- **A stopped answer was stored as a finished one.** Tapping Stop still wrote the partial text as an
+  ordinary assistant turn, which then came back as context and taught the model to stop mid-sentence.
+  Messages carry a `truncated` flag (**database migration v2 to v3**); the text is still saved and
+  rendered as generated, but the copy replayed to the model is annotated.
+- **A failed memory query read as a large phone.** `ActivityManager` returns 0 or negative on some
+  devices and `assess()` answered OK for everything, skipping the size check, so `recommended()`
+  offered the largest 7.62B / 4.4 GB model to a device whose free memory was unreadable. It now sizes
+  against a conservative assumed 1.5 GB, so every existing rule still applies and only the source of
+  the number differs - the recommendation moves to 1.07 GB.
+- **LaTeX escapes were eaten.** A backslash before a non-letter is an escape, not a macro, and the
+  fallback consumed both characters while appending nothing, so an escaped brace lost its braces and
+  a forced space merged the two sides together.
+- **A double tap could corrupt a download.** Two overlapping calls for the same entry both opened a
+  stream on the same `.part`; the interleaved result can still hit the expected length by
+  coincidence, and length is the only completeness check. One lock per catalog entry, with the second
+  caller waiting and re-checking the finished file.
+
+### Added
+
+- 13 unit tests (85 total, from 72): `GgufHeaderBoundsTest` builds real corrupt headers and asserts
+  each throws, plus a well-formed fixture proving a skipped key advances by exactly its own length;
+  five LaTeX escape cases; the unknown-free-memory catalog case. The parity fixture holding the
+  site's predictor to `DeviceProbe.kt` gained an `unknown-free-memory` profile.
+
 ## [3.7.0] - 2026-08-08
 
 **Recommending a model used to mean guessing, and reading an answer's cost was impossible.** The
@@ -1224,6 +1279,8 @@ that made larger models fail to load and made the model reply with robotic sound
 
 | Version | APK (in `apk/`) |
 |---|---|
+| 3.7.1 | `ENTITY-v26-review-fixes-20260814-release.apk` (release-signed, ~10.0 MB) |
+| 3.7.0 | `ENTITY-v25-device-probe-20260808-release.apk` (release-signed, new cert, ~10.0 MB) |
 | 3.6.2 | `ENTITY-v24-entity-identity-prompt-20260724-release.apk` (release-signed, ~10 MB) |
 | 3.6.1 | `ENTITY-v23-repeat-penalty-20260724-release.apk` (release-signed, ~10 MB) |
 | 3.6.0 | `ENTITY-v22-adpf-power-fix-20260723-release.apk` (release-signed, ~10 MB) |

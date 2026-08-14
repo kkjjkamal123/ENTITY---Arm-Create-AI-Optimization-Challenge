@@ -46,8 +46,8 @@ android {
         minSdk = 33
         targetSdk = 36
 
-        versionCode = 12
-        versionName = "2.2.0"
+        versionCode = 13
+        versionName = "2.2.1"
 
         buildConfigField("String", "RESULTS_ENDPOINT",
             "\"${resultsProperties.getProperty("RESULTS_ENDPOINT", "")}\"")

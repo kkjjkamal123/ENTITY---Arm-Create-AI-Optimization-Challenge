@@ -1,6 +1,6 @@
 # ENTITY v3.7.0 - predicting a model before downloading it
 
-**Status: source-tagged, APK not yet published.** versionCode 22. Unit tests pass (72).
+**Status: released** as `apk/ENTITY-v25-device-probe-20260808-release.apk`. versionCode 22. Unit tests pass (72). Superseded by [v3.7.1](RELEASE-v3.7.1.md).
 
 ## Read this before upgrading: the signing key changed
 

@@ -17,7 +17,8 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-v25-device-probe-20260808-release.apk` | **3.7.0** (current) | release-signed, **new cert** | 10.0 MB |
+| `ENTITY-v26-review-fixes-20260814-release.apk` | **3.7.1** (current) | release-signed | 10.0 MB |
+| `ENTITY-v25-device-probe-20260808-release.apk` | 3.7.0 | release-signed, **new cert** | 10.0 MB |
 | `ENTITY-v24-entity-identity-prompt-20260724-release.apk` | 3.6.2 | release-signed | 10 MB |
 | `ENTITY-v23-repeat-penalty-20260724-release.apk` | 3.6.1 | release-signed | 10 MB |
 | `ENTITY-v22-adpf-power-fix-20260723-release.apk` | 3.6.0 | release-signed | 10 MB |
@@ -54,7 +55,8 @@ One prebuilt debug or release-signed APK per version, ready to install on any ar
 
 | File | Version | Build | Size |
 |---|---|---|---|
-| `ENTITY-Bench-v2.2.0-release.apk` | **2.2.0** (current) | release-signed, **new cert** | 9.9 MB |
+| `ENTITY-Bench-v2.2.1-release.apk` | **2.2.1** (current) | release-signed | 9.9 MB |
+| `ENTITY-Bench-v2.2.0-release.apk` | 2.2.0 | release-signed, **new cert** | 9.9 MB |
 | `ENTITY-Bench-v2.1.1-release.apk` | 2.1.1 | release-signed | 9.9 MB |
 | `ENTITY-Bench-v2.1.0-release.apk` | 2.1.0 | release-signed | 9.9 MB |
 | `ENTITY-Bench-v2.0.0-release.apk` | 2.0.0 | release-signed | 9.9 MB |

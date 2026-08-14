@@ -1,6 +1,6 @@
 # ENTITY Bench v2.2.0 - the catalog, brought level with chat
 
-**Status: source-tagged, APK not yet published.** versionCode 12. Unit tests pass.
+**Status: released** as `apk/ENTITY-Bench-v2.2.0-release.apk`. versionCode 12. Unit tests pass. Superseded by [v2.2.1](RELEASE-Bench-v2.2.1.md).
 
 **The signing key changed.** Same cause as chat v3.7.0 - the keystore used for prior releases was
 lost and cannot be reissued ([`docs/JOURNEY.md`](../docs/JOURNEY.md) §11). Installing fresh is
