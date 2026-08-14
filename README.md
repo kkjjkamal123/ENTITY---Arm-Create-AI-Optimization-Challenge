@@ -74,6 +74,30 @@ ENTITY Bench ships a one tap **Contribute** action. A finished ablation - summar
 | | **26 / 26** improved decode | median **1.78x**, range 1.34x to 4.27x |
 | | **20 / 26** power valid | the rest were charging, so their watts are the charger's |
 
+```mermaid
+flowchart LR
+    subgraph phone["On the contributor's phone"]
+        A["Ablation finishes<br/>4 arms x N passes"] --> B["Summary stats per arm<br/>median, sd, TTFT, watts"]
+        B --> C{"Contribute<br/>switched on?"}
+        C -->|"No, the default"| D["Stays on device.<br/>Nothing queued."]
+        C -->|"Yes"| E["Settings shows the<br/>exact JSON body first"]
+        E --> F["Fresh random UUID<br/>per submission"]
+    end
+
+    F -->|"HTTPS POST<br/>Prefer: return=minimal"| G
+
+    subgraph server["No server code exists"]
+        G["PostgREST"] --> H["Row level security<br/>anon: INSERT + SELECT only"]
+        H --> I[("public.bench_results<br/>one Postgres table")]
+    end
+
+    I --> J["Leaderboard on the site"]
+    I --> K["benchmarks/results/*.csv"]
+
+    F -.->|"offline or failed"| L["Queued on disk,<br/>retried next launch"]
+    L -.-> G
+```
+
 **Why this is the strongest evidence in the project.** A cross device table assembled from phones the author owns cannot separate the optimization from the hardware it was tuned on. These 13 devices were configured by strangers, in their own rooms, at their own starting temperatures, and the decode gain survived every one of them. The two prompt regressions survived too, and are published rather than dropped.
 
 **What is sent, and what is not.** Contribution is **off until someone turns it on** - there is no first run upload and no "anonymous statistics" default. Settings renders the exact JSON body verbatim before the first send. Each submission carries a **fresh random UUID** used only to drop duplicates, so no two runs from one phone can be linked. The payload is device model, SoC, CPU flags, core topology, model file and the per arm medians. No account, no advertising ID, no location, no chat content - the chat app has no network permission at all.
@@ -110,6 +134,57 @@ Raw exports live in [`benchmarks/results/`](benchmarks/results/); the table defi
 | Chat | Benchmark | Settings |
 |---|---|---|
 | ![ChatN](screenshots/Entity%20Chat/ChatN.png) | ![BenchmarkN](screenshots/Entity%20Chat/BenchmarkN.png) | ![SettingsN](screenshots/Entity%20Chat/SettingsN.png) |
+
+---
+
+## How ENTITY decides
+
+No vendor table, no device allowlist, no cloud lookup. The runtime reads the kernel's own view of the silicon it woke up on and derives a policy in about 60 ms.
+
+```mermaid
+flowchart TD
+    A["App start"] --> B["Probe the silicon<br/>/sys/devices/system/cpu/*"]
+    B --> C["cpuinfo_max_freq<br/>per core clock"]
+    B --> D["cpu_capacity<br/>kernel DMIPS estimate"]
+    B --> E["/proc/cpuinfo flags<br/>dotprod, i8mm, fp16, sve"]
+    B --> F["MemoryInfo.availMem<br/>free RAM, not installed"]
+
+    C --> G["build_fast_cpu_set&#40;&#41;<br/>rank online cores by clock"]
+    D --> H["prompt_thread_count&#40;&#41;<br/>rank by capacity"]
+    E --> I["ggml_backend_score&#40;&#41;<br/>pick 1 of 7 CPU backends"]
+    F --> J["ModelCatalog.fit&#40;&#41;<br/>ROOMY / TIGHT / NO"]
+
+    I --> K{"Which phase?"}
+    G --> K
+    H --> K
+
+    K -->|"Prefill<br/>compute bound<br/>I = 1643"| L["Wide: capacity ranked set<br/>KleidiAI GEMM if Q4_0 / Q8_0"]
+    K -->|"Decode<br/>bandwidth bound<br/>I = 3.21"| M["Narrow: clock ranked set<br/>re-pin at every entry point"]
+
+    L --> N["ADPF hint session<br/>report real step duration"]
+    M --> N
+    N --> O["Every 8th token:<br/>thermal check, 0 / 6 / 12 ms yield"]
+    J --> P["Recommend a model<br/>that fits free RAM"]
+```
+
+The two branches out of **Which phase?** are the whole idea. Prefill and decode are not the same workload wearing different hats, and the arithmetic says so before any benchmark does.
+
+### The arithmetic, with the constants you can check
+
+Arithmetic intensity is FLOPs performed per byte moved. A matmul against the full weight set does **2P** FLOPs per token for **P** parameters, and must read **B** bytes of weights regardless of how many tokens it is processing. So for a batch of **N** tokens:
+
+$$I = \frac{2PN}{B} \qquad\text{giving}\qquad \frac{I_{\text{prefill}}}{I_{\text{decode}}} = N$$
+
+Decode is the `N = 1` case. Both constants quoted in the flowchart come from two fields of the shipping catalog entry for Llama 3.2 1B Q4_0 in [`ModelCatalog.kt`](app/entity.bench.android/app/src/main/java/com/entity/bench/ModelCatalog.kt) - `1.24` billion parameters and `773_025_920` bytes:
+
+| Phase | Substitution | Result |
+|---|---|---:|
+| Decode, `N = 1` | `2 x 1.24e9 / 773,025,920` | **3.21** FLOP/byte |
+| Prefill, `N = 512` | `512 x 3.21` | **1643** FLOP/byte |
+
+**A 512x ratio between two phases of the same model is why one policy cannot serve both.** Prefill sits far to the right of any Arm CPU's roofline ridge point, so it is compute bound and wants every core that can retire a MAC - which is why the prefill width is derived from `cpu_capacity`, and why KleidiAI's INT8 GEMM shows up as **+379% prompt** on the ISA ladder and **nothing** on decode. Decode at 3.21 sits far to the left: it is bandwidth bound, the weights must cross the bus once per token no matter what, and adding cores past the point where the bus saturates buys queueing rather than throughput. That is the measured `-` in "eight threads on a 4+4 phone let the Cortex A55s gate every decode step".
+
+This is also the falsifiable part. If decode were compute bound, widening it would help, and the naive 8-thread arm would beat Auto's 4. It loses on all 13 contributed devices.
 
 ---
 
