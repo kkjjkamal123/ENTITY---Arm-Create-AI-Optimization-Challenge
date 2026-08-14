@@ -1,23 +1,40 @@
 <div align="center">
 
-<img src="Icons/Whitebg_icon.png" width="25%" alt="ENTITY icon">
+<img src="Icons/Whitebg_icon.png" width="18%" alt="ENTITY">
 
-# ENTITY: adaptive on device LLM runtime for Arm phones
+# ENTITY
 
-**Fully offline Android chat that tunes llama.cpp to the Arm CPU in the phone.**
+<b>An offline LLM runtime that tunes itself to the Arm CPU in your phone.</b>
 
-[Watch the demo](https://youtu.be/ZD_jpyBqkF8) · [View the source on GitHub](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge) · [Read the complete Arm Create submission](github.md)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue)](LICENSE)
+[![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)](#quick-start)
+[![Release](https://img.shields.io/github/v/release/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge)](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge/releases)
+[![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)](docs/KLEIDIAI-QUANTS.md)
+[![Upstream](https://img.shields.io/badge/llama.cpp%20PR%20%2325701-merged-brightgreen)](https://github.com/ggml-org/llama.cpp/pull/25701)
 
-![License](https://img.shields.io/badge/license-Apache--2.0-blue)
-![Platform](https://img.shields.io/badge/platform-arm64--v8a%20%7C%20Android%2013%2B-green)
-![Release](https://img.shields.io/badge/release-v3.6.2-orange)
-![Backend](https://img.shields.io/badge/llama.cpp-KleidiAI-red)
+[demo](https://youtu.be/ZD_jpyBqkF8) / [evidence](#evidence-at-a-glance) / [dataset](#the-dataset) / [benchmarks](benchmarks/BENCHMARKS.md) / [ledger](docs/LEDGER.md) / [limitations](#known-limitations) / [submission](github.md)
 
 </div>
 
-## Navigation
+## Quick start
 
-[Home](README.md) · [The dataset](#the-dataset) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [Ledger](docs/LEDGER.md) · [Limitations](#known-limitations) · [Quantization quality](docs/QUANTIZATION-QUALITY.md) · [Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
+Install the signed APK on any arm64 phone running Android 13 or later:
+
+```bash
+git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
+cd ENTITY---Arm-Create-AI-Optimization-Challenge
+adb install -r apk/ENTITY-v26-review-fixes-20260814-release.apk
+```
+
+Or take the APK straight from the [releases page](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge/releases/latest), which also carries **ENTITY Bench**, the standalone benchmark app.
+
+Then, on the phone:
+
+1. Tap the model line in the header. **Download a model...** picks from a catalog tagged for your phone; **Import from device...** takes a GGUF you already have - for example [Llama-3.2-1B-Instruct-Q4_0.gguf](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF). Prefer a **Q4_0** build: it is one of only two quantizations Arm's KleidiAI kernels accelerate ([why](docs/KLEIDIAI-QUANTS.md)).
+2. Leave **Auto** enabled so the runtime derives thread count, core placement and context from the silicon it finds.
+3. Open **BENCHMARK** from the drawer to run the three arm ablation on the loaded model. **Unplug first** - power and tokens per watt are only reported on battery, because a charging phone reports the charger's current rather than the workload's.
+
+Building from source needs the exact SDK, NDK, CMake and JDK versions in [BUILD](docs/BUILD.md). The release build is arm64 only and ships all seven CPU backend variants.
 
 ## What ENTITY is
 
@@ -116,37 +133,6 @@ flowchart LR
 
 Raw exports live in [`benchmarks/results/`](benchmarks/results/); the table definition is [`benchmarks/contribute-schema.sql`](benchmarks/contribute-schema.sql) and the backend write up is [`benchmarks/CONTRIBUTE-BACKEND.md`](benchmarks/CONTRIBUTE-BACKEND.md).
 
-## Features
-
-1. Fully offline chat with Llama 3.2 1B, Llama 3.2 3B and other runnable GGUF models.
-2. In app model import through Android Storage Access Framework.
-3. Streaming replies with Stop, New chat, Markdown rendering, Copy and Regenerate.
-4. Persistent local conversations with restore, rename, switch and delete actions.
-5. Auto mode plus manual controls for temperature, top k, top p, completion length, context and threads.
-6. Live statistics and a selectable graph for token count, token rate, TTFT, temperature, power, app CPU utilization and free memory.
-7. In app benchmark with a three arm ablation (naive, threads only, Auto), three run median, population standard deviation, thermal cooldown, decode attribution and CSV export. Every finished run is saved on the phone automatically, with a history screen to reopen, copy, re-export or delete any past run.
-8. One tap opt in contribution in ENTITY Bench: a finished ablation posts to the public dataset described in [The dataset](#the-dataset), which is how the decode claim was tested on 13 devices the author does not own.
-9. Light, dark and system themes plus a theme aware app icon.
-10. GGUF model information including parameters, quantization, architecture and running context.
-
----
-
-## Screenshots (Version <= 2.4.0)
-
-| Chat | Benchmark | Settings |
-|---|---|---|
-| ![Chat](screenshots/Entity%20Chat/ChatOld.png) | ![Benchmark](screenshots/Entity%20Chat/BenchmarkOld.png) | ![Settings](screenshots/Entity%20Chat/SettingsOld.png) |
-
----
-
-## Screenshots (Version > 3.0.0)
-
-| Chat | Benchmark | Settings |
-|---|---|---|
-| ![ChatN](screenshots/Entity%20Chat/ChatN.png) | ![BenchmarkN](screenshots/Entity%20Chat/BenchmarkN.png) | ![SettingsN](screenshots/Entity%20Chat/SettingsN.png) |
-
----
-
 ## How ENTITY decides
 
 No vendor table, no device allowlist, no cloud lookup. The runtime reads the kernel's own view of the silicon it woke up on and derives a policy in about 60 ms.
@@ -208,7 +194,7 @@ This is also the falsifiable part. If decode were compute bound, widening it wou
 
 ---
 
-## Current in app benchmark
+## Benchmarks
 
 The benchmark runs a synthetic PP 512 / TG 128 workload on the loaded model, on an unplugged phone, with a thermal cooldown before every pass. It runs three arms, not two, so the result can be attributed rather than assumed: naive (8 threads, all cores), threads only (Auto's thread count with core pinning switched off, which is what an upstream `llama.cpp -t N` run does), and ENTITY Auto.
 
@@ -304,24 +290,43 @@ Decode is where the thread count policy acts and where the margin is. The prompt
 
 The same three apps were measured on 2026-07-14 and the repeat did not agree with it. PocketPal and Arm swapped places on decode, and ENTITY's prompt margin over Arm narrowed from 11% to 6%. Both sessions are published with their dates, because PocketPal's decode swinging about 27% between sessions on identical hardware, while Arm's held within about 4%, is exactly why a figure from one session must never be paired with a figure from another. Full setup, both sessions, screenshots and caveats: [competitor comparison](benchmarks/competitor-comparison/README.md).
 
-## Get started
+## Features
 
-Ninety seconds from clone to chatting, on any arm64 phone with Android 13+:
+1. Fully offline chat with Llama 3.2 1B, Llama 3.2 3B and other runnable GGUF models.
+2. In app model import through Android Storage Access Framework.
+3. Streaming replies with Stop, New chat, Markdown rendering, Copy and Regenerate.
+4. Persistent local conversations with restore, rename, switch and delete actions.
+5. Auto mode plus manual controls for temperature, top k, top p, completion length, context and threads.
+6. Live statistics and a selectable graph for token count, token rate, TTFT, temperature, power, app CPU utilization and free memory.
+7. In app benchmark with a three arm ablation (naive, threads only, Auto), three run median, population standard deviation, thermal cooldown, decode attribution and CSV export. Every finished run is saved on the phone automatically, with a history screen to reopen, copy, re-export or delete any past run.
+8. One tap opt in contribution in ENTITY Bench: a finished ablation posts to the public dataset described in [The dataset](#the-dataset), which is how the decode claim was tested on 13 devices the author does not own.
+9. Light, dark and system themes plus a theme aware app icon.
+10. GGUF model information including parameters, quantization, architecture and running context.
 
-```bash
-git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
-cd ENTITY---Arm-Create-AI-Optimization-Challenge
-adb install -r apk/ENTITY-v24-entity-identity-prompt-20260724-release.apk
-```
+---
 
-Then on the phone:
+## Screenshots
 
-1. Download a model such as [Llama-3.2-1B-Instruct-Q4_0.gguf](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF) (Q4_0 reaches Arm's KleidiAI kernels; see [why](docs/KLEIDIAI-QUANTS.md)).
-2. Open ENTITY and tap the model line in the header. Choose **Download a model...** to pick from a curated catalog tagged for your phone, or **Import from device...** to select a GGUF file you already have.
-3. Leave Auto mode enabled (Settings, in the menu drawer) for device aware CPU and context decisions.
-4. Open BENCHMARK from the menu drawer to run the three arm ablation on the loaded model: the naive default, threads only, and the optimized path. Unplug the phone to see power and tokens per watt.
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/Entity%20Chat/ChatN.png" alt="Chat"><br><i>Chat</i></td>
+    <td align="center"><img src="screenshots/Entity%20Chat/BenchmarkN.png" alt="Benchmark"><br><i>Three arm ablation</i></td>
+    <td align="center"><img src="screenshots/Entity%20Chat/SettingsN.png" alt="Settings"><br><i>Auto mode and manual controls</i></td>
+  </tr>
+</table>
 
-To build from source use the exact Android SDK, NDK, CMake and JDK setup in [BUILD](docs/BUILD.md). The release build is arm64 only and includes all seven CPU backend variants.
+<details>
+<summary>Earlier interface, version 2.4.0 and below</summary>
+
+<table>
+  <tr>
+    <td align="center"><img src="screenshots/Entity%20Chat/ChatOld.png" alt="Chat"><br><i>Chat</i></td>
+    <td align="center"><img src="screenshots/Entity%20Chat/BenchmarkOld.png" alt="Benchmark"><br><i>Benchmark</i></td>
+    <td align="center"><img src="screenshots/Entity%20Chat/SettingsOld.png" alt="Settings"><br><i>Settings</i></td>
+  </tr>
+</table>
+
+</details>
 
 ## Repository guide
 
@@ -373,6 +378,18 @@ Stated here rather than left for a judge to find. Each of these is a live entry 
 | | **The iOS port is a control, not a product** | It exists to test whether these optimizations are Arm specific or Apple silicon portable. Different runtime and model (ONNX int8, not llama.cpp GGUF), so its numbers are never compared numerically against the Android record. |
 
 ---
+
+## Contributing
+
+Issues and pull requests are welcome; conventions are in [CONTRIBUTING](docs/CONTRIBUTING.md).
+
+The most useful contribution is a **benchmark run from a phone this project has never seen**. Install ENTITY Bench, run the ablation unplugged, and tap Contribute. That is how the decode claim came to be tested on 13 devices rather than 2, and every device that disagrees with it is worth more than one that agrees.
+
+## Acknowledgements
+
+- **[llama.cpp](https://github.com/ggml-org/llama.cpp)** and **ggml**, which this project is an optimization layer around rather than a replacement for. A KleidiAI fallback warning from this work is upstream as [PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701).
+- **[Arm KleidiAI](https://gitlab.arm.com/kleidi/kleidiai)** for the Q4_0 and Q8_0 matmul kernels, and for source clear enough to determine exactly which quantizations reach them.
+- **The 13 people who ran the benchmark on their own phones.** The generalization claim in this README is theirs, not mine: it is the only part of the evidence that came from silicon the author has never touched.
 
 ## License
 
