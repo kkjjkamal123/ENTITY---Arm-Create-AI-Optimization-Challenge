@@ -201,7 +201,10 @@ The current benchmark of record is the pair of four arm, five runs per arm ENTIT
 | CMF Phone 1, Dimensity 7300 | 10.8 ± 1.3 | 15.0 ± 0.5 | **18.1 ± 0.4** | 15.0 ± 0.3 | **+39%** | **+21%** |
 | OPPO CPH2729, Snapdragon 6 Gen 4 | 9.7 ± 0.5 | 17.4 ± 0.3 | **17.5 ± 0.2** | 14.3 ± 0.1 | **+80%** | +1% |
 
-![Four-arm decode and efficiency](benchmarks/plots/four_arm_decode_20260718.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="benchmarks/plots/four_arm_decode_20260718-dark.png">
+  <img alt="Four-arm decode and efficiency" src="benchmarks/plots/four_arm_decode_20260718.png">
+</picture>
 
 The thread count is the universal earner. What pinning adds depends on the SoC: decode on the Dimensity (+21%, the pinned and unpinned distributions do not overlap), power on the Snapdragon (2.52 to 1.78 W median, tokens per watt 6.80 to 9.85). And on both phones the LITTLE pinned arm loses on speed and on tok/W - the efficiency cores are not an efficiency win for LLM decode, which is why the affinity policy is measured per device instead of assumed.
 
@@ -216,7 +219,10 @@ The July 2026 three arm record that first split the attribution, CMF Phone 1:
 | Llama 3.2 3B Q4_0, 1 run | 3.1 | 6.0 | 6.8 | **+94%** | +13% |
 | Llama 3.2 3B Q4_0, 1 run | 3.5 | 6.3 | 6.3 | **+81%** | **+0%** |
 
-![Decode attribution](benchmarks/plots/decode_attribution.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="benchmarks/plots/decode_attribution-dark.png">
+  <img alt="Decode attribution" src="benchmarks/plots/decode_attribution.png">
+</picture>
 
 Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode step. Using four threads removes that. In this July record the pinning added nothing measurable - identical 15.9 tok/s medians pinned and unpinned in the repeat set, with the pinned arm's spread collapsing from 1.58 to 0.09, so pinning bought repeatability rather than speed. The 2026-07-18 five run exports above are the current statement - +21% on this same phone, +1% on the OPPO - and the difference between the two records is kept as an open question in [the benchmark record](benchmarks/BENCHMARKS.md). What every set agrees on: the v2.0.0 claim that +121% came from big core affinity was wrong, and ENTITY's own ablation is what proved it.
 
@@ -234,7 +240,10 @@ Same phone, same 512 token prompt, same four thread unpinned config. Only the qu
 
 This isolates the **quantization**, not KleidiAI specifically: moving to Q4_0 switches on both KleidiAI's kernels and ggml's Arm repack path at once, and the split between them has not been measured on this phone. Independent measurements suggest the KleidiAI flag adds little at Q4_0 (its clear win is at Q8_0). See [what this does not attribute](docs/KLEIDIAI-QUANTS.md#what-this-measures-and-what-it-does-not-attribute).
 
-![KleidiAI](benchmarks/plots/kleidiai_prompt_ttft.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="benchmarks/plots/kleidiai_prompt_ttft-dark.png">
+  <img alt="KleidiAI" src="benchmarks/plots/kleidiai_prompt_ttft.png">
+</picture>
 
 Prompt evaluation is a compute bound GEMM, which is what KleidiAI accelerates. Decode is memory bandwidth bound and tracks bytes per weight rather than kernel quality, so it does not improve: Q4_0 is about 6% more bytes and lands slightly slower. Q4_0 is also a quality tradeoff, and the cost is now measured rather than asserted: **+5.6% perplexity against Q4_K_M** on Llama-3.2-1B (15.6159 vs 14.7346, wikitext-2 test, 200 chunks), for 4.5% fewer bytes and a prompt path Q4_K_M cannot reach at all. ENTITY recommends rather than switching silently, and the model card now reports both sides. Full table: [`docs/QUANTIZATION-QUALITY.md`](docs/QUANTIZATION-QUALITY.md).
 
@@ -264,7 +273,10 @@ Same phone, same `Llama-3.2-1B-Instruct-Q4_0`, same PP 512 / TG 128 workload, ea
 | Arm AI Chat (Arm's own app) | 121 tok per s | 12.4 tok per s | not reported |
 | **ENTITY** | **128 tok per s** | **18.2 tok per s** | 4, pinned |
 
-![Competitor comparison](benchmarks/competitor-comparison/three_app_comparison.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="benchmarks/competitor-comparison/three_app_comparison-dark.png">
+  <img alt="Competitor comparison" src="benchmarks/competitor-comparison/three_app_comparison.png">
+</picture>
 
 Against Arm's own reference app, on Arm's own silicon: 6% on prompt and **47% on token generation**. Against PocketPal: 45% and 31%.
 

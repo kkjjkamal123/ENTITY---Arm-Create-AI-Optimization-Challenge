@@ -41,9 +41,7 @@ ARMS = [
     ("efficiency", "Efficiency  (4 thr, LITTLE-pinned)", "#2f9e6f"),
 ]
 
-SURFACE = "#fcfcfb"
-INK = "#0b0b0b"
-INK_MUTED = "#52514e"
+from plot_theme import GRID, INK, INK_MUTED, SURFACE, suffixed
 
 
 def load(path):
@@ -143,7 +141,7 @@ def main():
              "The efficiency arm (LITTLE-cluster pinning) is new in v1.1.0.",
              fontsize=8, color=INK_MUTED, ha="left")
     fig.tight_layout(rect=(0, 0.025, 1, 0.90))
-    fig.savefig(OUT / "four_arm_decode_20260718.png", dpi=150, facecolor=SURFACE)
+    fig.savefig(OUT / suffixed("four_arm_decode_20260718.png"), dpi=150, facecolor=SURFACE)
     print("wrote", OUT / "four_arm_decode_20260718.png")
 
 

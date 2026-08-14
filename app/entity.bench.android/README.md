@@ -76,7 +76,10 @@ The result page prints that split as its headline. The current benchmark of reco
 | CMF Phone 1, Dimensity 7300 | 10.8 ± 1.3 | 15.0 ± 0.5 | **18.1 ± 0.4** | 15.0 ± 0.3 | **+39%** | **+21%** |
 | OPPO CPH2729, Snapdragon 6 Gen 4 | 9.7 ± 0.5 | 17.4 ± 0.3 | **17.5 ± 0.2** | 14.3 ± 0.1 | **+80%** | +1% |
 
-![Four-arm decode and efficiency](../../benchmarks/plots/four_arm_decode_20260718.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="../../benchmarks/plots/four_arm_decode_20260718-dark.png">
+  <img alt="Four-arm decode and efficiency" src="../../benchmarks/plots/four_arm_decode_20260718.png">
+</picture>
 
 The thread count earns the multiplier on both devices. What pinning adds is device dependent: decode on the Dimensity (+21%, non overlapping distributions), power on the Snapdragon (2.52 to 1.78 W median, tok/W 6.80 to 9.85). This same ablation, in its earlier three arm form, is what disproved ENTITY's own "+121% from big core affinity" claim - the July sets read pinning at ~0% and are retained in [the benchmark record](../../benchmarks/BENCHMARKS.md).
 

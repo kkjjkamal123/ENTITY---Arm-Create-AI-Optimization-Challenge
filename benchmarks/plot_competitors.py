@@ -30,9 +30,7 @@ import matplotlib.pyplot as plt
 
 OUT = Path(__file__).parent / "competitor-comparison"
 
-SURFACE = "#fcfcfb"
-INK = "#0b0b0b"
-INK_MUTED = "#52514e"
+from plot_theme import GRID, INK, INK_MUTED, SURFACE, suffixed
 
 # Validated categorical slots: red / yellow / blue.
 # (label, colour, prompt tok/s, decode tok/s, decode sd if the app reports one)
@@ -114,7 +112,7 @@ def main():
              "where the app reports a spread.",
              fontsize=8, color=INK_MUTED)
     fig.subplots_adjust(left=0.07, right=0.98, top=0.84, bottom=0.25, wspace=0.22)
-    fig.savefig(OUT / "three_app_comparison.png", dpi=180, facecolor=SURFACE)
+    fig.savefig(OUT / suffixed("three_app_comparison.png"), dpi=180, facecolor=SURFACE)
     plt.close(fig)
     print(f"wrote {OUT / 'three_app_comparison.png'}")
 

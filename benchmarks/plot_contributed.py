@@ -42,11 +42,7 @@ OUT = HERE / "plots"
 
 # Validated categorical slots 1 and 2 (see the project's chart palette). Checked with the
 # palette validator: adjacent-pair CVD dE 24.7 protan / 32.7 tritan, normal-vision 33.6.
-BLUE = "#2a78d6"
-ORANGE = "#eb6834"
-INK = "#1a1a19"
-MUTED = "#6b6a66"
-GRID = "#e3e2df"
+from plot_theme import BLUE, GRID, INK, MUTED, ORANGE, SURFACE, suffixed
 
 # Its naive arm is unusable (88.5% RSD); see the module docstring.
 NO_STEP1 = {"Samsung SM-S911B"}
@@ -96,7 +92,7 @@ def main():
     fig, (ax1, ax2) = plt.subplots(
         1, 2, figsize=(13.5, 5.4), gridspec_kw={"width_ratios": [1, 1.25]}
     )
-    fig.patch.set_facecolor("white")
+    fig.patch.set_facecolor(SURFACE)
 
     # ---- panel 1: thread count. one series, so no legend - the title names it. --------
     y = range(len(order1))
@@ -179,8 +175,8 @@ def main():
     )
 
     fig.tight_layout(rect=(0, 0.115, 1, 0.945))
-    dst = OUT / "contributed_multidevice.png"
-    fig.savefig(dst, dpi=200, facecolor="white")
+    dst = OUT / suffixed("contributed_multidevice.png")
+    fig.savefig(dst, dpi=200, facecolor=SURFACE)
     print(f"wrote {dst}")
 
 

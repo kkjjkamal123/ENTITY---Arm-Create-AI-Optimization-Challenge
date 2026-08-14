@@ -30,9 +30,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-SURFACE = "#fcfcfb"
-INK = "#0b0b0b"
-INK_MUTED = "#52514e"
+from plot_theme import GRID, INK, INK_MUTED, SURFACE, suffixed
 
 ARMS = [
     ("naive", "Naive\n8 threads, all cores", "#e34948"),
@@ -170,7 +168,7 @@ def main():
              fontsize=8, color=INK_MUTED)
     fig.subplots_adjust(left=0.06, right=0.98, top=0.85, bottom=0.22, wspace=0.22)
 
-    out = args.output_dir / "energy_per_task.png"
+    out = args.output_dir / suffixed("energy_per_task.png")
     fig.savefig(out, dpi=180, facecolor=SURFACE)
     plt.close(fig)
     print(f"wrote {out}")

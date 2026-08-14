@@ -35,9 +35,7 @@ ARMS = [
     ("auto", "ENTITY Auto\n4 threads, pinned", "#2a78d6"),
 ]
 
-SURFACE = "#fcfcfb"
-INK = "#0b0b0b"
-INK_MUTED = "#52514e"
+from plot_theme import GRID, INK, INK_MUTED, SURFACE, suffixed
 
 
 def num(value):
@@ -129,7 +127,7 @@ def decode_attribution(rows):
     fig.text(0.055, 0.055, "   |   ".join(notes[:half]), fontsize=8, color=INK_MUTED)
     fig.text(0.055, 0.020, "   |   ".join(notes[half:]), fontsize=8, color=INK_MUTED)
     fig.subplots_adjust(left=0.075, right=0.98, top=0.90, bottom=0.24)
-    fig.savefig(OUT / "decode_attribution.png", dpi=180, facecolor=SURFACE)
+    fig.savefig(OUT / suffixed("decode_attribution.png"), dpi=180, facecolor=SURFACE)
     plt.close(fig)
     return "decode_attribution.png"
 
@@ -177,7 +175,7 @@ def kleidiai(rows):
              "memory-bandwidth-bound and does not improve: it tracks bytes-per-weight, not kernel quality.",
              fontsize=8, color=INK_MUTED)
     fig.subplots_adjust(left=0.075, right=0.98, top=0.84, bottom=0.22, wspace=0.25)
-    fig.savefig(OUT / "kleidiai_prompt_ttft.png", dpi=180, facecolor=SURFACE)
+    fig.savefig(OUT / suffixed("kleidiai_prompt_ttft.png"), dpi=180, facecolor=SURFACE)
     plt.close(fig)
     return "kleidiai_prompt_ttft.png"
 
@@ -205,7 +203,7 @@ def energy(rows):
              "so the app hides power rather than reporting a wrong number.",
              fontsize=8, color=INK_MUTED)
     fig.subplots_adjust(left=0.085, right=0.98, top=0.90, bottom=0.20)
-    fig.savefig(OUT / "energy_efficiency.png", dpi=180, facecolor=SURFACE)
+    fig.savefig(OUT / suffixed("energy_efficiency.png"), dpi=180, facecolor=SURFACE)
     plt.close(fig)
     return "energy_efficiency.png"
 
