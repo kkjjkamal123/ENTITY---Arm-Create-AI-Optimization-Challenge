@@ -32,9 +32,11 @@ import java.util.UUID
  *
  * Transport is a single HTTPS POST via HttpURLConnection - the same primitive
  * [ModelDownloader] uses - so no HTTP client, analytics SDK or backend library is linked
- * into the APK. The server side is PostgREST over one Postgres table with an insert-only
- * row-level-security policy, so the key embedded here can only append rows; it cannot read,
- * update or delete anything.
+ * into the APK. The server side is PostgREST over one Postgres table. Row-level security
+ * grants this key INSERT and SELECT and nothing else, so it can append a run and read the
+ * public dataset back, but cannot update or delete a row - including its own. The SELECT
+ * grant is deliberate: the contributed data is published anyway, and reading it is what
+ * lets a client show the dataset it just joined.
  */
 object ResultUploader {
 

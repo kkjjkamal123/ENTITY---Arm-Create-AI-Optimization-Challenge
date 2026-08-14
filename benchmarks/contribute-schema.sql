@@ -1,10 +1,12 @@
 -- ENTITY Bench: contributed results table.
 -- Paste this whole file into the Supabase SQL editor and run it once.
 --
--- Shape rationale: one table, exposed directly by PostgREST, with an insert-only
--- row-level-security policy. There is no server code anywhere in this project - the
--- endpoint IS the table - and the key shipped inside the app can only append rows,
--- which is why publishing it is safe.
+-- Shape rationale: one table, exposed directly by PostgREST, under row-level security
+-- that grants the anon role INSERT and SELECT and nothing else. There is no server code
+-- anywhere in this project - the endpoint IS the table - and the key shipped inside the
+-- app can append a run and read the public dataset, but cannot update or delete a row,
+-- including its own. That is why publishing it is safe. See the policies below for the
+-- reason SELECT is granted as well as INSERT.
 
 create table if not exists public.bench_results (
   id                bigint generated always as identity primary key,

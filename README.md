@@ -17,7 +17,7 @@
 
 ## Navigation
 
-[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [Ledger](docs/LEDGER.md) · [Quantization quality](docs/QUANTIZATION-QUALITY.md) · [Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
+[Home](README.md) · [The dataset](#the-dataset) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [Ledger](docs/LEDGER.md) · [Limitations](#known-limitations) · [Quantization quality](docs/QUANTIZATION-QUALITY.md) · [Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
 
 ## What ENTITY is
 
@@ -54,7 +54,33 @@ The challenge names **performance-per-watt** as a judging axis, so ENTITY leads 
 | **The speedup does not change the model's output** | Four scheduling arms, one device, greedy decoding at a fixed seed plus per-chunk perplexity. Eight threads against the shipped four - the only pair where ggml's reduction width changes, and the baseline the decode gain is measured from - produced the same 96 tokens byte for byte and the same twelve per-chunk values. Three controls, including one showing the per-chunk series *does* move when batch shape changes rather than thread count. | Not bit-exactness: the series prints to four decimals, and greedy decoding only reveals a perturbation big enough to change an argmax. One device, one model. |
 | **Six of the ten optimizations are removed or crippled on another arm64 platform** | Ported the same intent to Apple silicon - also arm64, also big.LITTLE. **Four cease to exist outright**: per-core frequency, ADPF deadline hints, energy telemetry, and multi-variant v8.0-v9.2 backend dispatch. **Two survive only degraded**: core placement falls back to a QoS request that cannot be verified or read back, and thermal detail collapses to four coarse levels. Two others get *better*. Measured on two iPhones: the runtime picks **one** thread, and a second costs +16.8% and +11.4%. KleidiAI still pays (1.089x, 1.045x). | Different runtime and model from the Android record (ONNX int8, not llama.cpp GGUF), so the two are never compared numerically. Two devices, one workload. |
 
+| **The decode gain holds on silicon the author has never touched** | ENTITY Bench uploads a finished ablation, opt in, to a public Postgres table. **26 contributed runs from 13 distinct devices across 9 SoC families and 4 vendors** - MediaTek, Qualcomm, Samsung Exynos and Google Tensor - from a TECNO on a Helio G37 to a Pixel 10 on Tensor G5. Decode improved in **26 of 26**, median **1.78x**, range **1.34x to 4.27x**. Prompt regressed in 2 of 26, and both are kept in the table. | A self selected sample, not a random one, run under contributors' own thermal state and Android version (4 releases). Near controlled on the workload: two model files only, Q4_0 and Q8_0. 20 of 26 ran unplugged, so only those carry valid power columns. |
+
 This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has the full record, the graphs, and the limits.
+
+---
+
+## The dataset
+
+Most of this README's claims were measured on two phones. That is the honest limit of one student with two devices, and it is the limit ENTITY was built to escape: the app that runs the experiment also returns the answer.
+
+ENTITY Bench ships a one tap **Contribute** action. A finished ablation - summary statistics per arm, never the per pass 150 ms trace - is posted to a Postgres table behind PostgREST. What has arrived so far:
+
+| | Contributed | |
+|---|---|---|
+| | **26** submissions | Jul 22 to Jul 27 2026 |
+| | **13** distinct devices | 13 SoCs, 9 SoC families |
+| | **4** silicon vendors | MediaTek 5 devices, Qualcomm 5, Exynos 2, Tensor 1 |
+| | **26 / 26** improved decode | median **1.78x**, range 1.34x to 4.27x |
+| | **20 / 26** power valid | the rest were charging, so their watts are the charger's |
+
+**Why this is the strongest evidence in the project.** A cross device table assembled from phones the author owns cannot separate the optimization from the hardware it was tuned on. These 13 devices were configured by strangers, in their own rooms, at their own starting temperatures, and the decode gain survived every one of them. The two prompt regressions survived too, and are published rather than dropped.
+
+**What is sent, and what is not.** Contribution is **off until someone turns it on** - there is no first run upload and no "anonymous statistics" default. Settings renders the exact JSON body verbatim before the first send. Each submission carries a **fresh random UUID** used only to drop duplicates, so no two runs from one phone can be linked. The payload is device model, SoC, CPU flags, core topology, model file and the per arm medians. No account, no advertising ID, no location, no chat content - the chat app has no network permission at all.
+
+**The key in the APK is public on purpose.** Row level security grants the shipped anon key `INSERT` and `SELECT` and nothing else: it can append a run and read the public dataset, and cannot update or delete a row, including its own. The endpoint is a build config value that is **blank in the public source**, so a fork builds and runs with contribution switched off rather than posting into this database.
+
+Raw exports live in [`benchmarks/results/`](benchmarks/results/); the table definition is [`benchmarks/contribute-schema.sql`](benchmarks/contribute-schema.sql) and the backend write up is [`benchmarks/CONTRIBUTE-BACKEND.md`](benchmarks/CONTRIBUTE-BACKEND.md).
 
 ## Features
 
@@ -65,7 +91,7 @@ This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has t
 5. Auto mode plus manual controls for temperature, top k, top p, completion length, context and threads.
 6. Live statistics and a selectable graph for token count, token rate, TTFT, temperature, power, app CPU utilization and free memory.
 7. In app benchmark with a three arm ablation (naive, threads only, Auto), three run median, population standard deviation, thermal cooldown, decode attribution and CSV export. Every finished run is saved on the phone automatically, with a history screen to reopen, copy, re-export or delete any past run.
-8. In Entity Bench Users are able to contribute thier Benchmarks with a single click which stores in our Database, Making optimizations for various device with ease.
+8. One tap opt in contribution in ENTITY Bench: a finished ablation posts to the public dataset described in [The dataset](#the-dataset), which is how the decode claim was tested on 13 devices the author does not own.
 9. Light, dark and system themes plus a theme aware app icon.
 10. GGUF model information including parameters, quantization, architecture and running context.
 
@@ -224,6 +250,22 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 11. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
 12. [Experiment ledger](docs/LEDGER.md): every optimization tried, one row each - KEEP, REVERT, NO EFFECT or OPEN, with the number that decided it. Seven reverts, four of them things this project had already published as wins.
 13. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
+
+## Known limitations
+
+Stated here rather than left for a judge to find. Each of these is a live entry in the [experiment ledger](docs/LEDGER.md), not a known bug being managed quietly.
+
+| | Limitation | Detail |
+|---|---|---|
+| | **The controlled claims rest on two phones** | The ablation, equivalence and ISA ladder results are single device by design, because isolating a variable requires holding the rest fixed. Breadth comes from the 13 device contributed dataset instead, which is the opposite tradeoff: uncontrolled conditions, many devices. Neither substitutes for the other. |
+| | **The i8mm rung is modelled, not measured** | The one device ISA ladder proves the dotprod rung is worth **+379% prompt**. It cannot load the armv8.6 backend, because the Cortex-A78 in hand has no i8mm. The catalog still prices that rung from a cross device comparison. |
+| | **One contributed device gets *slower* at prefill** | The Helio G37 prefills 9.3 to 7.8 tok/s tuned versus naive. All eight cores are A53s, so capacity ranked selection is probably choosing the wrong four. A single contributed pass, so a lead rather than a result. |
+| | **Decode thread width on flagships lands on a clamp** | On prime core topologies the derived count hits a floor clamp rather than a derivation. Bench has a sweep mode built to answer it; no flagship has run one. |
+| | **`power_valid` has no plausibility floor in the app** | Charging is detected and excluded, but an implausible current reading is filtered in analysis and on the leaderboard, not at the point of measurement. |
+| | **Models are imported, not bundled** | The APK is 10 MB and a GGUF is fetched or side loaded on first use, so the first run needs storage or a network. Everything after it is fully offline; the chat app holds no network permission. |
+| | **The iOS port is a control, not a product** | It exists to test whether these optimizations are Arm specific or Apple silicon portable. Different runtime and model (ONNX int8, not llama.cpp GGUF), so its numbers are never compared numerically against the Android record. |
+
+---
 
 ## License
 
