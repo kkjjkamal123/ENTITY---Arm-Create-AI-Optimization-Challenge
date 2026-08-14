@@ -74,6 +74,14 @@ ENTITY Bench ships a one tap **Contribute** action. A finished ablation - summar
 | | **26 / 26** improved decode | median **1.78x**, range 1.34x to 4.27x |
 | | **20 / 26** power valid | the rest were charging, so their watts are the charger's |
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/contribution-pipeline-dark.svg">
+  <img alt="How a contributed run reaches the dataset" src="docs/diagrams/contribution-pipeline.svg">
+</picture>
+
+<details>
+<summary>Mermaid source for this diagram</summary>
+
 ```mermaid
 flowchart LR
     subgraph phone["On the contributor's phone"]
@@ -97,6 +105,8 @@ flowchart LR
     F -.->|"offline or failed"| L["Queued on disk,<br/>retried next launch"]
     L -.-> G
 ```
+
+</details>
 
 **Why this is the strongest evidence in the project.** A cross device table assembled from phones the author owns cannot separate the optimization from the hardware it was tuned on. These 13 devices were configured by strangers, in their own rooms, at their own starting temperatures, and the decode gain survived every one of them. The two prompt regressions survived too, and are published rather than dropped.
 
@@ -141,6 +151,14 @@ Raw exports live in [`benchmarks/results/`](benchmarks/results/); the table defi
 
 No vendor table, no device allowlist, no cloud lookup. The runtime reads the kernel's own view of the silicon it woke up on and derives a policy in about 60 ms.
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/decision-flow-dark.svg">
+  <img alt="How ENTITY derives its policy at startup" src="docs/diagrams/decision-flow.svg">
+</picture>
+
+<details>
+<summary>Mermaid source for this diagram</summary>
+
 ```mermaid
 flowchart TD
     A["App start"] --> B["Probe the silicon<br/>/sys/devices/system/cpu/*"]
@@ -149,10 +167,10 @@ flowchart TD
     B --> E["/proc/cpuinfo flags<br/>dotprod, i8mm, fp16, sve"]
     B --> F["MemoryInfo.availMem<br/>free RAM, not installed"]
 
-    C --> G["build_fast_cpu_set&#40;&#41;<br/>rank online cores by clock"]
-    D --> H["prompt_thread_count&#40;&#41;<br/>rank by capacity"]
-    E --> I["ggml_backend_score&#40;&#41;<br/>pick 1 of 7 CPU backends"]
-    F --> J["ModelCatalog.fit&#40;&#41;<br/>ROOMY / TIGHT / NO"]
+    C --> G["build_fast_cpu_set()<br/>rank online cores by clock"]
+    D --> H["prompt_thread_count()<br/>rank by capacity"]
+    E --> I["ggml_backend_score()<br/>pick 1 of 7 CPU backends"]
+    F --> J["ModelCatalog.fit()<br/>ROOMY / TIGHT / NO"]
 
     I --> K{"Which phase?"}
     G --> K
@@ -166,6 +184,8 @@ flowchart TD
     N --> O["Every 8th token:<br/>thermal check, 0 / 6 / 12 ms yield"]
     J --> P["Recommend a model<br/>that fits free RAM"]
 ```
+
+</details>
 
 The two branches out of **Which phase?** are the whole idea. Prefill and decode are not the same workload wearing different hats, and the arithmetic says so before any benchmark does.
 
