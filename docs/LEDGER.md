@@ -50,6 +50,8 @@ established.
 | Thread rule counting cores within 10% of the fastest **clock** | **REVERT** | Every modern flagship puts its prime core 17–20% above its own big cluster, so the count collapsed to 1 and was clamped to 2. Prefill had been running on two threads on every flagship; both of my own phones were structurally immune | A |
 | `power_valid` as a name for what was really a unit heuristic | **REVERT** | A device reporting whole volts where Android documents millivolts produced 2.7 µW and 11M tok/W. Two compounding 1000× errors. Renamed and re-gated on physical plausibility | A |
 | Asserting a pinning energy win | **REVERT** | Isolated properly the median was +0.6% decode, −1.5% tok/W, positive on 3 of 6 rows. Demoted from a claim to a setting | A |
+| Offload inference to the Mali GPU over Vulkan | **REVERT** | **30.3x slower on prompt**, 1.9x slower on decode, same binary and model. The GPU reports `int dot: 0` and `matrix cores: none`, so Q4_0 integer matmul has no hardware path there while the CPU has dotprod. `quant-lab/results/backend-probe/` | A |
+| `-ngl 0` as a CPU control while a Vulkan device is registered | **REVERT (harness)** | Measured the CPU arm at 4.69 tok/s prompt, 32x below the same silicon in the shipped build, which would have made the GPU look competitive. `-dev none` removes the device from the registry and restores 142-158 tok/s | A |
 
 ## NO EFFECT
 
@@ -65,7 +67,6 @@ established.
 |---|---|---|
 | What the i8mm rung is worth | **OPEN** | Modelled by the catalog and the probe; the one-device ladder shows the rung exists but a Cortex-A78 cannot load it. Needs silicon with i8mm under controlled conditions |
 | Why the Helio G37 prefills *slower* tuned than naive (9.3 → 7.8 tok/s) | **OPEN** | All eight cores are A53s, so capacity-ranked selection is probably picking the wrong four. Single contributed pass, so a lead rather than a result |
-| GPU and NNAPI as alternatives to the tuned CPU path | **OPEN** | The shipped build is CPU-only. Nothing here yet measures what a Vulkan or NNAPI path would do on this class of hardware, so "CPU is the right choice" is currently a design decision and not a measurement |
 | Decode thread width on prime-core flagships | **OPEN** | The count lands on a floor clamp rather than a derivation. Bench's sweep mode exists to answer it; no flagship has run it |
 | A plausibility floor for `power_valid` inside the app | **OPEN** | Currently enforced in analysis and on the leaderboard, not at the point of measurement |
 
@@ -75,7 +76,7 @@ established.
 
 Both halves of a comparison need the same standard of evidence, and the natural failure mode
 of an optimization project is to measure carefully when a change works and stop measuring
-when it does not. Four of the seven REVERT rows above were things this project had already
+when it does not. Four of the nine REVERT rows above were things this project had already
 published as wins. One of them — "pinning earns roughly nothing" — was a *retraction* that
 itself needed retracting, which was harder to notice than the original error, because being
 wrong in the cautious direction feels like rigour.
