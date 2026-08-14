@@ -17,7 +17,7 @@
 
 ## Navigation
 
-[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [Quantization quality](docs/QUANTIZATION-QUALITY.md) · [Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
+[Home](README.md) · [Evidence](benchmarks/REPRODUCIBILITY.md) · [Comparisons](benchmarks/COMPARISONS.md) · [Benchmarks](benchmarks/BENCHMARKS.md) · [Optimization](docs/OPTIMIZATIONS.md) · [Ledger](docs/LEDGER.md) · [Quantization quality](docs/QUANTIZATION-QUALITY.md) · [Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md) · [FAQ](docs/FAQ.md) · [Starter kit](templates/arm64-android-runtime/README.md) · [Contributing](docs/CONTRIBUTING.md) · [License](LICENSE)
 
 ## What ENTITY is
 
@@ -222,7 +222,8 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 9. [Arm against Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md): six of ENTITY's ten optimization mechanisms are removed or crippled on a platform that is also arm64 - measured on two iPhones, including a thread sweep where the second thread is a straight loss.
 10. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
 11. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
-12. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
+12. [Experiment ledger](docs/LEDGER.md): every optimization tried, one row each - KEEP, REVERT, NO EFFECT or OPEN, with the number that decided it. Seven reverts, four of them things this project had already published as wins.
+13. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
 
 ## License
 
