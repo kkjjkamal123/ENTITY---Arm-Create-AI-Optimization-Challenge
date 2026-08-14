@@ -17,6 +17,8 @@ data class Message(
     /** Token accounting for this answer. Null on user turns, on an answer still being
      *  generated, and on answers written before the app recorded stats. */
     val stats: TurnStats? = null,
+    /** True when the user stopped this answer part-way. See [StoredMessage.truncated]. */
+    val truncated: Boolean = false,
 )
 
 class MessageAdapter(

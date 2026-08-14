@@ -189,3 +189,26 @@ estimate	unusably-slow	mistral-7b-v0.3-q4_k_m	0.429214	0.050000	1192.879256	TOO_
 recommend	unusably-slow	BALANCED	-	-	-	-
 recommend	unusably-slow	LONG_PROMPT	-	-	-	-
 recommend	unusably-slow	LONG_GENERATION	-	-	-	-
+profile	unknown-free-memory	26.200000	1.000000	4	0	dotprod
+estimate	unknown-free-memory	smollm2-360m-q4_0	441.577778	61.240895	1.159479	TIGHT	Q4_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	smollm2-360m-q8_0	715.356000	36.410144	0.715728	TIGHT	Q8_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	qwen2.5-0.5b-q4_0	317.936000	39.858849	1.610387	TIGHT	Q4_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	qwen2.5-0.5b-q8_0	515.056320	26.492010	0.994066	TIGHT	Q8_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	llama3.2-1b-q4_0	128.200000	18.200000	3.993760	TIGHT	Q4_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	llama3.2-1b-q4_k_m	111.534000	17.418804	4.590528	TIGHT	Q4_K_M misses KleidiAI - runs ggml's Arm repack kernels instead · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	llama3.2-1b-q8_0	207.684000	10.649650	2.465284	TIGHT	Q8_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	qwen2.5-1.5b-q4_0	103.225974	15.006438	4.959992	TIGHT	Q4_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	qwen2.5-1.5b-q8_0	167.226078	8.544455	3.061723	TOO_BIG	available memory could not be read - 1.65 GB is too much to risk on an unknown device
+estimate	unknown-free-memory	qwen2.5-coder-1.5b-q4_0	103.225974	15.006437	4.959992	TIGHT	Q4_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	deepseek-r1-qwen-1.5b-q4_0	89.307865	13.163332	5.732978	TIGHT	Q4_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	smollm2-1.7b-q4_0	92.963743	14.155777	5.507524	TIGHT	Q4_0 reaches KleidiAI on this CPU's dotprod kernels · available memory could not be read - sized against an assumed 1.5 GB free
+estimate	unknown-free-memory	gemma2-2b-q4_k_m	52.989333	8.234352	9.662322	TOO_BIG	available memory could not be read - 1.71 GB is too much to risk on an unknown device
+estimate	unknown-free-memory	qwen2.5-3b-q4_0	51.445955	7.694382	9.952192	TOO_BIG	available memory could not be read - 1.83 GB is too much to risk on an unknown device
+estimate	unknown-free-memory	llama3.2-3b-q4_0	49.522741	7.320362	10.338685	TOO_BIG	available memory could not be read - 1.92 GB is too much to risk on an unknown device
+estimate	unknown-free-memory	llama3.2-3b-q8_0	80.226841	4.111480	6.381904	TOO_BIG	available memory could not be read - 3.42 GB is too much to risk on an unknown device
+estimate	unknown-free-memory	phi3.5-mini-q4_0	41.614660	6.446402	12.303357	TOO_BIG	available memory could not be read - 2.18 GB is too much to risk on an unknown device
+estimate	unknown-free-memory	qwen2.5-7b-q4_0	20.861942	3.165771	24.542298	TOO_BIG	available memory could not be read - 4.44 GB is too much to risk on an unknown device
+estimate	unknown-free-memory	mistral-7b-v0.3-q4_k_m	19.076160	3.217397	26.839783	TOO_BIG	available memory could not be read - 4.37 GB is too much to risk on an unknown device
+recommend	unknown-free-memory	BALANCED	deepseek-r1-qwen-1.5b-q4_0	smollm2-1.7b-q4_0	13.163332	89.307865
+recommend	unknown-free-memory	LONG_PROMPT	deepseek-r1-qwen-1.5b-q4_0	smollm2-1.7b-q4_0	13.163332	89.307865
+recommend	unknown-free-memory	LONG_GENERATION	deepseek-r1-qwen-1.5b-q4_0	smollm2-1.7b-q4_0	13.163332	89.307865

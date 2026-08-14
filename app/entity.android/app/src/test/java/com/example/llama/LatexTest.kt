@@ -137,6 +137,42 @@ class LatexTest {
         assertNull(Latex.groupAt("{a", 0))
     }
 
+    // ---- escapes -------------------------------------------------------------
+    //
+    // A backslash before a non-letter is an escape, not a macro. macroAt() returns null
+    // for it, and the fallback used to consume the backslash AND the character with
+    // nothing appended - so the escaped character silently disappeared from the output.
+
+    @Test
+    fun escapedBracesSurviveAsLiteralCharacters() {
+        assertEquals("{1, 2, 3}", uni("\\{1, 2, 3\\}"))
+    }
+
+    @Test
+    fun forcedSpaceIsNotSwallowed() {
+        // "$5\ \text{kg}$": without the escape the digits and the unit merge into "5kg".
+        assertEquals("5 kg", uni("5\\ \\text{kg}"))
+    }
+
+    @Test
+    fun escapedPunctuationIsRenderedLiterally() {
+        assertEquals("50%", uni("50\\%"))
+        assertEquals("a_b", uni("a\\_b"))
+        assertEquals("&", uni("\\&"))
+        assertEquals("#", uni("\\#"))
+    }
+
+    @Test
+    fun doubleBackslashBecomesALineBreak() {
+        // Consistent with `&`, which this path already flattens to a space.
+        assertEquals("a\nb", uni("a\\\\b"))
+    }
+
+    @Test
+    fun trailingBackslashIsKeptRatherThanDropped() {
+        assertEquals("x\\", uni("x\\"))
+    }
+
     // ---- realistic model output ---------------------------------------------
 
     @Test

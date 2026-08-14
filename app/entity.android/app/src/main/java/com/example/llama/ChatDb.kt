@@ -18,6 +18,15 @@ data class StoredMessage(
     /** Encoded [TurnStatsCodec] blob, or null for user turns and for answers written
      *  before this column existed. */
     val stats: String?,
+    /**
+     * True when the user stopped generation part-way through this answer.
+     *
+     * Without it a three-word fragment is indistinguishable from a finished reply, both in
+     * the history list and - the part that actually degrades the model - when the turn is
+     * replayed as context on the next prompt. An assistant turn that stops mid-sentence
+     * teaches the model that stopping mid-sentence is what an answer looks like.
+     */
+    val truncated: Boolean = false,
 )
 
 class ChatDb(context: Context) :
@@ -43,6 +52,7 @@ class ChatDb(context: Context) :
                 "content TEXT, " +
                 "created_at INTEGER, " +
                 "stats TEXT, " +
+                "truncated INTEGER NOT NULL DEFAULT 0, " +
                 "FOREIGN KEY(conversation_id) REFERENCES conversations(id) ON DELETE CASCADE)"
         )
     }
@@ -53,6 +63,13 @@ class ChatDb(context: Context) :
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) {
             db.execSQL("ALTER TABLE messages ADD COLUMN stats TEXT")
+        }
+        if (oldVersion < 3) {
+            // Existing rows default to 0. That is the right answer for them: answers
+            // written before this column existed were persisted whether or not the user
+            // stopped them, so there is no way to tell after the fact, and treating an
+            // unknown as "complete" preserves the behaviour those conversations already had.
+            db.execSQL("ALTER TABLE messages ADD COLUMN truncated INTEGER NOT NULL DEFAULT 0")
         }
     }
 
@@ -91,6 +108,7 @@ class ChatDb(context: Context) :
         content: String,
         now: Long,
         stats: String? = null,
+        truncated: Boolean = false,
     ): Long {
         val db = writableDatabase
         val values = ContentValues().apply {
@@ -99,6 +117,7 @@ class ChatDb(context: Context) :
             put("content", content)
             put("created_at", now)
             put("stats", stats)
+            put("truncated", if (truncated) 1 else 0)
         }
         val id = db.insert("messages", null, values)
         db.execSQL(
@@ -139,11 +158,11 @@ class ChatDb(context: Context) :
     fun messagesFor(conversationId: Long): List<StoredMessage> {
         val out = mutableListOf<StoredMessage>()
         readableDatabase.rawQuery(
-            "SELECT role, content, stats FROM messages WHERE conversation_id = ? ORDER BY id ASC",
+            "SELECT role, content, stats, truncated FROM messages WHERE conversation_id = ? ORDER BY id ASC",
             arrayOf(conversationId.toString())
         ).use { c ->
             while (c.moveToNext()) {
-                out.add(StoredMessage(c.getString(0), c.getString(1), c.getString(2)))
+                out.add(StoredMessage(c.getString(0), c.getString(1), c.getString(2), c.getInt(3) != 0))
             }
         }
         return out
@@ -151,7 +170,7 @@ class ChatDb(context: Context) :
 
     companion object {
         private const val DB_NAME = "chats.db"
-        // 2 added messages.stats.
-        private const val DB_VERSION = 2
+        // 2 added messages.stats; 3 added messages.truncated.
+        private const val DB_VERSION = 3
     }
 }

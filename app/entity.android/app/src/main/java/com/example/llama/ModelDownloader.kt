@@ -2,11 +2,14 @@ package com.example.llama
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.coroutineContext
 
 // Model download: resumable, cancellable, no third-party HTTP client.
@@ -27,18 +30,49 @@ object ModelDownloader {
     fun partFileFor(dir: File, e: ModelCatalog.Entry) = File(dir, e.fileName + ".part")
 
     /**
+     * One lock per catalog entry, held for the whole transfer.
+     *
+     * Two overlapping calls for the same entry - a double tap, or an activity recreated
+     * mid-download - used to open [FileOutputStream] on the same ".part" concurrently.
+     * Both would read the same starting byte count, both would append from there, and the
+     * interleaved result can still end up the expected length by coincidence: the only
+     * completeness check here is on length. A corrupt file that passes that check gets
+     * renamed to the final ".gguf" and handed to the native loader.
+     *
+     * The second caller waits rather than failing, because waiting is what a user who
+     * tapped twice actually wants - it re-checks the finished file inside the lock and
+     * returns it. Cancelling the first caller releases the lock and the second one resumes
+     * the ".part" normally.
+     */
+    private val locks = ConcurrentHashMap<String, Mutex>()
+
+    /**
      * Downloads [e] into [dir], resuming any existing ".part". Returns the finished file.
      * Cancelling the calling coroutine stops the transfer and leaves the ".part" in place
      * for a later resume.
+     *
+     * Concurrent calls for the same entry are serialised; see [locks].
      */
     suspend fun download(
         e: ModelCatalog.Entry,
         dir: File,
         onProgress: (Progress) -> Unit,
     ): File = withContext(Dispatchers.IO) {
+        locks.getOrPut(e.id) { Mutex() }.withLock {
+            downloadLocked(e, dir, onProgress)
+        }
+    }
+
+    private suspend fun downloadLocked(
+        e: ModelCatalog.Entry,
+        dir: File,
+        onProgress: (Progress) -> Unit,
+    ): File {
         if (!dir.exists()) dir.mkdirs()
         val target = File(dir, e.fileName)
-        if (target.exists() && target.length() == e.sizeBytes) return@withContext target
+        // Re-checked inside the lock: the caller that waited here may find the download it
+        // was queued behind has already finished the file.
+        if (target.exists() && target.length() == e.sizeBytes) return target
 
         val part = partFileFor(dir, e)
         var have = if (part.exists()) part.length() else 0L
@@ -96,6 +130,6 @@ object ModelDownloader {
         }
         if (target.exists()) target.delete()
         if (!part.renameTo(target)) throw DownloadException("Could not finalise ${e.fileName}")
-        target
+        return target
     }
 }

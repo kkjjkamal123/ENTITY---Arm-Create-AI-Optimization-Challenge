@@ -88,8 +88,26 @@ object Latex {
             val c = src[i]
             when {
                 c == '\\' -> {
-                    val name = macroAt(src, i + 1) ?: run { i++; return@run "" }
-                    if (name.isEmpty()) { i++; continue }
+                    // A backslash followed by anything that is not a letter is an escape,
+                    // not a macro, and LaTeX renders the character itself. Both bytes used
+                    // to be consumed with nothing appended, so `$\{1, 2, 3\}$` rendered as
+                    // a set with no braces and `$5\ \text{kg}$` merged into "5kg" - visibly
+                    // wrong output with no error anywhere to explain it.
+                    val name = macroAt(src, i + 1)
+                    if (name == null) {
+                        when (val esc = src.getOrNull(i + 1)) {
+                            // `\\` is a line break. This path is for fragments with no
+                            // structural layout, and `&` above is already flattened to a
+                            // space, so a newline is the consistent reading.
+                            '\\' -> { sb.append('\n'); i += 2 }
+                            // `\ ` is a forced space - the whole reason it was written.
+                            ' ' -> { sb.append(' '); i += 2 }
+                            // \{ \} \% \$ \& \# \_ and friends: the character, literally.
+                            null -> { sb.append('\\'); i++ }
+                            else -> { sb.append(esc); i += 2 }
+                        }
+                        continue
+                    }
                     if (name == "frac" || name == "sqrt" || name == "dfrac" || name == "tfrac") return null
                     val sym = SYMBOLS[name]
                     when {

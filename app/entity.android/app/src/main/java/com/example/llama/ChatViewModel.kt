@@ -38,6 +38,20 @@ object ThermalGuard {
     }
 }
 
+/**
+ * A stored message as the model should see it when the conversation is replayed.
+ *
+ * Identical to what is on screen, except that an answer the user stopped part-way carries
+ * a note saying so. Replaying a fragment as an ordinary assistant turn is the thing that
+ * degrades the next answer: the model reads a reply that stops mid-sentence and imitates
+ * it. The note goes only into the model's copy - the stored text and the chat bubble stay
+ * exactly what was generated.
+ */
+internal fun Message.asChatTurn(): ChatTurn = ChatTurn(
+    if (isUser) ChatViewModel.ROLE_USER else ChatViewModel.ROLE_ASSISTANT,
+    if (!isUser && truncated) "$content\n\n[The user stopped this answer before it finished.]" else content,
+)
+
 class ChatViewModel(app: Application) : AndroidViewModel(app) {
 
     enum class GenPhase { IDLE, PRIMING, GENERATING }
@@ -146,6 +160,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                 Message(
                     UUID.randomUUID().toString(), it.content, it.role == ROLE_USER,
                     stats = TurnStatsCodec.decode(it.stats),
+                    truncated = it.truncated,
                 )
             )
         }
@@ -185,7 +200,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             }
             val convId = conversationId
             val priorTurns = _messages.map {
-                ChatTurn(if (it.isUser) ROLE_USER else ROLE_ASSISTANT, it.content)
+                it.asChatTurn()
             }
             _messages.add(Message(UUID.randomUUID().toString(), userText, true))
             _messages.add(Message(UUID.randomUUID().toString(), "", false))
@@ -211,7 +226,7 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
             if (_messages.isEmpty() || !_messages.last().isUser) return@launch
             val userText = _messages.last().content
             val priorTurns = _messages.dropLast(1).map {
-                ChatTurn(if (it.isUser) ROLE_USER else ROLE_ASSISTANT, it.content)
+                it.asChatTurn()
             }
             _messages.add(Message(UUID.randomUUID().toString(), "", false))
             bump()
@@ -275,17 +290,31 @@ class ChatViewModel(app: Application) : AndroidViewModel(app) {
                         // accumulating. Attached to the message and persisted in the same
                         // step as the text, so a restored conversation keeps both.
                         val turn = engine.lastTurnStats()
-                        if (turn != null && conversationId == convId &&
+                        // The truncated mark has to land on the in-memory message too, not
+                        // just the row: the next prompt in this session builds its context
+                        // from _messages, without a reload.
+                        val wasTruncated = cause != null
+                        if (conversationId == convId &&
                             assistantIndex in _messages.indices && !_messages[assistantIndex].isUser
                         ) {
-                            _messages[assistantIndex] = _messages[assistantIndex].copy(stats = turn)
+                            _messages[assistantIndex] = _messages[assistantIndex].copy(
+                                stats = turn ?: _messages[assistantIndex].stats,
+                                truncated = wasTruncated,
+                            )
                         }
+                        // A non-null cause here is almost always the user tapping stop, so
+                        // this text is a fragment, not an answer. It is still persisted -
+                        // it is on screen and deleting it on reload would be its own bug -
+                        // but it is marked, because an unmarked fragment is replayed as a
+                        // finished assistant turn on the next prompt and teaches the model
+                        // to stop mid-sentence.
                         withContext(NonCancellable + Dispatchers.IO) {
                             runCatching {
                                 db.insertMessage(
                                     convId, ROLE_ASSISTANT, sb.toString(),
                                     System.currentTimeMillis(),
                                     turn?.let { TurnStatsCodec.encode(it) },
+                                    truncated = wasTruncated,
                                 )
                             }
                         }

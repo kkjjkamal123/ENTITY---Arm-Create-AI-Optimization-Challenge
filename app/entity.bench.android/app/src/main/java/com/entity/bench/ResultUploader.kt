@@ -139,6 +139,11 @@ object ResultUploader {
      * time the app starts. A benchmark is usually run unplugged and away from a network.
      */
     suspend fun upload(ctx: Context, r: BenchResult, file: String? = null): Boolean {
+        // The automatic path carries its own consent check, now that [post] no longer does
+        // one for everybody. Nothing is queued when contribution is off either: a result
+        // the user did not agree to share must not sit on disk waiting to be sent the day
+        // they switch the toggle on for something else.
+        if (!enabled(ctx)) return false
         val body = payload(ctx, r).toString()
         val ok = post(ctx, body)
         if (ok) file?.let { markSent(ctx, it) } else queue(ctx, body)
@@ -190,8 +195,21 @@ object ResultUploader {
         runCatching { File(queueDir(ctx), "${System.currentTimeMillis()}.json").writeText(body) }
     }
 
+    /**
+     * The transport. Deliberately checks [configured] and not [enabled].
+     *
+     * Consent belongs to the caller, because the two callers have different consent. The
+     * automatic path ([upload], [flushQueue]) fires without anyone asking for it, so it is
+     * gated on the Settings toggle. The Contribute screen is the opposite: the user opened
+     * a picker, chose specific results and tapped Send, which is consent for those results
+     * and does not depend on a global preference they may never have touched.
+     *
+     * Requiring the toggle here made that screen fail for exactly the users it was built
+     * for - every send returned a generic error immediately after an explicit choice to
+     * share.
+     */
     private suspend fun post(ctx: Context, body: String): Boolean = withContext(Dispatchers.IO) {
-        if (!enabled(ctx)) return@withContext false
+        if (!configured) return@withContext false
         runCatching {
             val conn = (URL(BuildConfig.RESULTS_ENDPOINT).openConnection() as HttpURLConnection).apply {
                 requestMethod = "POST"

@@ -119,7 +119,21 @@ class RunActivity : AppCompatActivity() {
             }
             outcome
                 .onSuccess { result ->
-                    val f = withContext(Dispatchers.IO) { ResultStore.save(this@RunActivity, result) }
+                    // A write can fail - a full disk, most plausibly, after a run that may
+                    // have taken ten minutes. Uncaught it escaped this coroutine and took
+                    // the app down, which loses the result and explains nothing. The result
+                    // is lost either way; the user should at least be told why.
+                    val f = withContext(Dispatchers.IO) {
+                        runCatching { ResultStore.save(this@RunActivity, result) }
+                    }.getOrElse { e ->
+                        Toast.makeText(
+                            this@RunActivity,
+                            "Benchmark finished but could not be saved: ${e.message}",
+                            Toast.LENGTH_LONG,
+                        ).show()
+                        finish()
+                        return@onSuccess
+                    }
                     // Opt-in contribution. Saved locally first, so a failed or refused
                     // upload can never cost the user their result.
                     if (ResultUploader.enabled(this@RunActivity)) {

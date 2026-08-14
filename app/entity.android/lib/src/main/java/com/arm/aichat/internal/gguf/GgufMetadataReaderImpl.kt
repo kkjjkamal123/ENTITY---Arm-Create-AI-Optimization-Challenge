@@ -30,6 +30,37 @@ internal class GgufMetadataReaderImpl(
          */
         private const val MAX_TENSORS = 100_000L
         private const val MAX_TENSOR_DIMS = 4
+
+        /**
+         * The same kind of bound on the metadata block. Every count and length in a GGUF
+         * header is a 64-bit field, and every one of them was being narrowed with a bare
+         * `toInt()`. That is not a harmless narrowing: `2^32` truncates to `0`, so a
+         * corrupt header does not fail - it reports zero pairs, or a zero-element array,
+         * having consumed none of the bytes those items actually occupy. Parsing then
+         * continues from the wrong offset and reads the rest of the file as garbage, with
+         * no exception anywhere to say what happened.
+         *
+         * Real models sit far below these numbers: a few hundred KV pairs, and the largest
+         * arrays are tokenizer vocabularies in the low hundreds of thousands.
+         */
+        private const val MAX_KV_PAIRS = 100_000L
+        private const val MAX_ARRAY_ELEMENTS = 10_000_000L
+    }
+
+    /**
+     * Narrows a 64-bit header count to an Int, or fails loudly.
+     *
+     * GGUF stores counts and lengths as u64 while every loop here is driven by an Int.
+     * Going between the two silently is what turns a corrupt header into a confusing
+     * downstream error instead of a clear one, so this is the only place the conversion
+     * is allowed to happen. [readString] already worked this way; this generalises it to
+     * the four other places that did not.
+     */
+    private fun checkedCount(value: Long, what: String, max: Long): Int {
+        if (value < 0L || value > max) {
+            throw IOException("Corrupt GGUF header: $what is $value (expected 0..$max)")
+        }
+        return value.toInt()
     }
 
     /** Enum corresponding to GGUF metadata value types (for convenience and array element typing). */
@@ -232,7 +263,7 @@ internal class GgufMetadataReaderImpl(
      */
     private fun readMetaMap(input: InputStream, kvCnt: Long): Map<String, MetadataValue> =
         mutableMapOf<String, MetadataValue>().apply {
-             repeat(kvCnt.toInt()) {
+             repeat(checkedCount(kvCnt, "metadata pair count", MAX_KV_PAIRS)) {
                  val key = readString(input)
                  val valueT = MetadataType.fromCode(littleEndianBytesToInt(input.readNBytesExact(4)))
                  if (key in skipKeys) {
@@ -486,7 +517,7 @@ internal class GgufMetadataReaderImpl(
         MetadataType.ARRAY -> {
             val elemType = MetadataType.fromCode(littleEndianBytesToInt(input.readNBytesExact(4)))
             val len      = readLittleLong(input)
-            val count    = len.toInt()
+            val count    = checkedCount(len, "array element count", MAX_ARRAY_ELEMENTS)
 
             if (arraySummariseThreshold >= 0 && count > arraySummariseThreshold) {
                 // fast‑forward without allocation
@@ -558,12 +589,21 @@ internal class GgufMetadataReaderImpl(
             MetadataType.UINT32, MetadataType.INT32, MetadataType.FLOAT32 -> input.skipFully(4)
             MetadataType.UINT64, MetadataType.INT64, MetadataType.FLOAT64 -> input.skipFully(8)
             MetadataType.STRING -> {
-                val len = readLittleLong(input); input.skipFully(len)
+                // The length is validated before it reaches skipFully, whose
+                // `while (remaining > 0)` loop would read a negative length as "skip
+                // nothing" and leave the stream pointer sitting on the string's own bytes
+                // - silently parsing the rest of the file, including the whole tensor
+                // table, from the wrong offset. A skipped key still has to be skipped by
+                // the right number of bytes.
+                val len = checkedCount(readLittleLong(input), "skipped string length", Int.MAX_VALUE.toLong())
+                input.skipFully(len.toLong())
             }
             MetadataType.ARRAY -> {
                 val elemType = MetadataType.fromCode(littleEndianBytesToInt(input.readNBytesExact(4)))
                 val len      = readLittleLong(input)
-                repeat(len.toInt()) { skipValue(input, elemType) }   // recursive skip
+                repeat(checkedCount(len, "skipped array element count", MAX_ARRAY_ELEMENTS)) {
+                    skipValue(input, elemType)   // recursive skip
+                }
             }
         }
     }

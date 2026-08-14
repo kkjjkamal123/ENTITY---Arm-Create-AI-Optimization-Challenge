@@ -31,8 +31,15 @@ struct HomeView: View {
                             }
                         }
                         .onDelete { offsets in
-                            for index in offsets {
-                                store.delete(Array(store.runs.dropFirst())[index])
+                            // The offsets are indices into the list as it was drawn, so
+                            // they have to be resolved against that list before anything is
+                            // removed. Rebuilding `Array(store.runs.dropFirst())` inside the
+                            // loop meant a multi-select delete of [0, 2] removed index 0,
+                            // then looked up index 2 in the now-shorter array - deleting a
+                            // run the user had not selected.
+                            let history = Array(store.runs.dropFirst())
+                            for run in offsets.map({ history[$0] }) {
+                                store.delete(run)
                             }
                         }
                     }

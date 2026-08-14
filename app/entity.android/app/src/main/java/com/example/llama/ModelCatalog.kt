@@ -203,6 +203,17 @@ object ModelCatalog {
         ),
     )
 
+    /**
+     * Free memory assumed when the system reports none, in GiB.
+     *
+     * 1.5 GB is roughly what a 4 GB phone - the smallest device this catalog targets -
+     * actually reports available with a launcher and a couple of apps resident. Choosing
+     * the low end is the point: an assumption that turns out generous costs someone an OOM
+     * kill after a multi-gigabyte download, while one that turns out mean costs them a
+     * smaller model than they could have run, which they can override from the catalog.
+     */
+    private const val ASSUMED_FREE_GB_WHEN_UNKNOWN = 1.5
+
     enum class Fit { GREAT, OK, TIGHT, TOO_BIG }
 
     data class Assessment(val fit: Fit, val reason: String)
@@ -229,11 +240,31 @@ object ModelCatalog {
      * [flags] is lower-case ISA feature names ("dotprod", "i8mm"); see [featureFlags].
      */
     fun assess(e: Entry, availableRamBytes: Long, flags: Set<String>): Assessment {
-        val ramGb = availableRamBytes / 1_073_741_824.0
+        // A memory query that failed is not a large phone.
+        //
+        // ActivityManager can report 0 or a negative figure - an OEM quirk, a permission
+        // problem - and this used to return OK for every entry, which skipped the size
+        // check below entirely. [recommended] then ranked on `s + e.paramsB` with nothing
+        // to stop it, and handed the largest 7.62B / 4.4 GB model to a device whose free
+        // memory nobody could read. That is precisely the case most likely to end in an
+        // OOM kill on first load.
+        //
+        // Substituting a conservative figure is better than a special case: every rule
+        // below - TOO_BIG, the 70% headroom band, the capability tiers - then applies
+        // unchanged, and the only thing that differs is that the number came from an
+        // assumption. The reason string says so, on every affected row.
+        val unknownRam = availableRamBytes <= 0
+        val ramGb = if (unknownRam) ASSUMED_FREE_GB_WHEN_UNKNOWN else availableRamBytes / 1_073_741_824.0
         val sizeGb = e.sizeBytes / 1_073_741_824.0
-        if (ramGb <= 0) return Assessment(Fit.OK, "available memory unknown")
 
         if (sizeGb > ramGb) {
+            if (unknownRam) {
+                return Assessment(
+                    Fit.TOO_BIG,
+                    "available memory could not be read - ${humanSize(e.sizeBytes)} is too much to " +
+                        "risk on an unknown device",
+                )
+            }
             return Assessment(
                 Fit.TOO_BIG,
                 "%.1f GB of weights with only %.1f GB free right now".format(sizeGb, ramGb),
@@ -250,6 +281,16 @@ object ModelCatalog {
             "${e.quant} $isa"
         } else {
             "${e.quant} misses KleidiAI - runs ggml's Arm repack kernels instead"
+        }
+
+        if (unknownRam) {
+            // Everything that survives the size check on an assumed figure is TIGHT by
+            // definition: the headroom band and the capability tiers below both need a
+            // real reading to mean anything, and inventing a GREAT verdict from a number
+            // nobody could measure would be the same overconfidence in a new costume.
+            notes += "available memory could not be read - sized against an assumed " +
+                "%.1f GB free".format(ASSUMED_FREE_GB_WHEN_UNKNOWN)
+            return Assessment(Fit.TIGHT, notes.joinToString(" · "))
         }
 
         if (sizeGb > ramGb * 0.7) {

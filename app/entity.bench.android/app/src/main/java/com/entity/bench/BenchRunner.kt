@@ -93,7 +93,7 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
 
     suspend fun runAblation(modelName: String, nRuns: Int, efficiencyArm: Boolean,
                             adpfEnabled: Boolean = true): BenchResult {
-        val charging = isCharging()
+        resetChargingWatch()
         val baselineC = readTempC()
         val startThermal = powerManager.currentThermalStatus
         val coolTargetC = coolTarget(baselineC)
@@ -130,7 +130,7 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
             if (arms.any { a -> stat(a.passes.map { it.tg }).n == 0 }) {
                 error("Engine returned no timing - try again.")
             }
-            return result(BenchResult.TYPE_ABLATION, modelName, charging, baselineC, startThermal,
+            return result(BenchResult.TYPE_ABLATION, modelName, chargingSeen, baselineC, startThermal,
                 runsPerArm = nRuns, durationMin = 0, arms = arms)
         } finally {
             restoreConfig()
@@ -150,7 +150,7 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
      * width isolates placement the same way threads-only -> auto does.
      */
     suspend fun runSweep(modelName: String, nRuns: Int): BenchResult {
-        val charging = isCharging()
+        resetChargingWatch()
         val baselineC = readTempC()
         val startThermal = powerManager.currentThermalStatus
         val coolTargetC = coolTarget(baselineC)
@@ -171,7 +171,7 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
             if (arms.any { a -> stat(a.passes.map { it.tg }).n == 0 }) {
                 error("Engine returned no timing - try again.")
             }
-            return result(BenchResult.TYPE_SWEEP, modelName, charging, baselineC, startThermal,
+            return result(BenchResult.TYPE_SWEEP, modelName, chargingSeen, baselineC, startThermal,
                 runsPerArm = nRuns, durationMin = 0, arms = arms)
         } finally {
             restoreConfig()
@@ -179,7 +179,7 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
     }
 
     suspend fun runSustained(modelName: String, durationMs: Long): BenchResult {
-        val charging = isCharging()
+        resetChargingWatch()
         val baselineC = readTempC()
         val startThermal = powerManager.currentThermalStatus
         val coolTargetC = coolTarget(baselineC)
@@ -196,7 +196,7 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
             if (threadsOnly.passes.isEmpty() || opt.passes.isEmpty()) {
                 error("Engine returned no timing - try again.")
             }
-            return result(BenchResult.TYPE_SUSTAINED, modelName, charging, baselineC, startThermal,
+            return result(BenchResult.TYPE_SUSTAINED, modelName, chargingSeen, baselineC, startThermal,
                 runsPerArm = 0, durationMin = (durationMs / 60_000L).toInt(),
                 arms = listOf(threadsOnly, opt))
         } finally {
@@ -346,6 +346,10 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
         val sampler = launch(Dispatchers.Default) {
             while (isActive) {
                 val now = SystemClock.elapsedRealtime()
+                // Polled on the power clock, not once per run: this is the only place that
+                // can notice a charger arriving mid-pass, which is exactly when it would
+                // silently contaminate every watts reading that follows.
+                pollCharging()
                 val ua = readCurrentUa()
                 val watts = ua?.let { PowerMath.watts(it, voltage) } ?: 0.0
                 if (watts > 0.0) samples.add(watts)
@@ -419,13 +423,37 @@ class BenchRunner(private val context: Context, private val engine: InferenceEng
         return info.availMem / (1024.0 * 1024.0 * 1024.0)
     }
 
-    private fun isCharging(): Boolean {
+    /**
+     * True if the phone was charging at any point since [resetChargingWatch].
+     *
+     * The charging flag used to be a single reading taken before the first pass, and it is
+     * what `ResultUploader` turns into `power_valid` for the public dataset. A charger
+     * plugged or unplugged a minute into a multi-minute run never reached it, while
+     * `PowerMath.watts()` went on stripping the sign of every subsequent sample - so a run
+     * contaminated by charger current could be uploaded as clean, or a clean run marked
+     * invalid, and neither is recoverable from the stored result.
+     *
+     * Sticky, and deliberately so: a run is contaminated if it was charging for any part
+     * of its duration, not if it happened to be charging when someone looked. The sampler
+     * polls it every 150 ms alongside power, which is the same clock the contamination
+     * would arrive on.
+     */
+    private var chargingSeen = false
+
+    private fun resetChargingWatch() {
+        chargingSeen = false
+        pollCharging()
+    }
+
+    private fun pollCharging(): Boolean {
         val i = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val status = i?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
         val plugged = i?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
-        return plugged != 0 ||
+        val now = plugged != 0 ||
             status == BatteryManager.BATTERY_STATUS_CHARGING ||
             status == BatteryManager.BATTERY_STATUS_FULL
+        if (now) chargingSeen = true
+        return chargingSeen
     }
 
     private fun status(text: String) = onStatus(text)

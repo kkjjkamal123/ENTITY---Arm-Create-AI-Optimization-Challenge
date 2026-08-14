@@ -1,8 +1,10 @@
 package com.entity.bench
 
 import android.content.Context
+import android.util.Log
 import org.json.JSONObject
 import java.io.File
+import java.io.IOException
 
 // Every completed benchmark is written to files/results/<ts>.json the moment it
 // finishes - there is no "save" button to forget. index.jsonl carries one summary
@@ -25,9 +27,39 @@ object ResultStore {
         val deltaPct get() = if (naiveTg > 0) (autoTg / naiveTg - 1) * 100 else 0.0
     }
 
+    private const val TAG = "ResultStore"
+
+    /**
+     * Serialises every mutation of index.jsonl.
+     *
+     * [save] appends a line while [delete] does a read-filter-rewrite of the same file,
+     * and the two used to run with nothing between them. A benchmark finishing at the
+     * moment a user deletes an old entry would have delete() read the file before save()'s
+     * append landed, then write back the filtered copy - silently dropping the just-
+     * finished run from the history index while its JSON file sat on disk unreferenced.
+     * A multi-minute benchmark is too expensive to lose to a lost update.
+     *
+     * Reads are held under the same lock so a listing can never observe a half-rewritten
+     * index. The critical sections are file-sized, not benchmark-sized, so the contention
+     * cost is nil.
+     */
+    private val indexLock = Any()
+
     private fun dir(ctx: Context) = File(ctx.filesDir, "results").apply { mkdirs() }
     private fun indexFile(ctx: Context) = File(dir(ctx), "index.jsonl")
 
+    /**
+     * Writes a finished benchmark to disk and returns its file.
+     *
+     * @throws IOException if the result itself could not be written - storage full, or a
+     *   filesystem error. That is genuinely fatal to this result and the caller has to say
+     *   so; it used to propagate uncaught out of the coroutine and take the app down,
+     *   which lost the same data and told the user nothing.
+     *
+     * A failure to update index.jsonl is not fatal and does not throw: the result file is
+     * the durable artifact and the index is a derived listing. Losing a line costs the run
+     * its place in history, which is recoverable; losing the file is not.
+     */
     fun save(ctx: Context, r: BenchResult): File {
         val f = File(dir(ctx), "${r.ts}.json")
         f.writeText(r.toJson().toString())
@@ -47,11 +79,14 @@ object ResultStore {
             put("auto", stat((bestSweep ?: r.optimized)?.passes?.map { it.tg } ?: emptyList()).median)
             put("best", bestSweep?.label ?: "")
         }
-        indexFile(ctx).appendText(line.toString() + "\n")
+        synchronized(indexLock) {
+            runCatching { indexFile(ctx).appendText(line.toString() + "\n") }
+                .onFailure { Log.e(TAG, "result ${f.name} saved but not indexed", it) }
+        }
         return f
     }
 
-    fun summaries(ctx: Context): List<Summary> {
+    fun summaries(ctx: Context): List<Summary> = synchronized(indexLock) {
         val idx = indexFile(ctx)
         if (!idx.exists()) return emptyList()
         return runCatching {
@@ -84,13 +119,15 @@ object ResultStore {
 
     fun delete(ctx: Context, fileName: String) {
         File(dir(ctx), fileName).delete()
-        val idx = indexFile(ctx)
-        if (!idx.exists()) return
-        runCatching {
-            val kept = idx.readLines().filter { l ->
-                runCatching { JSONObject(l).optString("file") != fileName }.getOrDefault(true)
-            }
-            idx.writeText(if (kept.isEmpty()) "" else kept.joinToString("\n") + "\n")
+        synchronized(indexLock) {
+            val idx = indexFile(ctx)
+            if (!idx.exists()) return
+            runCatching {
+                val kept = idx.readLines().filter { l ->
+                    runCatching { JSONObject(l).optString("file") != fileName }.getOrDefault(true)
+                }
+                idx.writeText(if (kept.isEmpty()) "" else kept.joinToString("\n") + "\n")
+            }.onFailure { Log.e(TAG, "could not rewrite the index after deleting $fileName", it) }
         }
     }
 }

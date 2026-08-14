@@ -18,6 +18,29 @@
 #include "llama.h"
 #include "ggml-cpu.h"
 
+/**
+ * Copies a Java string into a std::string, or reports failure.
+ *
+ * GetStringUTFChars allocates, and so it can fail: under memory pressure - exactly the
+ * condition loading a multi-gigabyte model creates - it returns nullptr with an
+ * OutOfMemoryError already pending on the thread. Passing that nullptr to a std::string
+ * constructor is undefined behaviour, and in practice takes the whole process down at a
+ * point where the Kotlin side could have shown an error and carried on.
+ *
+ * The pending exception is deliberately left pending rather than cleared: it is a real
+ * OOM and Java should see it when the native frame returns. The bool is there so this
+ * side stops touching state in the meantime, since nothing useful can be done with a
+ * string that does not exist.
+ */
+static bool jni_copy_string(JNIEnv *env, jstring js, std::string &out) {
+    if (!js) { return false; }
+    const char *chars = env->GetStringUTFChars(js, nullptr);
+    if (!chars) { return false; }
+    out.assign(chars);
+    env->ReleaseStringUTFChars(js, chars);
+    return true;
+}
+
 template<class T>
 static std::string join(const std::vector<T> &values, const std::string &delim) {
     std::ostringstream str;
@@ -392,10 +415,13 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_init(JNIEnv *env, jobject /*unu
     llama_log_set(aichat_android_log_callback, nullptr);
 
     // Loading all CPU backend variants
-    const auto *path_to_backend = env->GetStringUTFChars(nativeLibDir, 0);
-    LOGi("Loading backends from %s", path_to_backend);
-    ggml_backend_load_all_from_path(path_to_backend);
-    env->ReleaseStringUTFChars(nativeLibDir, path_to_backend);
+    std::string path_to_backend;
+    if (!jni_copy_string(env, nativeLibDir, path_to_backend)) {
+        LOGe("%s: could not read the native library directory; backends not loaded", __func__);
+        return;
+    }
+    LOGi("Loading backends from %s", path_to_backend.c_str());
+    ggml_backend_load_all_from_path(path_to_backend.c_str());
 
     // Initialize backends
     llama_backend_init();
@@ -425,11 +451,14 @@ JNIEXPORT jint JNICALL
 Java_com_arm_aichat_internal_InferenceEngineImpl_load(JNIEnv *env, jobject, jstring jmodel_path) {
     llama_model_params model_params = llama_model_default_params();
 
-    const auto *model_path = env->GetStringUTFChars(jmodel_path, 0);
-    LOGd("%s: Loading model from: \n%s\n", __func__, model_path);
+    std::string model_path;
+    if (!jni_copy_string(env, jmodel_path, model_path)) {
+        LOGe("%s: could not read the model path", __func__);
+        return 1;
+    }
+    LOGd("%s: Loading model from: \n%s\n", __func__, model_path.c_str());
 
-    auto *model = llama_model_load_from_file(model_path, model_params);
-    env->ReleaseStringUTFChars(jmodel_path, model_path);
+    auto *model = llama_model_load_from_file(model_path.c_str(), model_params);
     if (!model) {
         return 1;
     }
@@ -633,6 +662,32 @@ extern "C"
 JNIEXPORT jstring JNICALL
 Java_com_arm_aichat_internal_InferenceEngineImpl_benchModel(JNIEnv *env, jobject /*unused*/, jint pp, jint tg,
                                                       jint pl, jint nr) {
+    // g_batch is allocated once with BATCH_SIZE slots and is never resized. The loops
+    // below fill it with `pp` entries for prompt processing and `pl` entries per
+    // generation step, so anything above BATCH_SIZE makes common_batch_add write past
+    // the end of g_batch's token/pos/seq_id/logits arrays - heap corruption, not a
+    // caught error. decode_tokens_in_batches chunks by BATCH_SIZE for exactly this
+    // reason; this path never did.
+    //
+    // The shipped UI passes pp = 512, which sits exactly at the limit, so the bound is
+    // checked rather than assumed: this is a public JNI entry point and the next caller
+    // may not be the shipped UI. Rejecting is deliberate rather than clamping - a
+    // benchmark that silently measures a smaller workload than it was asked for reports
+    // a number for a configuration nobody requested, which is worse than no number.
+    if (pp < 1 || tg < 1 || pl < 1 || nr < 1) {
+        const auto *const err_msg = "Bench aborted: pp, tg, pl and nr must all be at least 1.";
+        LOGe("%s", err_msg);
+        return env->NewStringUTF(err_msg);
+    }
+    if (pp > BATCH_SIZE || pl > BATCH_SIZE) {
+        char err_msg[160];
+        snprintf(err_msg, sizeof(err_msg),
+                 "Bench aborted: pp=%d and pl=%d must not exceed the %d-token batch.",
+                 (int) pp, (int) pl, BATCH_SIZE);
+        LOGe("%s", err_msg);
+        return env->NewStringUTF(err_msg);
+    }
+
     // The benchmark builds its own context (n_ctx = pp) with its own thread
     // count, so init_context overwrites the global ctx tracker AND the core
     // affinity set. Save both so the chat's context bounds and its big-core
@@ -862,10 +917,25 @@ static int decode_tokens_in_batches(
         common_batch_clear(batch);
         LOGv("%s: Preparing a batch size of %d starting at: %d", __func__, cur_batch_size, i);
 
-        // Shift context if current batch cannot fit into the context
+        // Shift context if current batch cannot fit into the context.
+        //
+        // The result has to be checked, not assumed. shift_context() frees half of what
+        // lies between the system prompt and the current position, so it frees nothing at
+        // all when the two are adjacent - a system prompt sized close to max_batch_size
+        // leaves exactly that state, and n_discard comes out as 0. It can also free less
+        // than this batch needs. Either way the old code carried on and wrote token
+        // positions past the end of the KV cache, handing llama_decode() out-of-range
+        // positions; failing here is the only correct answer, because there is genuinely
+        // nowhere to put these tokens.
         if (current_position + cur_batch_size >= g_n_ctx - OVERFLOW_HEADROOM) {
             LOGw("%s: Current batch won't fit into context! Shifting...", __func__);
             shift_context();
+            if (current_position + cur_batch_size >= g_n_ctx - OVERFLOW_HEADROOM) {
+                LOGe("%s: shift freed too little - %d tokens at position %d will not fit a "
+                     "context of %d. Aborting instead of decoding out of range.",
+                     __func__, cur_batch_size, current_position, g_n_ctx);
+                return 2;
+            }
         }
 
         // Add tokens to the batch with proper positions
@@ -898,8 +968,12 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_processSystemPrompt(
     reset_short_term_states();
 
     // Obtain system prompt from JEnv
-    const auto *system_prompt = env->GetStringUTFChars(jsystem_prompt, nullptr);
-    LOGd("%s: System prompt received: \n%s", __func__, system_prompt);
+    std::string system_prompt;
+    if (!jni_copy_string(env, jsystem_prompt, system_prompt)) {
+        LOGe("%s: could not read the system prompt", __func__);
+        return 3;
+    }
+    LOGd("%s: System prompt received: \n%s", __func__, system_prompt.c_str());
     std::string formatted_system_prompt(system_prompt);
 
     // Format system prompt if applicable
@@ -907,7 +981,6 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_processSystemPrompt(
     if (has_chat_template) {
         formatted_system_prompt = chat_add_and_format(ROLE_SYSTEM, system_prompt, false);
     }
-    env->ReleaseStringUTFChars(jsystem_prompt, system_prompt);
 
     // Tokenize system prompt
     const auto system_tokens = common_tokenize(g_context, formatted_system_prompt,
@@ -947,8 +1020,12 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_processUserPrompt(
     reset_short_term_states();
 
     // Obtain and tokenize user prompt
-    const auto *const user_prompt = env->GetStringUTFChars(juser_prompt, nullptr);
-    LOGd("%s: User prompt received: \n%s", __func__, user_prompt);
+    std::string user_prompt;
+    if (!jni_copy_string(env, juser_prompt, user_prompt)) {
+        LOGe("%s: could not read the user prompt", __func__);
+        return 3;
+    }
+    LOGd("%s: User prompt received: \n%s", __func__, user_prompt.c_str());
     std::string formatted_user_prompt(user_prompt);
 
     // Format user prompt if applicable
@@ -956,7 +1033,6 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_processUserPrompt(
     if (has_chat_template) {
         formatted_user_prompt = chat_add_and_format(ROLE_USER, user_prompt, true);
     }
-    env->ReleaseStringUTFChars(juser_prompt, user_prompt);
 
     // Decode formatted user prompts
     auto user_tokens = common_tokenize(g_context, formatted_user_prompt, has_chat_template, has_chat_template);
@@ -1104,9 +1180,22 @@ Java_com_arm_aichat_internal_InferenceEngineImpl_generateNextToken(
     pin_to_fast_cores();
     // Infinite text generation via context shifting. The stop position tracks
     // the trim so the n_predict budget stays correct after a shift.
+    //
+    // A shift that frees nothing ends generation rather than continuing. shift_context()
+    // discards half of what sits between the system prompt and here, so it returns 0 when
+    // there is nothing between them - and decoding on regardless would place the next
+    // token past the end of the KV cache. Stopping produces a short answer; the
+    // alternative produces out-of-range positions.
     if (current_position >= g_n_ctx - OVERFLOW_HEADROOM) {
         LOGw("%s: Context full! Shifting...", __func__);
         stop_generation_position -= shift_context();
+        if (current_position >= g_n_ctx - OVERFLOW_HEADROOM) {
+            LOGe("%s: context full at position %d and nothing could be discarded - "
+                 "ending this turn instead of decoding out of range.",
+                 __func__, current_position);
+            chat_add_and_format(ROLE_ASSISTANT, assistant_ss.str(), false);
+            return nullptr;
+        }
     }
 
     // Stop if reaching the marked position

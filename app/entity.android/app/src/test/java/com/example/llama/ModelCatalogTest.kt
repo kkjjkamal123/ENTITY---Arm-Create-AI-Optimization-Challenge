@@ -66,6 +66,42 @@ class ModelCatalogTest {
         assertTrue("a recommendation should reach Arm's kernels", large.kleidiAccelerated)
     }
 
+    /**
+     * A failed memory query must not read as a large phone.
+     *
+     * ActivityManager returns 0 or a negative figure on some devices, and assess() used to
+     * answer OK for every entry - skipping the size check entirely, so recommended()
+     * ranked on parameter count alone and picked the largest 4.4 GB model for a device
+     * whose free memory nobody could read.
+     */
+    @Test
+    fun `unknown free memory is sized conservatively, not treated as unlimited`() {
+        for (unknown in listOf(0L, -1L)) {
+            val flags = setOf("dotprod")
+            val biggest = ModelCatalog.ALL.maxByOrNull { it.sizeBytes }!!
+            val verdict = ModelCatalog.assess(biggest, unknown, flags)
+            assertEquals(
+                "the largest model must not be offered when free memory is unreadable",
+                ModelCatalog.Fit.TOO_BIG, verdict.fit,
+            )
+            assertTrue(
+                "the reason must say the figure was unreadable, not invent one",
+                verdict.reason.contains("could not be read"),
+            )
+
+            // Nothing is GREAT on a number nobody measured, but small models stay usable.
+            val small = ModelCatalog.ALL.first { it.id == "llama3.2-1b-q4_0" }
+            assertEquals(ModelCatalog.Fit.TIGHT, ModelCatalog.assess(small, unknown, flags).fit)
+
+            val pick = ModelCatalog.recommended(unknown, flags)
+            assertNotNull("a conservative pick is still better than none", pick)
+            assertTrue(
+                "recommended ${pick!!.id} (${pick.sizeBytes} bytes) on unknown memory",
+                pick.sizeBytes < biggest.sizeBytes,
+            )
+        }
+    }
+
     // Chat-app-only: the flags come from llama's system-info string rather than
     // /proc/cpuinfo, so the bridge onto assess()'s lower-case names needs its own cover.
     @Test
