@@ -1,0 +1,28 @@
+0.00.063.800 I llama_completion: llama backend init
+0.00.063.816 I llama_completion: load the model and apply lora adapter, if any
+0.07.115.564 I llama_completion: llama threadpool init, n_threads = 4
+0.07.115.636 I 
+0.07.116.125 I system_info: n_threads = 4 (n_threads_batch = 4) / 8 | CPU : NEON = 1 | ARM_FMA = 1 | FP16_VA = 1 | DOTPROD = 1 | LLAMAFILE = 1 | OPENMP = 1 | KLEIDIAI = 1 | REPACK = 1 | 
+0.07.116.136 I 
+0.07.116.158 I llama_completion: attempting to load saved session from '/data/local/tmp/qlab/results/kv-restore/cache-750.bin'
+0.10.471.301 I llama_completion: loaded a session with prompt size of 173 tokens
+0.10.479.431 I llama_completion: session file has exact match for prompt!
+0.10.486.844 W kleidiai: no kernel for tensor type q6_K, not accelerated by KleidiAI (kernels available for Q4_0 and Q8_0)
+0.11.004.362 I llama_completion: replayed last token from session
+0.11.004.504 I sampler seed: 42
+0.11.004.547 I sampler params: 
+	repeat_last_n = 64, repeat_penalty = 1.000, frequency_penalty = 0.000, presence_penalty = 0.000
+	dry_multiplier = 0.000, dry_base = 1.750, dry_allowed_length = 2, dry_penalty_last_n = 64
+	top_k = 40, top_p = 0.950, min_p = 0.050, xtc_probability = 0.000, xtc_threshold = 0.100, typical_p = 1.000, top_n_sigma = -1.000, temp = 0.000
+	mirostat = 0, mirostat_lr = 0.100, mirostat_ent = 5.000, adaptive_target = -1.000, adaptive_decay = 0.900
+0.11.004.617 I sampler chain: logits -> ?penalties -> ?dry -> ?top-n-sigma -> top-k -> ?typical -> top-p -> min-p -> ?xtc -> temp-ext -> dist 
+0.11.004.636 I generate: n_ctx = 125440, n_batch = 2048, n_predict = 1, n_keep = 1
+0.11.004.648 I 
+0.11.007.104 I common_perf_print:    sampling time =       0.91 ms
+0.11.007.125 I common_perf_print:    samplers time =       0.12 ms /   173 tokens
+0.11.007.142 I common_perf_print:        load time =    3890.70 ms
+0.11.007.156 I common_perf_print: prompt eval time =       0.00 ms /     1 tokens (    0.00 ms per token,      inf tokens per second)
+0.11.007.169 I common_perf_print:        eval time =     526.05 ms /     1 runs   (  526.05 ms per token,     1.90 tokens per second)
+0.11.007.180 I common_perf_print:       total time =    3891.61 ms /     2 tokens
+0.11.007.193 I common_perf_print: unaccounted time =    3364.65 ms /  86.5 %      (total - sampling - prompt eval - eval) / (total)
+0.11.007.204 I common_perf_print:    graphs reused =          0
