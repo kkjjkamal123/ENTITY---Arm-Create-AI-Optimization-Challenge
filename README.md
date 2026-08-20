@@ -18,7 +18,7 @@
 
 ## Quick start
 
-Install the signed APK on any arm64 phone running Android 13 or later:
+Any arm64 phone on Android 13 or later. Install the signed APK:
 
 ```bash
 git clone https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge.git
@@ -26,21 +26,21 @@ cd ENTITY---Arm-Create-AI-Optimization-Challenge
 adb install -r apk/ENTITY-v26-review-fixes-20260814-release.apk
 ```
 
-Or take the APK straight from the [releases page](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge/releases/latest), which also carries **ENTITY Bench**, the standalone benchmark app.
+The [releases page](https://github.com/kkjjkamal123/ENTITY---Arm-Create-AI-Optimization-Challenge/releases/latest) has the same APK plus **ENTITY Bench**, the standalone benchmark app.
 
-Then, on the phone:
+Then on the phone:
 
-1. Tap the model line in the header. **Download a model...** picks from a catalog tagged for your phone; **Import from device...** takes a GGUF you already have - for example [Llama-3.2-1B-Instruct-Q4_0.gguf](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF). Prefer a **Q4_0** build: it is one of only two quantizations Arm's KleidiAI kernels accelerate ([why](docs/KLEIDIAI-QUANTS.md)).
-2. Leave **Auto** enabled so the runtime derives thread count, core placement and context from the silicon it finds.
-3. Open **BENCHMARK** from the drawer to run the three arm ablation on the loaded model. **Unplug first** - power and tokens per watt are only reported on battery, because a charging phone reports the charger's current rather than the workload's.
+1. Tap the model line in the header. **Download a model...** picks from a catalog tagged for your phone. **Import from device...** takes a GGUF you already have, say [Llama-3.2-1B-Instruct-Q4_0.gguf](https://huggingface.co/bartowski/Llama-3.2-1B-Instruct-GGUF). Pick a **Q4_0** build if you can. It is one of only two quantizations Arm's KleidiAI kernels touch ([why](docs/KLEIDIAI-QUANTS.md)).
+2. Leave **Auto** on. It works out thread count, core placement and context from whatever silicon it finds.
+3. Open **BENCHMARK** from the drawer for the three arm ablation. **Unplug the phone first.** Power and tokens per watt only show on battery, because a charging phone reports the charger's current instead of the workload's.
 
-Building from source needs the exact SDK, NDK, CMake and JDK versions in [BUILD](docs/BUILD.md). The release build is arm64 only and ships all seven CPU backend variants.
+To build from source you need the exact SDK, NDK, CMake and JDK versions listed in [BUILD](docs/BUILD.md). The release build is arm64 only and ships all seven CPU backend variants.
 
 ## What ENTITY is
 
-ENTITY is a private Android assistant that runs runnable GGUF language models entirely on the phone. It is built as an inference optimization layer around llama.cpp with a Kotlin interface and a C++ JNI inference path.
+ENTITY is a private Android assistant. It runs GGUF language models entirely on the phone, as an optimization layer over llama.cpp with a Kotlin front end and a C++ JNI inference path.
 
-The current release is built for arm64 Android phones running Android 13 or later. It has been measured on a CMF Phone 1 with MediaTek Dimensity 7300 and independently validated on a Qualcomm Snapdragon 6 Gen 4 phone.
+The current release targets arm64 phones on Android 13 or later. I measured it on a CMF Phone 1 with a MediaTek Dimensity 7300 and checked it again on a Qualcomm Snapdragon 6 Gen 4.
 
 ## What makes it different
 
@@ -48,30 +48,30 @@ The current release is built for arm64 Android phones running Android 13 or late
 |---|---|
 | CPU backend | Ships seven Arm CPU backend variants from Arm v8.0 through Arm v9.2. ggml loads the best supported variant at startup. |
 | KleidiAI advisor | Arm's KleidiAI has kernels for Q4_0 and Q8_0 only. Every other quantization silently falls back to generic ggml. ENTITY reads the GGUF header and tells you whether the model you loaded can actually reach Arm's kernels, and what it costs when it cannot. |
-| Fast core selection | Reads maximum CPU frequency from the device then ranks the cores. Auto derives its thread count from the size of the top frequency cluster (two to six cores; four on the reference 4+4 phone) and runs both inference phases there rather than waiting for the slower efficiency cores. |
+| Fast core selection | Reads maximum CPU frequency from the device then ranks the cores. Auto derives its thread count from the size of the top frequency cluster (two to six cores; four on the reference 4+4 phone) and runs both inference phases there instead of waiting on the slower efficiency cores. |
 | Adaptive context | Selects a 2048 to 8192 token context from model size and free RAM. This lets a 3B class model use a smaller window when memory is tight. |
 | Thermal policy | Checks Android thermal status during generation and adds a small cooperative delay when heat rises. Efficiency mode doubles the delay and caps inference at two threads. |
 | Energy telemetry | Reports tokens, token rate, time to first token, temperature, power, token per watt and free memory. |
-| Three arm ablation | The benchmark does not just report a number, it attributes it: naive, threads only, and Auto, so a reader can see which decision earned the speed up and which did not. |
+| Three arm ablation | The benchmark does not just report a number, it attributes it. Naive, threads only and Auto, so a reader can see which decision earned the speed up and which did not. |
 
-ENTITY does not claim to beat a tuned command line build on raw token rate. Its purpose is to give a normal phone user the same hardware aware decisions in a responsive foreground app with live energy and thermal information.
+ENTITY does not claim to beat a tuned command line build on raw token rate. The point is to hand a normal phone user the same hardware aware decisions inside a responsive app, with live energy and thermal readings while it runs.
 
 ## Evidence at a glance
 
-The challenge names **performance-per-watt** as a judging axis, so ENTITY leads with the figure most on-device apps never even measure: the battery cost of producing the same output. Every number below is measured on the phone and bounded, and where the ablation disproved ENTITY's own flagship claim, that is recorded here rather than buried.
+The challenge names **performance-per-watt** as a judging axis, so I lead with the number most on-device apps never bother to measure. What the same output costs your battery. Everything below was measured on the phone and comes with the limits it holds inside. Where my own ablation killed one of my headline claims, that is in the table too.
 
 | Claim | Evidence | Boundary |
 |---|---|---|
-| **The same output costs 42% less battery** | Each pass samples battery current and voltage every 150 ms; watts and tok/W appear only while unplugged. Integrated over a pass, the same 128 tokens cost **86 J naive versus 50 J optimized** - 42% less battery, from finishing in 11.8 s instead of 19.9 s at the same watts. On the Snapdragon 6 Gen 4, pinning holds decode flat while cutting median power 2.52 to 1.78 W: **tok/W 6.80 to 9.85 (+45%)**. | Battery current reporting is OEM dependent. Comparative on one device, not lab grade metering. |
+| **The same output costs 42% less battery** | Each pass samples battery current and voltage every 150 ms; watts and tok/W appear only while unplugged. Integrated over a pass, the same 128 tokens cost **86 J naive versus 50 J optimized**. That is 42% less battery, and it comes from finishing in 11.8 s instead of 19.9 s at the same watts. On the Snapdragon 6 Gen 4, pinning holds decode flat while cutting median power 2.52 to 1.78 W: **tok/W 6.80 to 9.85 (+45%)**. | Battery current reporting is OEM dependent. Comparative on one device, not lab grade metering. |
 | Auto is much faster than the out of the box default | Current five-run exports (2026-07-18): decode 10.8 to 18.1 tok/s (+68%) on the CMF Phone 1 and 9.7 to 17.5 tok/s (+81%) on an OPPO Snapdragon 6 Gen 4. The July record read +81% to +106% across two models. | Two phones, 1B and 3B models. Not a universal multiplier. |
-| **The thread count earns the multiplier; what pinning adds is device dependent** | The threads only arm runs Auto's thread count with affinity switched off. The current five-run exports: on the Dimensity 7300 pinning adds **+21% decode** (distributions non overlapping); on the Snapdragon 6 Gen 4 it adds +1% decode but cuts median power 2.52 to 1.78 W (tok/W 6.80 to 9.85). July's three-run sets on the chat app's bench read pinning at ~0%, and the v2.0.0 claim of "+121% from big core affinity" was wrong either way - the ablation is the experiment that showed it. | Per-SoC behavior, not a universal rule. The July ~0% record is retained; the raw CSVs keep the difference answerable. |
+| **The thread count earns the multiplier; what pinning adds is device dependent** | The threads only arm runs Auto's thread count with affinity switched off. The current five-run exports: on the Dimensity 7300 pinning adds **+21% decode** (distributions non overlapping); on the Snapdragon 6 Gen 4 it adds +1% decode but cuts median power 2.52 to 1.78 W (tok/W 6.80 to 9.85). July's three-run sets on the chat app's bench read pinning at ~0%, and the v2.0.0 claim of "+121% from big core affinity" was wrong either way. My own ablation is what showed it. | Per-SoC behavior, not a universal rule. The July ~0% record is retained; the raw CSVs keep the difference answerable. |
 | **KleidiAI only accelerates Q4_0 and Q8_0** | Verified in Arm's kernel source. Every benchmark published before v2.1.0 used Q3_K_L, so KleidiAI never ran. Switching to Q4_0, same phone and same thread config: prompt 43 to 121 tok/s, TTFT 12.1s to 4.3s. On an i8mm phone (Snapdragon 6 Gen 4) the loaded backend's MATMUL_INT8 GEMM adds a further **+32% prompt** over dotprod on Q4_0 (190.6 vs 143.7 tok/s, cold). | Decode does not improve. It is bandwidth bound and tracks bytes per weight, not kernel quality. Q4_0 is also a quality tradeoff, so ENTITY recommends rather than switches. |
-| Widening prompt processing to all cores was a regression | Prompt on 4 fast cores measures 135 tok/s; spread across all 8 it measures 86. The efficiency cores gate every GEMM. Removed in v2.1.0. | Empirical to this SoC. A tri cluster chip may prefer a wider pool, which is why the benchmark decides it, not an assumption. |
+| Widening prompt processing to all cores was a regression | Prompt on 4 fast cores measures 135 tok/s; spread across all 8 it measures 86. The efficiency cores gate every GEMM. Removed in v2.1.0. | Empirical to this SoC. A tri cluster chip may prefer a wider pool, so the benchmark decides it instead of me assuming. |
 | A developer can reproduce or challenge any of it | The app runs the ablation and exports every pass to CSV. Each arm logs the CPU mask the kernel actually applied, so a failed pin cannot pass as "pinning earns nothing". The device card's optimization indicator shows which Arm levers are live on the phone in hand. | A matching device and model are needed for a direct numerical comparison. |
-| **The speedup does not change the model's output** | Four scheduling arms, one device, greedy decoding at a fixed seed plus per-chunk perplexity. Eight threads against the shipped four - the only pair where ggml's reduction width changes, and the baseline the decode gain is measured from - produced the same 96 tokens byte for byte and the same twelve per-chunk values. Three controls, including one showing the per-chunk series *does* move when batch shape changes rather than thread count. | Not bit-exactness: the series prints to four decimals, and greedy decoding only reveals a perturbation big enough to change an argmax. One device, one model. |
-| **Six of the ten optimizations are removed or crippled on another arm64 platform** | Ported the same intent to Apple silicon - also arm64, also big.LITTLE. **Four cease to exist outright**: per-core frequency, ADPF deadline hints, energy telemetry, and multi-variant v8.0-v9.2 backend dispatch. **Two survive only degraded**: core placement falls back to a QoS request that cannot be verified or read back, and thermal detail collapses to four coarse levels. Two others get *better*. Measured on two iPhones: the runtime picks **one** thread, and a second costs +16.8% and +11.4%. KleidiAI still pays (1.089x, 1.045x). | Different runtime and model from the Android record (ONNX int8, not llama.cpp GGUF), so the two are never compared numerically. Two devices, one workload. |
+| **The speedup does not change the model's output** | Four scheduling arms, one device, greedy decoding at a fixed seed plus per-chunk perplexity. Eight threads against the shipped four is the only pair where ggml's reduction width changes, and it is the baseline the decode gain is measured from. It produced the same 96 tokens byte for byte and the same twelve per-chunk values. Three controls, including one showing the per-chunk series *does* move when batch shape changes rather than thread count. | Not bit-exactness: the series prints to four decimals, and greedy decoding only reveals a perturbation big enough to change an argmax. One device, one model. |
+| **Six of the ten optimizations are removed or crippled on another arm64 platform** | Ported the same intent to Apple silicon, which is also arm64 and also big.LITTLE. **Four cease to exist outright**: per-core frequency, ADPF deadline hints, energy telemetry and multi-variant v8.0-v9.2 backend dispatch. **Two survive only degraded**: core placement falls back to a QoS request that cannot be verified or read back, and thermal detail collapses to four coarse levels. Two others get *better*. Measured on two iPhones: the runtime picks **one** thread, and a second costs +16.8% and +11.4%. KleidiAI still pays (1.089x, 1.045x). | Different runtime and model from the Android record (ONNX int8, not llama.cpp GGUF), so the two are never compared numerically. Two devices, one workload. |
 
-| **The decode gain holds on silicon the author has never touched** | ENTITY Bench uploads a finished ablation, opt in, to a public Postgres table. **26 contributed runs from 13 distinct devices across 9 SoC families and 4 vendors** - MediaTek, Qualcomm, Samsung Exynos and Google Tensor - from a TECNO on a Helio G37 to a Pixel 10 on Tensor G5. Decode improved in **26 of 26**, median **1.78x**, range **1.34x to 4.27x**. Prompt regressed in 2 of 26, and both are kept in the table. | A self selected sample, not a random one, run under contributors' own thermal state and Android version (4 releases). Near controlled on the workload: two model files only, Q4_0 and Q8_0. 20 of 26 ran unplugged, so only those carry valid power columns. |
+| **The decode gain holds on silicon the author has never touched** | ENTITY Bench uploads a finished ablation, opt in, to a public Postgres table. **26 contributed runs from 13 distinct devices across 9 SoC families and 4 vendors**, those being MediaTek, Qualcomm, Samsung Exynos and Google Tensor, from a TECNO on a Helio G37 to a Pixel 10 on Tensor G5. Decode improved in **26 of 26**, median **1.78x**, range **1.34x to 4.27x**. Prompt regressed in 2 of 26. Both are kept in the table. | A self selected sample, not a random one, run under contributors' own thermal state and Android version (4 releases). Near controlled on the workload: two model files only, Q4_0 and Q8_0. 20 of 26 ran unplugged, so only those carry valid power columns. |
 
 This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has the full record, the graphs, and the limits.
 
@@ -79,9 +79,9 @@ This is the short judge facing map. [Benchmarks](benchmarks/BENCHMARKS.md) has t
 
 ## The dataset
 
-Most of this README's claims were measured on two phones. That is the honest limit of one student with two devices, and it is the limit ENTITY was built to escape: the app that runs the experiment also returns the answer.
+Most of the claims above were measured on two phones. That is what one student with two devices can honestly do. It is also the limit I built ENTITY Bench to get past, since the app that runs the experiment can just as well send back the answer.
 
-ENTITY Bench ships a one tap **Contribute** action. A finished ablation - summary statistics per arm, never the per pass 150 ms trace - is posted to a Postgres table behind PostgREST. What has arrived so far:
+ENTITY Bench has a one tap **Contribute** action. It posts a finished ablation to a Postgres table behind PostgREST. Summary statistics per arm only. The per pass 150 ms trace never leaves the phone. What has come in so far:
 
 | | Contributed | |
 |---|---|---|
@@ -125,17 +125,17 @@ flowchart LR
 
 </details>
 
-**Why this is the strongest evidence in the project.** A cross device table assembled from phones the author owns cannot separate the optimization from the hardware it was tuned on. These 13 devices were configured by strangers, in their own rooms, at their own starting temperatures, and the decode gain survived every one of them. The two prompt regressions survived too, and are published rather than dropped.
+**Why this is the strongest evidence here.** A table built only from phones I own cannot tell my optimization apart from the hardware I tuned it on. These 13 devices were set up by strangers in their own rooms at their own starting temperatures. The decode gain held on all of them. The two prompt regressions held too. Both are in the table.
 
-**What is sent, and what is not.** Contribution is **off until someone turns it on** - there is no first run upload and no "anonymous statistics" default. Settings renders the exact JSON body verbatim before the first send. Each submission carries a **fresh random UUID** used only to drop duplicates, so no two runs from one phone can be linked. The payload is device model, SoC, CPU flags, core topology, model file and the per arm medians. No account, no advertising ID, no location, no chat content - the chat app has no network permission at all.
+**What gets sent.** Contribution is **off until you turn it on**. No first run upload. No "anonymous statistics" default. Settings shows you the exact JSON body before anything is sent. Every submission gets a **fresh random UUID** that exists only to drop duplicates, so two runs from one phone cannot be tied together. The body is device model, SoC, CPU flags, core topology, model file and the per arm medians. No account. No advertising ID. No location. No chat content. The chat app holds no network permission at all.
 
-**The key in the APK is public on purpose.** Row level security grants the shipped anon key `INSERT` and `SELECT` and nothing else: it can append a run and read the public dataset, and cannot update or delete a row, including its own. The endpoint is a build config value that is **blank in the public source**, so a fork builds and runs with contribution switched off rather than posting into this database.
+**The key in the APK is public on purpose.** Row level security gives the shipped anon key `INSERT` and `SELECT` and nothing more. It can append a run and read the public dataset. It cannot update or delete anything, its own row included. The endpoint itself is a build config value left **blank in the public source**, so a fork builds with contribution switched off instead of posting into this database.
 
 Raw exports live in [`benchmarks/results/`](benchmarks/results/); the table definition is [`benchmarks/contribute-schema.sql`](benchmarks/contribute-schema.sql) and the backend write up is [`benchmarks/CONTRIBUTE-BACKEND.md`](benchmarks/CONTRIBUTE-BACKEND.md).
 
 ## How ENTITY decides
 
-No vendor table, no device allowlist, no cloud lookup. The runtime reads the kernel's own view of the silicon it woke up on and derives a policy in about 60 ms.
+No vendor table. No device allowlist. No cloud lookup. The runtime reads what the kernel already knows about the silicon it woke up on and works out a policy in roughly 60 ms.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/decision-flow-dark.svg">
@@ -173,30 +173,30 @@ flowchart TD
 
 </details>
 
-The two branches out of **Which phase?** are the whole idea. Prefill and decode are not the same workload wearing different hats, and the arithmetic says so before any benchmark does.
+Everything hangs on the two branches out of **Which phase?**. Prefill and decode look like one workload but they are not. You can see it in the arithmetic before you run a single benchmark.
 
-### The arithmetic, with the constants you can check
+### The arithmetic, and the constants it comes from
 
-Arithmetic intensity is FLOPs performed per byte moved. A matmul against the full weight set does **2P** FLOPs per token for **P** parameters, and must read **B** bytes of weights regardless of how many tokens it is processing. So for a batch of **N** tokens:
+Arithmetic intensity is FLOPs done per byte moved. A matmul over the full weight set does **2P** FLOPs per token for **P** parameters. It still has to read **B** bytes of weights no matter how many tokens are in flight. For a batch of **N** tokens:
 
 $$I = \frac{2PN}{B} \qquad\text{giving}\qquad \frac{I_{\text{prefill}}}{I_{\text{decode}}} = N$$
 
-Decode is the `N = 1` case. Both constants quoted in the flowchart come from two fields of the shipping catalog entry for Llama 3.2 1B Q4_0 in [`ModelCatalog.kt`](app/entity.bench.android/app/src/main/java/com/entity/bench/ModelCatalog.kt) - `1.24` billion parameters and `773_025_920` bytes:
+Decode is just `N = 1`. Both numbers in the flowchart drop out of two fields on the shipping catalog entry for Llama 3.2 1B Q4_0 in [`ModelCatalog.kt`](app/entity.bench.android/app/src/main/java/com/entity/bench/ModelCatalog.kt), `1.24` billion parameters and `773_025_920` bytes:
 
 | Phase | Substitution | Result |
 |---|---|---:|
 | Decode, `N = 1` | `2 x 1.24e9 / 773,025,920` | **3.21** FLOP/byte |
 | Prefill, `N = 512` | `512 x 3.21` | **1643** FLOP/byte |
 
-**A 512x ratio between two phases of the same model is why one policy cannot serve both.** Prefill sits far to the right of any Arm CPU's roofline ridge point, so it is compute bound and wants every core that can retire a MAC - which is why the prefill width is derived from `cpu_capacity`, and why KleidiAI's INT8 GEMM shows up as **+379% prompt** on the ISA ladder and **nothing** on decode. Decode at 3.21 sits far to the left: it is bandwidth bound, the weights must cross the bus once per token no matter what, and adding cores past the point where the bus saturates buys queueing rather than throughput. That is the measured `-` in "eight threads on a 4+4 phone let the Cortex A55s gate every decode step".
+**One policy cannot serve a 512x gap between two phases of the same model.** Prefill sits well to the right of any Arm CPU's roofline ridge point. It is compute bound and wants every core that can retire a MAC, so the prefill width comes from `cpu_capacity`. That is also why KleidiAI's INT8 GEMM shows up as **+379% prompt** on the ISA ladder and does nothing at all for decode. Decode at 3.21 sits far to the left. It is bandwidth bound. The weights cross the bus once per token whatever you do, so once the bus saturates, extra cores buy you queueing instead of throughput. That is the measurement behind "eight threads on a 4+4 phone let the Cortex A55s gate every decode step".
 
-This is also the falsifiable part. If decode were compute bound, widening it would help, and the naive 8-thread arm would beat Auto's 4. It loses on all 13 contributed devices.
+You can also break this claim. If decode were compute bound, going wider would help and the naive 8 thread arm would beat Auto's 4. It loses on all 13 contributed devices.
 
 ---
 
 ## Benchmarks
 
-The benchmark runs a synthetic PP 512 / TG 128 workload on the loaded model, on an unplugged phone, with a thermal cooldown before every pass. It runs three arms, not two, so the result can be attributed rather than assumed: naive (8 threads, all cores), threads only (Auto's thread count with core pinning switched off, which is what an upstream `llama.cpp -t N` run does), and ENTITY Auto.
+The benchmark runs a synthetic PP 512 / TG 128 workload on the loaded model, unplugged, with a thermal cooldown before every pass. Three arms instead of two, so you can see where a number came from instead of taking my word for it. Naive is 8 threads across all cores. Threads only takes Auto's thread count and switches core pinning off, which is what an upstream `llama.cpp -t N` run gives you. Then ENTITY Auto.
 
 ### Where the speed up actually comes from
 
@@ -212,7 +212,7 @@ The current benchmark of record is the pair of four arm, five runs per arm ENTIT
   <img alt="Four-arm decode and efficiency" src="benchmarks/plots/four_arm_decode_20260718.png">
 </picture>
 
-The thread count is the universal earner. What pinning adds depends on the SoC: decode on the Dimensity (+21%, the pinned and unpinned distributions do not overlap), power on the Snapdragon (2.52 to 1.78 W median, tokens per watt 6.80 to 9.85). And on both phones the LITTLE pinned arm loses on speed and on tok/W - the efficiency cores are not an efficiency win for LLM decode, which is why the affinity policy is measured per device instead of assumed.
+The thread count is the universal earner. What pinning adds depends on the SoC: decode on the Dimensity (+21%, the pinned and unpinned distributions do not overlap), power on the Snapdragon (2.52 to 1.78 W median, tokens per watt 6.80 to 9.85). And on both phones the LITTLE pinned arm loses on speed and on tok/W. The efficiency cores are not an efficiency win for LLM decode, which is why the affinity policy is measured per device instead of assumed.
 
 The July 2026 three arm record that first split the attribution, CMF Phone 1:
 
@@ -230,7 +230,7 @@ The July 2026 three arm record that first split the attribution, CMF Phone 1:
   <img alt="Decode attribution" src="benchmarks/plots/decode_attribution.png">
 </picture>
 
-Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode step. Using four threads removes that. In this July record the pinning added nothing measurable - identical 15.9 tok/s medians pinned and unpinned in the repeat set, with the pinned arm's spread collapsing from 1.58 to 0.09, so pinning bought repeatability rather than speed. The 2026-07-18 five run exports above are the current statement - +21% on this same phone, +1% on the OPPO - and the difference between the two records is kept as an open question in [the benchmark record](benchmarks/BENCHMARKS.md). What every set agrees on: the v2.0.0 claim that +121% came from big core affinity was wrong, and ENTITY's own ablation is what proved it.
+Eight threads on a 4+4 big.LITTLE phone let the Cortex A55s gate every decode step. Using four threads removes that. In this July record the pinning added nothing measurable. Identical 15.9 tok/s medians pinned and unpinned in the repeat set, with the pinned arm's spread collapsing from 1.58 to 0.09, so pinning bought repeatability instead of speed. The 2026-07-18 five run exports above are the current statement, +21% on this same phone and +1% on the OPPO. The difference between the two records is kept as an open question in [the benchmark record](benchmarks/BENCHMARKS.md). What every set agrees on: the v2.0.0 claim that +121% came from big core affinity was wrong. My own ablation proved it.
 
 ### KleidiAI never ran
 
@@ -251,7 +251,7 @@ This isolates the **quantization**, not KleidiAI specifically: moving to Q4_0 sw
   <img alt="KleidiAI" src="benchmarks/plots/kleidiai_prompt_ttft.png">
 </picture>
 
-Prompt evaluation is a compute bound GEMM, which is what KleidiAI accelerates. Decode is memory bandwidth bound and tracks bytes per weight rather than kernel quality, so it does not improve: Q4_0 is about 6% more bytes and lands slightly slower. Q4_0 is also a quality tradeoff, and the cost is now measured rather than asserted: **+5.6% perplexity against Q4_K_M** on Llama-3.2-1B (15.6159 vs 14.7346, wikitext-2 test, 200 chunks), for 4.5% fewer bytes and a prompt path Q4_K_M cannot reach at all. ENTITY recommends rather than switching silently, and the model card now reports both sides. Full table: [`docs/QUANTIZATION-QUALITY.md`](docs/QUANTIZATION-QUALITY.md).
+Prompt evaluation is a compute bound GEMM, which is what KleidiAI accelerates. Decode is memory bandwidth bound and tracks bytes per weight and not kernel quality, so it does not improve: Q4_0 is about 6% more bytes and lands slightly slower. Q4_0 is also a quality tradeoff, and the cost is measured now instead of asserted: **+5.6% perplexity against Q4_K_M** on Llama-3.2-1B (15.6159 vs 14.7346, wikitext-2 test, 200 chunks), for 4.5% fewer bytes and a prompt path Q4_K_M cannot reach at all. ENTITY recommends instead of switching silently. The model card reports both sides. Full table: [`docs/QUANTIZATION-QUALITY.md`](docs/QUANTIZATION-QUALITY.md).
 
 ### What the user actually gets
 
@@ -286,7 +286,7 @@ Same phone, same `Llama-3.2-1B-Instruct-Q4_0`, same PP 512 / TG 128 workload, ea
 
 Against Arm's own reference app, on Arm's own silicon: 6% on prompt and **47% on token generation**. Against PocketPal: 45% and 31%.
 
-Decode is where the thread count policy acts and where the margin is. The prompt column is close because all three apps run Q4_0 and reach the same KleidiAI kernels, so that column mostly measures whether an app got the quantization right, and here everyone did. The decode margin has a named mechanism rather than a mystery: PocketPal runs **6 threads on a 4+4 chip**, so two of them land on Cortex-A55s at roughly a third of an A78's throughput and every decode step waits on them. That is the straggler bound this project's own ablation measures, just less severe than the naive 8 thread arm.
+Decode is where the thread count policy acts and where the margin is. The prompt column is close because all three apps run Q4_0 and reach the same KleidiAI kernels, so that column mostly measures whether an app got the quantization right, and here everyone did. The decode margin has a named mechanism behind it, not a mystery: PocketPal runs **6 threads on a 4+4 chip**, so two of them land on Cortex-A55s at roughly a third of an A78's throughput and every decode step waits on them. That is the straggler bound this project's own ablation measures, just less severe than the naive 8 thread arm.
 
 The same three apps were measured on 2026-07-14 and the repeat did not agree with it. PocketPal and Arm swapped places on decode, and ENTITY's prompt margin over Arm narrowed from 11% to 6%. Both sessions are published with their dates, because PocketPal's decode swinging about 27% between sessions on identical hardware, while Arm's held within about 4%, is exactly why a figure from one session must never be paired with a figure from another. Full setup, both sessions, screenshots and caveats: [competitor comparison](benchmarks/competitor-comparison/README.md).
 
@@ -356,23 +356,23 @@ The canonical source repository is [kkjjkamal123/ENTITY---Arm-Create-AI-Optimiza
 5. [Benchmarks](benchmarks/BENCHMARKS.md): current method, cross device values, and caveats.
 6. [Reproducibility](benchmarks/REPRODUCIBILITY.md): protocol, CSV evidence schema, source pointers, and evidence limits.
 7. [Runtime comparisons](benchmarks/COMPARISONS.md): a fair upstream llama.cpp baseline and the requirements for any ExecuTorch or MLC-LLM claim.
-8. [Quantization and output equivalence lab](quant-lab/RESULTS.md): what each quantization costs in quality, and the measurement showing the scheduling speedups leave the model's output unchanged - four arms, three controls, raw files included.
-9. [Arm against Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md): six of ENTITY's ten optimization mechanisms are removed or crippled on a platform that is also arm64 - measured on two iPhones, including a thread sweep where the second thread is a straight loss.
+8. [Quantization and output equivalence lab](quant-lab/RESULTS.md): what each quantization costs in quality, and the measurement showing the scheduling speedups leave the model's output unchanged. Four arms, three controls, raw files included.
+9. [Arm against Apple silicon](docs/PORTABILITY-ARM-VS-APPLE-SILICON.md): six of ENTITY's ten optimization mechanisms are removed or crippled on a platform that is also arm64. Measured on two iPhones, including a thread sweep where the second thread is a straight loss.
 10. [FAQ](docs/FAQ.md): device support, models, Auto mode, privacy, and troubleshooting answers.
 11. [Arm64 Android starter kit](templates/arm64-android-runtime/README.md): copyable runtime policy, affinity helper, and retargeting checklist.
-12. [Experiment ledger](docs/LEDGER.md): every optimization tried, one row each - KEEP, REVERT, NO EFFECT or OPEN, with the number that decided it. Seven reverts, four of them things this project had already published as wins.
+12. [Experiment ledger](docs/LEDGER.md): every optimization tried, one row each. KEEP, REVERT, NO EFFECT or OPEN, with the number that decided it. Seven reverts, four of them things this project had already published as wins.
 13. [Contributing](docs/CONTRIBUTING.md): project conventions and next steps.
 
 ## Known limitations
 
-Stated here rather than left for a judge to find. Each of these is a live entry in the [experiment ledger](docs/LEDGER.md), not a known bug being managed quietly.
+Better you read these from me than find them yourself. Every one is an open row in the [experiment ledger](docs/LEDGER.md), not a bug I am quietly sitting on.
 
 | | Limitation | Detail |
 |---|---|---|
 | | **The controlled claims rest on two phones** | The ablation, equivalence and ISA ladder results are single device by design, because isolating a variable requires holding the rest fixed. Breadth comes from the 13 device contributed dataset instead, which is the opposite tradeoff: uncontrolled conditions, many devices. Neither substitutes for the other. |
 | | **The i8mm rung is modelled, not measured** | The one device ISA ladder proves the dotprod rung is worth **+379% prompt**. It cannot load the armv8.6 backend, because the Cortex-A78 in hand has no i8mm. The catalog still prices that rung from a cross device comparison. |
 | | **One contributed device gets *slower* at prefill** | The Helio G37 prefills 9.3 to 7.8 tok/s tuned versus naive. All eight cores are A53s, so capacity ranked selection is probably choosing the wrong four. A single contributed pass, so a lead rather than a result. |
-| | **Decode thread width on flagships lands on a clamp** | On prime core topologies the derived count hits a floor clamp rather than a derivation. Bench has a sweep mode built to answer it; no flagship has run one. |
+| | **Decode thread width on flagships lands on a clamp** | On prime core topologies the derived count hits a floor clamp instead of a real derivation. Bench has a sweep mode built to answer it; no flagship has run one. |
 | | **`power_valid` has no plausibility floor in the app** | Charging is detected and excluded, but an implausible current reading is filtered in analysis and on the leaderboard, not at the point of measurement. |
 | | **Models are imported, not bundled** | The APK is 10 MB and a GGUF is fetched or side loaded on first use, so the first run needs storage or a network. Everything after it is fully offline; the chat app holds no network permission. |
 | | **The iOS port is a control, not a product** | It exists to test whether these optimizations are Arm specific or Apple silicon portable. Different runtime and model (ONNX int8, not llama.cpp GGUF), so its numbers are never compared numerically against the Android record. |
@@ -381,15 +381,15 @@ Stated here rather than left for a judge to find. Each of these is a live entry 
 
 ## Contributing
 
-Issues and pull requests are welcome; conventions are in [CONTRIBUTING](docs/CONTRIBUTING.md).
+Issues and pull requests welcome. Conventions live in [CONTRIBUTING](docs/CONTRIBUTING.md).
 
-The most useful contribution is a **benchmark run from a phone this project has never seen**. Install ENTITY Bench, run the ablation unplugged, and tap Contribute. That is how the decode claim came to be tested on 13 devices rather than 2, and every device that disagrees with it is worth more than one that agrees.
+The most useful thing you can send me is a **benchmark from a phone I have never seen**. Install ENTITY Bench, run the ablation unplugged then tap Contribute. That is how the decode claim went from 2 devices to 13. A phone that disagrees with me is worth more than one that agrees.
 
 ## Acknowledgements
 
-- **[llama.cpp](https://github.com/ggml-org/llama.cpp)** and **ggml**, which this project is an optimization layer around rather than a replacement for. A KleidiAI fallback warning from this work is upstream as [PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701).
-- **[Arm KleidiAI](https://gitlab.arm.com/kleidi/kleidiai)** for the Q4_0 and Q8_0 matmul kernels, and for source clear enough to determine exactly which quantizations reach them.
-- **The 13 people who ran the benchmark on their own phones.** The generalization claim in this README is theirs, not mine: it is the only part of the evidence that came from silicon the author has never touched.
+- **[llama.cpp](https://github.com/ggml-org/llama.cpp)** and **ggml**. ENTITY sits on top of them and never tried to replace them. A KleidiAI fallback warning I hit while building this went upstream as [PR #25701](https://github.com/ggml-org/llama.cpp/pull/25701).
+- **[Arm KleidiAI](https://gitlab.arm.com/kleidi/kleidiai)** for the Q4_0 and Q8_0 matmul kernels, and for source readable enough that I could work out exactly which quantizations reach them.
+- **The 13 people who ran the benchmark on their own phones.** The generalization claim in this README belongs to them more than to me. It is the only evidence here that came off silicon I have never touched.
 
 ## License
 
@@ -397,4 +397,4 @@ ENTITY is licensed under [Apache License 2.0](LICENSE). It builds on llama.cpp a
 
 ---
 
-**Why trust any of this?** [`docs/JOURNEY.md`](docs/JOURNEY.md) is the record of every claim this project had to withdraw - the +121% pinning headline, the widened prompt pool, the flagship thread-width prediction, the energy attribution - with what broke each one and what replaced it. The falsifications are the evidence that the surviving numbers were actually checked.
+**Why trust any of this?** [`docs/JOURNEY.md`](docs/JOURNEY.md) keeps every claim I had to withdraw. The +121% pinning headline. The widened prompt pool. The flagship thread width prediction. The energy attribution. Each one is there with whatever broke it and whatever replaced it. Those are the reason to believe the numbers that survived.
